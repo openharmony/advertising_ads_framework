@@ -2,7 +2,7 @@
 
 ### 简介
 
-广告服务依托鸿蒙系统为您提供流量变现服务，极简接入，无需集成SDK，轻松实现广告的接入，帮助您解决流量变现的难题。
+广告服务为您提供流量变现服务，极简接入，无需集成SDK，轻松实现广告的接入，帮助您解决流量变现的难题。
 
 ### 目录
 
@@ -23,13 +23,13 @@
 
 - SA
 
-  SA是SystemAbility的缩写，中文名叫系统元能力，它是一个binder实体，运行在服务端的进程中，接收到外部的请求后进行处理并返回处理结果，对外提供服务。
+  SA是SystemAbility的缩写，中文名叫系统元能力，运行在服务端的进程中，接收到外部的请求后进行处理并返回处理结果，对外提供服务。
 
 ### 说明
 
 #### 使用说明
 
-广告SA用于接收来自媒体的广告请求，进行处理后将请求转发到广告平台，广告平台需要找到最佳广告内容给SA响应，用于后续的广告内容展示。
+广告SA用于接收来自媒体的广告请求，进行处理后将请求转发到广告平台，广告平台需要找到广告内容给SA响应，用于后续的广告内容展示。
 
 ##### 创建广告平台
 
@@ -165,7 +165,7 @@ commonEvent.publish("event", (err) => {
 
 ##### 请求广告
 
-请求广告需要创建一个AdLoader对象，通过AdLoader的loadAd方法请求广告。最后通过AdLoadListener回调来监听广告的加载状态。
+请求广告需要创建一个AdLoader对象，通过AdLoader的loadAd方法请求广告。然后通过AdLoadListener回调来监听广告的加载状态。
 
 ```javascript
 import advertising from '@ohos.advertising';
@@ -207,7 +207,7 @@ try {
 
 1. 事件订阅
 
-   开发者需要在App中订阅com.huawei.hms.pps.action.PPS_REWARD_STATUS_CHANGED事件来监听激励广告页面变化并接收奖励信息。订阅需要在每次展示广告前调用 。
+   开发者需要在App中订阅com.company.pps.action.PPS_REWARD_STATUS_CHANGED事件来监听激励广告页面变化并接收奖励信息。订阅需要在每次展示广告前调用 。
 
    订阅者接收到公共事件后，可以从[CommonEventData](https://docs.openharmony.cn/pages/v4.0/zh-cn/application-dev/reference/apis/js-apis-inner-commonEvent-commonEventData.md/)的parameters参数中使用"reward_ad_status"作为key值获取激励广告页面变化状态，使用"reward_ad_data"作为key值获取奖励信息，属性rewardType用来获取奖励物品的名称，rewardAmount用来获取奖励物品的数量。
 
@@ -228,7 +228,7 @@ try {
        }
        // 订阅者信息
        const subscribeInfo = {
-         events: ["com.huawei.hms.pps.action.PPS_REWARD_STATUS_CHANGED"],
+         events: ["com.company.pps.action.PPS_REWARD_STATUS_CHANGED"],
        };
        // 创建订阅者回调
        commonEvent.createSubscriber(subscribeInfo, (err, commonEventSubscriber) => {
