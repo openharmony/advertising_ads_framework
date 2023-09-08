@@ -2,13 +2,13 @@
 
 ## Introduction
 
-The HarmonyOS advertising service enables you to implement ad access without SDK integration, helping you easily monetize your traffic.
+The advertising service enables you to implement ad access without SDK integration, helping you easily monetize your traffic.
 
 ### Concepts
 
 - SA
 
-  SA, short for SystemAbility, is a binder entity that runs in the server process. After receiving an external request, SA processes the request and returns the processing result, thereby implementing service provisioning for external systems.
+  SA, short for SystemAbility, is a ipc entity that runs in the server process. After receiving an external request, SA processes the request and returns the processing result, thereby implementing service provisioning for external systems.
 
 ### Architecture
 
@@ -214,7 +214,7 @@ try {
 
 1. Subscribe to the event.
 
-   Subscribe to the com.huawei.hms.pps.action.PPS_REWARD_STATUS_CHANGED event to listen for changes on the reward ad page and receive reward information. The subscription must be initiated each time before an ad is displayed.
+   Subscribe to the com.company.pps.action.PPS_REWARD_STATUS_CHANGED event to listen for changes on the reward ad page and receive reward information. The subscription must be initiated each time before an ad is displayed.
 
    After receiving the common event, use **reward_ad_status** and **reward_ad_data** as keys in the **parameters** parameter of [CommonEventData](https://docs.openharmony.cn/pages/v4.0/en/application-dev/reference/apis/js-apis-inner-commonEvent-commonEventData.md/) to obtain changes on the reward ad page and obtain reward information, respectively. You can use the **rewardType** and **rewardAmount** attributes to obtain the name of a reward and its quantity.
 
@@ -235,7 +235,7 @@ try {
        }
        // Subscriber information.
        const subscribeInfo = {
-         events: ["com.huawei.hms.pps.action.PPS_REWARD_STATUS_CHANGED"],
+         events: ["com.company.pps.action.PPS_REWARD_STATUS_CHANGED"],
        };
        // Callback for subscriber creation.
        commonEvent.createSubscriber(subscribeInfo, (err, commonEventSubscriber) => {

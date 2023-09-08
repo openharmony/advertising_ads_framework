@@ -12,10 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <new>
 
-#include "request_data.h"
 #include "ad_hilog_wreapper.h"
+#include "request_data.h"
 
 namespace OHOS {
 namespace Cloud {

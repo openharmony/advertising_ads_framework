@@ -19,11 +19,10 @@
 
 #include "want.h"
 #include "json/json.h"
-#include "ad_hilog_wreapper.h"
 #include "ad_constant.h"
-#include "ad_load_callback_stub.h"
 #include "ad_hilog_wreapper.h"
 #include "ad_inner_error_code.h"
+#include "ad_load_callback_stub.h"
 
 namespace OHOS {
 namespace Cloud {
