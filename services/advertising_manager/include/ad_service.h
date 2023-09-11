@@ -73,7 +73,7 @@ class AdRequestConnection : public AAFwk::AbilityConnectionStub {
 public:
     AdRequestConnection(uint32_t callingUid, const sptr<AdRequestData> &data, const sptr<IAdLoadCallback> &callback,
         int32_t loadAdType)
-        : callingUid_(callingUid), data_(data), callback_(callback), loadAdType_(loadAdType){};
+        : callingUid_(callingUid), data_(data), callback_(callback), loadAdType_(loadAdType) {};
     ~AdRequestConnection() = default;
 
     void OnAbilityConnectDone(const AppExecFwk::ElementName &element, const sptr<IRemoteObject> &remoteObject,
@@ -85,7 +85,7 @@ private:
     sptr<AdRequestData> data_;
     sptr<IAdLoadCallback> callback_;
     int32_t loadAdType_;
-    sptr<AdLoadSendRequestProxy> proxy_{ nullptr };
+    sptr<AdLoadSendRequestProxy> proxy_ { nullptr };
 };
 } // namespace Cloud
 } // namespace OHOS

@@ -31,7 +31,6 @@
 #include "element_name.h"
 #include "config_policy_utils.h"
 
-#include "ad_service.h"
 #include "ad_service_proxy.h"
 #include "ad_hilog_wreapper.h"
 #include "ad_constant.h"
@@ -39,6 +38,7 @@
 #include "ad_inner_error_code.h"
 #include "request_data.h"
 #include "iad_load_callback.h"
+#include "ad_service.h"
 
 #include "ability_connect_callback_stub.h"
 #include "ability_manager_client.h"
@@ -83,7 +83,7 @@ AdvertisingService::AdvertisingService() : state_(AdsServiceRunningState::STATE_
     adServiceElementName_.userId = 0;
 }
 
-AdvertisingService::~AdvertisingService(){};
+AdvertisingService::~AdvertisingService() {};
 
 sptr<AdvertisingService> AdvertisingService::GetInstance()
 {

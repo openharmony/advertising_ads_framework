@@ -16,12 +16,12 @@
 #include "ipc_skeleton.h"
 #include "ipc_types.h"
 #include "message_parcel.h"
-#include "ad_service_stub.h"
 #include "ad_hilog_wreapper.h"
 #include "ad_inner_error_code.h"
 #include "request_data.h"
 #include "ad_service.h"
 #include "advertising_service_ipc_interface_code.h"
+#include "ad_service_stub.h"
 
 namespace OHOS {
 namespace Cloud {
