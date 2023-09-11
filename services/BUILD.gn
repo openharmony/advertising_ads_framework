@@ -1,0 +1,67 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//domains/cloud/advertising/advertising.gni")
+
+config("advertising_service_config") {
+  visibility = [ ":*" ]
+  include_dirs = [
+    "${advertising_common_path}/error_code",
+    "${advertising_common_path}/ipc/include",
+    "${advertising_common_path}/log/include",
+    "${advertising_common_path}/model/include",
+    "advertising_manager/include",
+  ]
+}
+
+ohos_shared_library("advertising_service") {
+
+  configs = [ "${advertising_common_path}:common_config" ]
+
+  public_configs = [
+    ":advertising_service_config"
+  ]
+
+  ldflags = [
+    "-lpthread"
+  ]
+
+  sources = [
+    "advertising_manager/src/ad_service_stub.cpp",
+    "advertising_manager/src/ad_service.cpp",
+    "advertising_manager/src/ad_service_client.cpp",
+    "advertising_manager/src/ad_service_proxy.cpp",
+    "advertising_manager/src/ad_load_callback_proxy.cpp",
+  ]
+
+  deps = [
+    "${advertising_common_path}:advertising_common",
+    "//third_party/jsoncpp:jsoncpp",
+  ]
+
+  external_deps = [
+    "ability_runtime:ability_manager",
+    "hilog:libhilog",
+    "config_policy:configpolicy_util",
+    "c_utils:utilsbase",
+  ]
+  part_name = "advertising"
+  subsystem_name = "cloud"
+}
+
+ohos_prebuilt_etc("ad_service_config_json") {
+  source = "advertising_manager/resource/ad_service_config.json"
+  relative_install_dir = "cloud/advertising"
+  part_name = "advertising"
+  subsystem_name = "cloud"
+}
