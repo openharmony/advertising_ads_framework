@@ -19,10 +19,10 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi/native_common.h"
-#include "ad_load_napi_common.h"
 #include "ad_hilog_wreapper.h"
 #include "iad_load_callback.h"
 #include "ad_inner_error_code.h"
+#include "ad_load_napi_common.h"
 
 namespace OHOS {
 namespace CloudNapi {

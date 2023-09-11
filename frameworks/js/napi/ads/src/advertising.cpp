@@ -13,15 +13,14 @@
  * limitations under the License.
  */
 
-#include "napi_common_want.h"
-#include "napi/native_common.h"
 #include <fstream>
 #include <memory>
 #include <uv.h>
+#include "napi_common_want.h"
+#include "napi/native_common.h"
 #include "json/json.h"
 #include "securec.h"
 #include "want_agent_helper.h"
-#include "advertising.h"
 #include "ad_hilog_wreapper.h"
 #include "ad_load_napi_common.h"
 #include "ad_service_client.h"
@@ -30,6 +29,7 @@
 #include "ability_manager_client.h"
 #include "ad_service_interface.h"
 #include "config_policy_utils.h"
+#include "advertising.h"
 
 namespace OHOS {
 namespace CloudNapi {
@@ -374,7 +374,7 @@ napi_value ParseAdvertismentByAd(napi_env &env, napi_value &argv, Advertisment &
     }
     if (static_cast<int>(valueCount) > AD_STANDARD_SIZE) {
         ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "advertisment has extra value");
-        std::vector<std::string> keyArray{ AD_RESPONSE_AD_TYPE, AD_RESPONSE_REWARD_CONFIG, AD_RESPONSE_UNIQUE_ID,
+        std::vector<std::string> keyArray { AD_RESPONSE_AD_TYPE, AD_RESPONSE_REWARD_CONFIG, AD_RESPONSE_UNIQUE_ID,
             AD_RESPONSE_REWARDED, AD_RESPONSE_SHOWN, AD_RESPONSE_CLICKED };
         if (RemoveAlreadyParsedProperties(env, argv, keyArray) == nullptr) {
             return nullptr;
