@@ -4,16 +4,6 @@
 
 The advertising service enables you to implement ad access without SDK integration, helping you easily monetize your traffic.
 
-### Concepts
-
-- SA
-
-  SA, short for SystemAbility, is a ipc entity that runs in the server process. After receiving an external request, SA processes the request and returns the processing result, thereby implementing service provisioning for external systems.
-
-### Architecture
-
-![img](figures/en-us_architecture-of-the-advertising.png)
-
 ## Directory Structure
 
 ```
@@ -29,9 +19,14 @@ The advertising service enables you to implement ad access without SDK integrati
 └── bundle.json                        # Component description file
 ```
 
-## How to Use
+### Concepts
 
-### Usage Description
+- SA
+
+  SA, short for SystemAbility, is a ipc entity that runs in the server process. After receiving an external request, SA processes the request and returns the processing result, thereby implementing service provisioning for external systems.
+
+
+## How to Use
 
 The advertising SA receives an ad request, processes the request, and forwards the request to the ad platform. The ad platform finds the best ad content and sends it to the SA for display.
 
