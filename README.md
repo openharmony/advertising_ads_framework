@@ -28,8 +28,6 @@ The advertising service enables you to implement ad access without SDK integrati
 
 ## How to Use
 
-### Usage Description
-
 The advertising SA receives an ad request, processes the request, and forwards the request to the ad platform. The ad platform finds the best ad content and sends it to the SA for display.
 
 ### Creating an Ad Platform
