@@ -11,9 +11,9 @@
     "scripts": {},
     "component": {
       "name": "advertising",
-      "subsystem": "cloud",
+      "subsystem": "advertising",
       "syscap": [
-        "SystemCapability.Cloud.Ads"
+        "SystemCapability.Advertising.Ads"
       ],
       "features": [
       ],
