@@ -69,6 +69,6 @@ ohos_shared_library("advertising") {
   ]
 
   relative_install_dir = "module"
-  subsystem_name = "cloud"
+  subsystem_name = "advertising"
   part_name = "advertising"
 }
