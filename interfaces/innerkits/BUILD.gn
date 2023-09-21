@@ -12,38 +12,34 @@
 # limitations under the License.
 
 import("//domains/cloud/advertising/advertising.gni")
+import("//build/ohos.gni")
 
-config("common_config") {
+config("ads_inner_config") {
+  visibility = [ ":*" ]
   include_dirs = [
-    "error_code",
-    "ipc/include",
-    "log/include",
-    "model/include",
-    "//commonlibrary/c_utils/base/include",
-    "//third_party/jsoncpp/include/json"
+    "include",
+    "${advertising_common_path}/error_code",
+    "${advertising_common_path}/ipc/include",
+    "${advertising_common_path}/log/include",
+    "${advertising_common_path}/model/include",
   ]
 }
 
-ohos_source_set("advertising_common") {
-  configs = [ ":common_config" ]
-
+ohos_shared_library("ads_inner") {
   sources = [
-    "ipc/src/ad_load_proxy.cpp",
-    "ipc/src/ad_load_callback_stub.cpp",
-    "model/src/request_data.cpp",
+    "src/ad_service_client.cpp",
+    "src/ad_service_proxy.cpp",
   ]
 
+  public_configs = [ ":ads_inner_config" ]
   deps = [
-    "//third_party/jsoncpp:jsoncpp",
+    "${advertising_common_path}:advertising_common",
   ]
-
   external_deps = [
-    "ability_base:want",
+    "ability_runtime:ability_manager",
     "hilog:libhilog",
-    "ipc:ipc_core",
-    "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
+    "c_utils:utilsbase",
   ]
-
   part_name = "advertising"
+  subsystem_name = "advertising"
 }
