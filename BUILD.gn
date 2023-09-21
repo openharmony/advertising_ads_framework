@@ -17,6 +17,7 @@ import("//domains/cloud/advertising/advertising.gni")
 group("advertising_native_packages") {
     deps = [
       "etc/init:advertisingservice.cfg",
+      "interfaces/innerkits:ads_inner",
       "frameworks/js/napi/ads:advertising",
       "frameworks/js/napi/adcomponent:adcomponent",
       "frameworks/js/napi/autoadcomponent:autoadcomponent",

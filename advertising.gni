@@ -23,6 +23,8 @@ advertising_service_path = "${advertising_root_path}/services"
 
 advertising_common_path = "${advertising_root_path}/common"
 
+advertising_inner_path = "${advertising_root_path}/interfaces/innerkits"
+
 ability_base_path = "//foundation/ability/ability_base"
 
 ability_base_kits_path = "${ability_base_path}/interfaces/kits/native"

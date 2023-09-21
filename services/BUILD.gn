@@ -32,6 +32,12 @@ ohos_shared_library("advertising_service") {
     ":advertising_service_config"
   ]
 
+  sanitize = {
+    boundary_sanitize = true
+    integer_overflow = true
+    ubsan = true
+  }
+
   ldflags = [
     "-lpthread"
   ]
@@ -39,13 +45,12 @@ ohos_shared_library("advertising_service") {
   sources = [
     "advertising_manager/src/ad_service_stub.cpp",
     "advertising_manager/src/ad_service.cpp",
-    "advertising_manager/src/ad_service_client.cpp",
-    "advertising_manager/src/ad_service_proxy.cpp",
     "advertising_manager/src/ad_load_callback_proxy.cpp",
   ]
 
   deps = [
     "${advertising_common_path}:advertising_common",
+    "${advertising_inner_path}:ads_inner",
     "//third_party/jsoncpp:jsoncpp",
   ]
 

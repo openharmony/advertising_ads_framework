@@ -14,12 +14,12 @@
  */
 
 #include "iremote_broker.h"
+#include "ad_service_proxy.h"
 #include "ad_hilog_wreapper.h"
 #include "ad_service_interface.h"
 #include "ad_inner_error_code.h"
 #include "message_option.h"
 #include "advertising_service_ipc_interface_code.h"
-#include "ad_service_proxy.h"
 
 namespace OHOS {
 namespace Cloud {

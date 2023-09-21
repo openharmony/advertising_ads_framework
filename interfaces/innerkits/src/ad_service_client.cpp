@@ -21,9 +21,9 @@
 #include "iservice_registry.h"
 
 #include "ad_hilog_wreapper.h"
+#include "ad_service_client.h"
 #include "ad_constant.h"
 #include "ad_inner_error_code.h"
-#include "ad_service_client.h"
 
 namespace OHOS {
 namespace Cloud {
