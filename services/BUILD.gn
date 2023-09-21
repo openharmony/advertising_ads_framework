@@ -56,12 +56,12 @@ ohos_shared_library("advertising_service") {
     "c_utils:utilsbase",
   ]
   part_name = "advertising"
-  subsystem_name = "cloud"
+  subsystem_name = "advertising"
 }
 
 ohos_prebuilt_etc("ad_service_config_json") {
   source = "advertising_manager/resource/ad_service_config.json"
   relative_install_dir = "cloud/advertising"
   part_name = "advertising"
-  subsystem_name = "cloud"
+  subsystem_name = "advertising"
 }
