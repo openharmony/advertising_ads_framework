@@ -16,7 +16,7 @@ import("//domains/cloud/advertising/advertising.gni")
 #####################hydra-fuzz###################
 import("//build/config/features.gni")
 import("//build/test.gni")
-module_output_path = "cloud/advertising"
+module_output_path = "advertising/advertising"
 
 ##############################fuzztest##########################################
 ohos_fuzztest("AdvertisingFuzzTest") {
