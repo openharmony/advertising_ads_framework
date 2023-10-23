@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The advertising service enables you to implement ad access without SDK integration, helping you easily monetize your traffic.
+The advertising service enables you to implement ad access without SDK integration.
 
 ## Directory Structure
 
