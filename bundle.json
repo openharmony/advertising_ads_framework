@@ -5,7 +5,7 @@
     "license": "Apache License 2.0",
     "publishAs": "code-segment",
     "segment": {
-      "destPath": "domains/cloud/advertising"
+      "destPath": "domains/advertising/advertising"
     },
     "dirs": {},
     "scripts": {},
@@ -42,10 +42,7 @@
       },
       "build": {
         "sub_component": [
-          "//domains/cloud/advertising:advertising_native_packages"
-        ],
-        "test": [
-          "//domains/cloud/advertising/test/fuzztest:fuzztest"
+          "//domains/advertising/advertising:advertising_native_packages"
         ]
       }
     }
