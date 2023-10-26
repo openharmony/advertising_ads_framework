@@ -25,8 +25,7 @@ static napi_module _module = {
     .nm_filename = "advertising/libadsserviceextensionability.so/AdsServiceExtensionAbility.js",
     .nm_modname = "advertising.AdsServiceExtensionAbility",
 };
-extern "C" __attribute__((constructor))
-void NAPI_advertising_AdsServiceExtensionAbility_AutoRegister()
+extern "C" __attribute__((constructor)) void NAPI_advertising_AdsServiceExtensionAbility_AutoRegister()
 {
     napi_module_register(&_module);
 }
