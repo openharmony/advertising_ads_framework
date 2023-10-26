@@ -12,25 +12,17 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("//domains/cloud/advertising/advertising.gni")
+import("//domains/advertising/advertising/advertising.gni")
 
 group("advertising_native_packages") {
     deps = [
-      "etc/init:advertisingservice.cfg",
-      "interfaces/innerkits:ads_inner",
       "frameworks/js/napi/ads:advertising",
       "frameworks/js/napi/adcomponent:adcomponent",
       "frameworks/js/napi/autoadcomponent:autoadcomponent",
-      "sa_profile:cloud_advertising_sa_profiles",
-      "services:advertising_service",
-      "services:ad_service_config_json",
+      "frameworks/js/napi/ads:ad_service_config_json",
+      "frameworks/js/napi/adsservice_extension_ability:adsserviceextensionability_napi",
+      "frameworks/js/napi/adsservice_extension_context:adsserviceextensioncontext_napi",
+      "frameworks/js/napi/extension:libadsservice_extension",
+      "frameworks/js/napi/extension:adsservice_extension_module",
     ]
-}
-
-group("ad_build_fuzztest") {
-  testonly = true
-  deps = []
-  deps += [
-    "${advertising_root_path}/test/fuzztest:fuzztest"
-  ]
 }
