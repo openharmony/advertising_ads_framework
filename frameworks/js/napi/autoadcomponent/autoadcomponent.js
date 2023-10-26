@@ -163,18 +163,23 @@ class AutoAdComponent extends ViewPU {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'start auto refresh advertising.');
     this.intervalId = setInterval((() => {
       this.adsCount--;
-      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `Auto refresh, adsCount is : ${this.adsCount}, refreshTime is: ${this.refreshTime} ms.`);
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `Auto refresh, adsCount is : ${this.adsCount}, refreshTime is:
+        ${this.refreshTime} ms.`);
       this.adsCount <= 0 && this.loadAd(!0);
     }), this.refreshTime);
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `intervalId is: ${this.intervalId}.`);
   }
 
   initRefreshTime() {
-    if (!(this.displayOptions && this.displayOptions.refreshTime && typeof this.displayOptions.refreshTime == 'number' && this.displayOptions.refreshTime > 0)) {
-      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `Invalid input refreshTime, refreshTime is: ${this.refreshTime}.`);
+    if (!(this.displayOptions && this.displayOptions.refreshTime && typeof this.displayOptions.refreshTime == 'number'
+      && this.displayOptions.refreshTime > 0)) {
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `Invalid input refreshTime, refreshTime is:
+        ${this.refreshTime}.`);
       return !1;
     }
-    this.displayOptions.refreshTime < MIN_REFRESH_TIME ? this.refreshTime = MIN_REFRESH_TIME : this.displayOptions.refreshTime > MAX_REFRESH_TIME ? this.refreshTime = MAX_REFRESH_TIME : this.refreshTime = this.displayOptions.refreshTime;
+    this.displayOptions.refreshTime < MIN_REFRESH_TIME ? this.refreshTime = MIN_REFRESH_TIME : 
+      this.displayOptions.refreshTime > MAX_REFRESH_TIME ? this.refreshTime = MAX_REFRESH_TIME : 
+      this.refreshTime = this.displayOptions.refreshTime;
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `refreshTime is: ${this.refreshTime} ms.`);
     return !0;
   }
