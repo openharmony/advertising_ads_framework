@@ -13,9 +13,6 @@
  * limitations under the License.
  */
 
-#include <fcntl.h>
-#include <fstream>
-#include <type_traits>
 #include "json/json.h"
 #include "want.h"
 #include "want_params.h"
@@ -27,13 +24,13 @@
 #include "element_name.h"
 #include "config_policy_utils.h"
 
-#include "ad_load_service.h"
 #include "ad_hilog_wreapper.h"
 #include "ad_constant.h"
 #include "iad_load_callback.h"
 #include "ad_inner_error_code.h"
 #include "request_data.h"
 #include "iad_load_callback.h"
+#include "ad_load_service.h"
 
 #include "ability_connect_callback_stub.h"
 #include "ability_manager_client.h"
@@ -70,7 +67,7 @@ AdLoadService::AdLoadService()
     adServiceElementName_.userId = 0;
 }
 
-AdLoadService::~AdLoadService(){};
+AdLoadService::~AdLoadService() {};
 
 sptr<AdLoadService> AdLoadService::GetInstance()
 {
@@ -148,8 +145,8 @@ bool AdLoadService::ConnectAdKit(const sptr<Cloud::AdRequestData> &data, const s
     OHOS::AAFwk::Want connectionWant;
     connectionWant.SetElementName(adServiceElementName_.bundleName, adServiceElementName_.extensionName);
     sptr<AdRequestConnection> serviceConnection = new (std::nothrow) AdRequestConnection(data, callback, loadAdType);
-    ErrCode errCode = AAFwk::AbilityManagerClient::GetInstance()->ConnectExtensionAbility(connectionWant, serviceConnection,
-        adServiceElementName_.userId);
+    ErrCode errCode = AAFwk::AbilityManagerClient::GetInstance()->ConnectExtensionAbility(connectionWant,
+        serviceConnection, adServiceElementName_.userId);
     if (errCode != ERR_OK) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "failed to connect ability");
         return false;

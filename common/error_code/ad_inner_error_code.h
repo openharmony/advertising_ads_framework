@@ -81,7 +81,6 @@ enum AdsError : int32_t {
     INNER_ERR = 21800001,
     REQUEST_FAIL = 21800003,
 };
-
 } // namespace Cloud
 } // namespace OHOS
 #endif // ADS_ERROR_CODE_H

@@ -59,7 +59,7 @@ class AdRequestConnection : public AAFwk::AbilityConnectionStub {
 public:
     AdRequestConnection(const sptr<Cloud::AdRequestData> &data, const sptr<Cloud::IAdLoadCallback> &callback,
         int32_t loadAdType)
-        : data_(data), callback_(callback), loadAdType_(loadAdType){};
+        : data_(data), callback_(callback), loadAdType_(loadAdType) {};
     ~AdRequestConnection() = default;
     void OnAbilityConnectDone(const AppExecFwk::ElementName &element, const sptr<IRemoteObject> &remoteObject,
         int32_t resultCode) override;
@@ -69,7 +69,7 @@ private:
     sptr<Cloud::AdRequestData> data_;
     sptr<Cloud::IAdLoadCallback> callback_;
     int32_t loadAdType_;
-    sptr<Cloud::AdLoadSendRequestProxy> proxy_{ nullptr };
+    sptr<Cloud::AdLoadSendRequestProxy> proxy_ { nullptr };
 };
 } // namespace AdsNapi
 } // namespace CloudNapi
