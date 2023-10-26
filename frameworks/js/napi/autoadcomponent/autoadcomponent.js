@@ -14,15 +14,13 @@
  */
 
 let advertising = globalThis.requireNapi('advertising');
-
 let fs = globalThis.requireNapi('file.fs');
-
 let hilog = globalThis.requireNapi('hilog');
 
 const MAX_REFRESH_TIME = 12e4;
-
 const MIN_REFRESH_TIME = 3e4;
-
+const AD_SIZE_OFFSET = 1;
+const AD_LOAD_ONCE_SIZE = 1;
 const HILOG_DOMAIN_CODE = 65280;
 const READ_FILE_BUFFER_SIZE = 4096;
 
@@ -34,8 +32,12 @@ class AutoAdComponent extends ViewPU {
     this.__adChangeStatus = new ObservedPropertySimplePU(0, this, 'adChangeStatus');
     this.adsCount = void 0;
     this.intervalId = void 0;
+    this.freshInterval = void 0;
     this.refreshTime = void 0;
     this.loader = void 0;
+    this.isAutoRefresh = void 0;
+    this.remoteProxy = void 0;
+    this.alreadyLoadAd = !1;
     this.adParam = void 0;
     this.adOptions = void 0;
     this.displayOptions = void 0;
@@ -49,15 +51,20 @@ class AutoAdComponent extends ViewPU {
     void 0 !== e.adChangeStatus && (this.adChangeStatus = e.adChangeStatus);
     void 0 !== e.adsCount && (this.adsCount = e.adsCount);
     void 0 !== e.intervalId && (this.intervalId = e.intervalId);
+    void 0 !== e.freshInterval && (this.freshInterval = e.freshInterval);
     void 0 !== e.refreshTime && (this.refreshTime = e.refreshTime);
     void 0 !== e.loader && (this.loader = e.loader);
+    void 0 !== e.isAutoRefresh && (this.isAutoRefresh = e.isAutoRefresh);
+    void 0 !== e.remoteProxy && (this.remoteProxy = e.remoteProxy);
+    void 0 !== e.alreadyLoadAd && (this.alreadyLoadAd = e.alreadyLoadAd);
     void 0 !== e.adParam && (this.adParam = e.adParam);
     void 0 !== e.adOptions && (this.adOptions = e.adOptions);
     void 0 !== e.displayOptions && (this.displayOptions = e.displayOptions);
     void 0 !== e.interactionListener && (this.interactionListener = e.interactionListener);
   }
 
-  updateStateVars(e) {}
+  updateStateVars(e) {
+  }
 
   purgeVariableDependenciesOnElmtId(e) {
     this.__adChangeStatus.purgeDependencyOnElmtId(e);
@@ -97,11 +104,11 @@ class AutoAdComponent extends ViewPU {
     try {
       const t = fs.openSync('/system/etc/cloud/advertising/ad_service_config.json');
       const i = new ArrayBuffer(READ_FILE_BUFFER_SIZE);
-      fs.readSync(t.fd, i);
+      let o = fs.readSync(t.fd, i);
       fs.closeSync(t);
-      let o = String.fromCharCode(...new Uint8Array(i));
-      o = o.replace(/[\r\n\t\"]/g, '').replace(/\s*/g, '').replace(/\[|\]/g, '');
-      e = this.toMap(o);
+      let s = String.fromCharCode(...new Uint8Array(i.slice(0, o)));
+      s = s.replace(/[\r\n\t\"]/g, '').replace(/\s*/g, '').replace(/\[|\]/g, '');
+      e = this.toMap(s);
       hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'file succeed');
     } catch (e) {
       hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent', `open file failed with error:${e.code}, message:${e.message}`);
@@ -110,76 +117,73 @@ class AutoAdComponent extends ViewPU {
     return e;
   }
 
-  setWant(e) {
-    let t = this.getConfigJsonData();
+  setWant() {
+    let e = this.getConfigJsonData();
     this.want = {
-      bundleName: null == t ? void 0 : t.providerBundleName,
-      abilityName: null == t ? void 0 : t.providerUEAAbilityName,
-      parameters: {
-        ads: e,
-        displayOptions: this.displayOptions
-      }
-    };
+      bundleName: null == e ? void 0 : e.providerBundleName,
+      abilityName: null == e ? void 0 : e.providerUEAAbilityName,
+      parameters: { displayOptions: this.displayOptions, 'ability.want.params.uiExtensionType': 'ads' }
+    }
   }
 
-  loadAd() {
-    hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'start load advertising.');
-    let e = {
-      onAdLoadFailure: (e, t) => {
-        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `request ad errorCode is: ${e}, errorMsg is: ${t}`);
-      },
-      onAdLoadSuccess: e => {
-        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'request ad success!');
-        this.setWant(e);
-        this.adsCount = e.length;
-        if (this.adsCount > 0) {
-          hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `advertising size is: ${this.adsCount}!`);
-          this.adChangeStatus++;
-        } else {
-          hilog.warn(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'advertising size is 0!');
-        }
+  pullUpPage(e, t) {
+    hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `send ${e} advertisings to UI Extension Ability.`);
+    let i = 0;
+    this.remoteProxy.send({ adArray: t[i] });
+    e > AD_SIZE_OFFSET && (this.freshInterval = setInterval((() => {
+      i++;
+      this.remoteProxy.send({ adArray: t[i] });
+      if (i == e - AD_SIZE_OFFSET) {
+        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `clearInterval ${this.freshInterval}.`);
+        clearInterval(this.freshInterval);
       }
-    };
-    this.loader.loadAd(this.adParam, this.adOptions, e);
+    }), this.refreshTime));
+  }
+
+  loadAd(e) {
+    hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'start load advertising.');
+    let t = { onAdLoadFailure: (e, t) => {
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `request ad errorCode is: ${e}, errorMsg is: ${t}`);
+    }, onAdLoadSuccess: t => {
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'request ad success!');
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `adArray is : ${JSON.stringify(t)}`);
+      this.adsCount = t.length;
+      if (this.adsCount > 0 && e) {
+        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `advertising size is: ${this.adsCount}!`);
+        this.pullUpPage(this.adsCount, t)
+      } else if (this.adsCount > 0 && !e) {
+        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'is not auto refresh!');
+        this.pullUpPage(AD_LOAD_ONCE_SIZE, t)
+      } else hilog.warn(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'advertising size is 0!');
+    } };
+    this.loader.loadAd(this.adParam, this.adOptions, t);
   }
 
   autoRefresh() {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'start auto refresh advertising.');
-    this.adsCount = 0;
     this.intervalId = setInterval((() => {
       this.adsCount--;
-      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `Auto refresh, adsCount is : ${this.adsCount},
-        refreshTime is: ${this.refreshTime} ms.`);
-      this.adsCount <= 0 && this.loadAd();
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `Auto refresh, adsCount is : ${this.adsCount}, refreshTime is: ${this.refreshTime} ms.`);
+      this.adsCount <= 0 && this.loadAd(!0);
     }), this.refreshTime);
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `intervalId is: ${this.intervalId}.`);
   }
 
   initRefreshTime() {
-    if (!(this.displayOptions && this.displayOptions.refreshTime &&
-        'number' === typeof this.displayOptions.refreshTime && this.displayOptions.refreshTime > 0)) {
-      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent',
-        `Invalid input refreshTime, refreshTime is： ${this.refreshTime}.`);
+    if (!(this.displayOptions && this.displayOptions.refreshTime && typeof this.displayOptions.refreshTime == 'number' && this.displayOptions.refreshTime > 0)) {
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `Invalid input refreshTime, refreshTime is: ${this.refreshTime}.`);
       return !1;
     }
-    this.displayOptions.refreshTime < MIN_REFRESH_TIME ? this.refreshTime = MIN_REFRESH_TIME :
-      this.displayOptions.refreshTime > MAX_REFRESH_TIME ? this.refreshTime = MAX_REFRESH_TIME :
-      this.refreshTime = this.displayOptions.refreshTime;
-    hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `refreshTime is： ${this.refreshTime} ms.`);
+    this.displayOptions.refreshTime < MIN_REFRESH_TIME ? this.refreshTime = MIN_REFRESH_TIME : this.displayOptions.refreshTime > MAX_REFRESH_TIME ? this.refreshTime = MAX_REFRESH_TIME : this.refreshTime = this.displayOptions.refreshTime;
+    hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `refreshTime is: ${this.refreshTime} ms.`);
     return !0;
   }
 
   aboutToAppear() {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'aboutToAppear.');
+    this.setWant();
     this.loader = new advertising.AdLoader(this.context);
-    let e = this.initRefreshTime();
-    this.loadAd();
-    if (e) {
-      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'Auto refresh advertising.');
-      this.autoRefresh();
-    } else {
-      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'Load advertising once.');
-    }
+    this.isAutoRefresh = this.initRefreshTime();
   }
 
   aboutToDisappear() {
@@ -189,44 +193,51 @@ class AutoAdComponent extends ViewPU {
       hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'stop cycle display advertising.');
       clearInterval(this.intervalId);
     }
+    null !== this.freshInterval && clearInterval(this.freshInterval);
   }
 
   initialRender() {
     this.observeComponentCreation(((e, t) => {
       ViewStackProcessor.StartGetAccessRecordingFor(e);
       Row.create();
-      Row.height('100%');
+      Row.height("100%");
       t || Row.pop();
       ViewStackProcessor.StopGetAccessRecording();
     }));
     this.observeComponentCreation(((e, t) => {
       ViewStackProcessor.StartGetAccessRecordingFor(e);
       Column.create();
-      Column.width('100%');
+      Column.width("100%");
       t || Column.pop();
       ViewStackProcessor.StopGetAccessRecording();
     }));
     this.observeComponentCreation(((e, t) => {
       ViewStackProcessor.StartGetAccessRecordingFor(e);
-      If.create();
-      this.adChangeStatus ? this.ifElseBranchUpdateFunction(0, (() => {
-        this.observeComponentCreation(((e, t) => {
-          ViewStackProcessor.StartGetAccessRecordingFor(e);
-          UIExtensionComponent.create(this.want);
-          UIExtensionComponent.width('100%');
-          UIExtensionComponent.height('100%');
-          UIExtensionComponent.onReceive((e => {
-            hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `${JSON.stringify(e)}`);
-            this.interactionListener.onStatusChanged(e.status, e.ad, e.data);
-          }));
-          t || UIExtensionComponent.pop();
-          ViewStackProcessor.StopGetAccessRecording();
-        }));
-      })) : If.branchId(1);
-      t || If.pop();
+      UIExtensionComponent.create(this.want);
+      UIExtensionComponent.width("100%");
+      UIExtensionComponent.height("100%");
+      UIExtensionComponent.onRemoteReady((e => {
+        this.remoteProxy = e;
+        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'remote proxy ready.');
+        if (!this.alreadyLoadAd) {
+          this.alreadyLoadAd = !0;
+          if (this.isAutoRefresh) {
+            this.loadAd(!0);
+            hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'Auto refresh advertising.');
+            this.autoRefresh();
+          } else {
+            this.loadAd(!1);
+            hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'Load advertising once.');
+          }
+        }
+      }));
+      UIExtensionComponent.onReceive((e => {
+        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `${JSON.stringify(e)}`);
+        this.interactionListener.onStatusChanged(e.status, e.ad, e.data);
+      }));
+      t || UIExtensionComponent.pop();
       ViewStackProcessor.StopGetAccessRecording();
     }));
-    If.pop();
     Column.pop();
     Row.pop();
   }
