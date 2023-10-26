@@ -30,17 +30,13 @@ inline std::u16string Str8ToStr16(const std::string &str)
     return result;
 }
 
-ErrCode AdLoadSendRequestProxy::SendAdLoadRequest(uint32_t callingUid, const sptr<AdRequestData> &requestData,
+ErrCode AdLoadSendRequestProxy::SendAdLoadRequest(const sptr<AdRequestData> &requestData,
     const sptr<IAdLoadCallback> &callback, int32_t loadAdType)
 {
     if (callback == nullptr) {
         ADS_HILOGI(OHOS::Cloud::ADS_MODULE_SERVICE, "callback is null");
     }
     MessageParcel data;
-    if (!data.WriteInt32(callingUid)) {
-        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "failed to callingUid");
-        return ERR_AD_COMMON_AD_WRITE_PARCEL_ERROR;
-    }
     if (!data.WriteRemoteObject(callback->AsObject())) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "failed to WriteRemoteObject");
         return ERR_AD_COMMON_AD_WRITE_PARCEL_ERROR;

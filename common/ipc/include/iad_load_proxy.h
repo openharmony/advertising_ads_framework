@@ -39,8 +39,8 @@ class IAdLoadSendRequest : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.Cloud.Ads.IAdLoadSendRequest");
 
-    virtual ErrCode SendAdLoadRequest(uint32_t callingUid, const sptr<AdRequestData> &data,
-        const sptr<IAdLoadCallback> &callback, int32_t loadAdType) = 0;
+    virtual ErrCode SendAdLoadRequest(const sptr<AdRequestData> &data, const sptr<IAdLoadCallback> &callback,
+        int32_t loadAdType) = 0;
 };
 } // namespace Cloud
 } // namespace OHOS
