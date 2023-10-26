@@ -55,7 +55,7 @@ napi_value AttachAdsServiceExtensionContext(napi_env env, void *value, void *)
     napi_wrap(env, contextObj, workContext,
         [](napi_env, void *data, void *) {
             ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI,
-			    "Finalizer for weak_ptr adsservice extension context is called");
+                "Finalizer for weak_ptr adsservice extension context is called");
             delete static_cast<std::weak_ptr<AdsServiceExtensionContext> *>(data);
         },
         nullptr, nullptr);
@@ -159,7 +159,7 @@ bool JsAdsServiceExtension::GetSrcPathAndModuleName(std::string& srcPath, std::s
     moduleName = Extension::abilityInfo_->moduleName;
     moduleName.append("::").append(abilityInfo_->name);
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "moduleName:%{public}s, srcPath:%{public}s.",
-	    moduleName.c_str(), srcPath.c_str());
+        moduleName.c_str(), srcPath.c_str());
     return true;
 }
 
