@@ -25,5 +25,4 @@ ability_base_path = "//foundation/ability/ability_base"
 
 ability_base_kits_path = "${ability_base_path}/interfaces/kits/native"
 
-
-
+ability_runtime_path = "//foundation/ability/ability_runtime"
