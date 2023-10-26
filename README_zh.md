@@ -7,13 +7,11 @@
 ## 目录
 
 ```
-/domain/cloud/advertising  # 广告服务部件业务代码
+/domain/advertising/advertising  # 广告服务部件业务代码
+├── common                             # 公共引用
 ├── frameworks                         # 框架代码
 │   └── js                             # 外部接口实现
 │       └── napi                       # napi 外部接口实现
-├── sa_profile                         # 服务配置文件
-├── services                           # 服务代码
-├── test                               # 测试代码
 ├── LICENSE                            # 证书文件
 ├── BUILD.gn                           # 编译入口
 └── bundle.json                        # 部件描述文件

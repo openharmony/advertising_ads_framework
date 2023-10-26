@@ -7,13 +7,11 @@ The advertising service enables you to implement ad access without SDK integrati
 ## Directory Structure
 
 ```
-/domain/cloud/advertising # Service code of the advertising service component
+/domain/advertising/advertising # Service code of the advertising service component
+├── common                             # Public References code
 ├── frameworks                         # Framework code
 │   └── js                             # External JS API implementation
 │       └── napi                       # External native API implementation
-├── sa_profile                         # Service configuration profile
-├── services                           # Service code
-├── test                               # Test code
 ├── LICENSE                            # License file
 ├── BUILD.gn                           # Build entry
 └── bundle.json                        # Component description file
