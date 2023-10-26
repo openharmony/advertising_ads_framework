@@ -21,7 +21,8 @@ namespace OHOS::AdsExtension {
 AdsServiceExtensionModuleLoader::AdsServiceExtensionModuleLoader() = default;
 AdsServiceExtensionModuleLoader::~AdsServiceExtensionModuleLoader() = default;
 
-AbilityRuntime::Extension *AdsServiceExtensionModuleLoader::Create(const std::unique_ptr<AbilityRuntime::Runtime> &runtime) const
+AbilityRuntime::Extension *AdsServiceExtensionModuleLoader::Create(
+    const std::unique_ptr<AbilityRuntime::Runtime> &runtime) const
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Create runtime");
     return AdsServiceExtension::Create(runtime);
