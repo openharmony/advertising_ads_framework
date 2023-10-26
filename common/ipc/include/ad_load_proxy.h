@@ -27,8 +27,8 @@ public:
 
     virtual ~AdLoadSendRequestProxy() {}
 
-    ErrCode SendAdLoadRequest(uint32_t callingUid, const sptr<AdRequestData> &data,
-        const sptr<IAdLoadCallback> &callback, int32_t loadAdType) override;
+    ErrCode SendAdLoadRequest(const sptr<AdRequestData> &data, const sptr<IAdLoadCallback> &callback,
+        int32_t loadAdType) override;
 
 private:
     ErrCode SendAdLoadIpcRequest(int32_t code, MessageParcel &data);

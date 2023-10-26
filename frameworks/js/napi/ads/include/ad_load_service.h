@@ -13,80 +13,65 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CLOUD_ADVERTISING_SERVICE_H
-#define OHOS_CLOUD_ADVERTISING_SERVICE_H
+#ifndef OHOS_CLOUD_ADVERTISING_LOAD_AD_H
+#define OHOS_CLOUD_ADVERTISING_LOAD_AD_H
 
 #include <mutex>
 #include <string>
 
 #include "request_data.h"
-#include "ad_service_stub.h"
 #include "bundle_mgr_interface.h"
-#include "iremote_proxy.h"
 #include "ability_connect_callback_stub.h"
 #include "system_ability.h"
 #include "errors.h"
+#include "refbase.h"
 #include "ad_load_proxy.h"
 #include "iad_load_proxy.h"
 #include "iad_load_callback.h"
 
 namespace OHOS {
-namespace Cloud {
-enum class AdsServiceRunningState {
-    STATE_NOT_START,
-    STATE_RUNNING
-};
-
+namespace CloudNapi {
+namespace AdsNapi {
 struct AdServiceElementName {
     std::string bundleName;
     std::string extensionName;
     int userId;
 };
 
-class AdvertisingService : public SystemAbility, public AdvertisingStub {
-    DECLARE_SYSTEM_ABILITY(AdvertisingService);
-
+class AdLoadService : public RefBase {
 public:
-    DISALLOW_COPY_AND_MOVE(AdvertisingService);
-    AdvertisingService(int32_t saId, bool runOnCreate);
-    static sptr<AdvertisingService> GetInstance();
-    AdvertisingService();
-    virtual ~AdvertisingService() override;
-    ErrCode LoadAd(const std::string &request, const std::string &options, const sptr<IRemoteObject> &callback,
-        uint32_t callingUid, int32_t loadAdType) override;
-    void GetCloudServiceProvider(AdServiceElementName &cloudServiceProvider);
-
-protected:
-    void OnStart() override;
-    void OnStop() override;
+    static sptr<AdLoadService> GetInstance();
+    AdLoadService();
+    ~AdLoadService();
+    ErrCode LoadAd(const std::string &request, const std::string &options, const sptr<Cloud::IAdLoadCallback> &callback,
+        int32_t loadAdType);
+    void GetAdServiceElement(AdServiceElementName &adServiceElementName);
 
 private:
-    bool ConnectAdKit(uint32_t callingUid, const sptr<AdRequestData> &data, const sptr<IAdLoadCallback> &callback,
+    bool ConnectAdKit(const sptr<Cloud::AdRequestData> &data, const sptr<Cloud::IAdLoadCallback> &callback,
         int32_t loadAdType);
-    AdsServiceRunningState state_;
     static std::mutex lock_;
-    static sptr<AdvertisingService> instance_;
+    static sptr<AdLoadService> instance_;
     AdServiceElementName adServiceElementName_;
 };
 
 class AdRequestConnection : public AAFwk::AbilityConnectionStub {
 public:
-    AdRequestConnection(uint32_t callingUid, const sptr<AdRequestData> &data, const sptr<IAdLoadCallback> &callback,
+    AdRequestConnection(const sptr<Cloud::AdRequestData> &data, const sptr<Cloud::IAdLoadCallback> &callback,
         int32_t loadAdType)
-        : callingUid_(callingUid), data_(data), callback_(callback), loadAdType_(loadAdType) {};
+        : data_(data), callback_(callback), loadAdType_(loadAdType) {};
     ~AdRequestConnection() = default;
-
     void OnAbilityConnectDone(const AppExecFwk::ElementName &element, const sptr<IRemoteObject> &remoteObject,
         int32_t resultCode) override;
     void OnAbilityDisconnectDone(const AppExecFwk::ElementName &element, int resultCode) override;
 
 private:
-    uint32_t callingUid_;
-    sptr<AdRequestData> data_;
-    sptr<IAdLoadCallback> callback_;
+    sptr<Cloud::AdRequestData> data_;
+    sptr<Cloud::IAdLoadCallback> callback_;
     int32_t loadAdType_;
-    sptr<AdLoadSendRequestProxy> proxy_ { nullptr };
+    sptr<Cloud::AdLoadSendRequestProxy> proxy_ { nullptr };
 };
-} // namespace Cloud
+} // namespace AdsNapi
+} // namespace CloudNapi
 } // namespace OHOS
-#endif // OHOS_CLOUD_ADVERTISING_SERVICE_H
+#endif // OHOS_CLOUD_ADVERTISING_LOAD_AD_H

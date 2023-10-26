@@ -11,8 +11,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//domains/cloud/advertising/advertising.gni")
+import("//domains/advertising/advertising/advertising.gni")
 import("//build/ohos.gni")
+import("//arkcompiler/ets_frontend/es2panda/es2abc_config.gni")
+
+es2abc_gen_abc("gen_advertising_abc") {
+  src_js = rebase_path("src/advertising.js")
+  dst_file = rebase_path(target_out_dir + "/advertising.abc")
+  in_puts = [ "src/advertising.js" ]
+  out_puts = [ target_out_dir + "/advertising.abc" ]
+  extra_args = [ "--module" ]
+}
+
+gen_js_obj("advertising_js") {
+  input = "src/advertising.js"
+  output = target_out_dir + "/advertising.o"
+}
+
+gen_js_obj("advertising_abc") {
+  input = get_label_info(":gen_advertising_abc", "target_out_dir") + "/advertising.abc"
+  output = target_out_dir + "/advertising_abc.o"
+  dep = ":gen_advertising_abc"
+}
 
 cflags = []
 
@@ -33,12 +53,11 @@ config("native_module_config") {
 
 ohos_shared_library("advertising") {
   include_dirs = [
-    "${advertising_service_path}/ipc/include",
-    "//domains/cloud/advertising/common/error_code",
-    "//domains/cloud/advertising/common/log/include",
-    "//domains/cloud/advertising/common/utils/include",
-    "//domains/cloud/advertising/common/ipc/include",
-    "//domains/cloud/advertising/common/model/include",
+    "//domains/advertising/advertising/common/error_code",
+    "//domains/advertising/advertising/common/log/include",
+    "//domains/advertising/advertising/common/utils/include",
+    "//domains/advertising/advertising/common/ipc/include",
+    "//domains/advertising/advertising/common/model/include",
     "./include",
   ]
 
@@ -54,13 +73,15 @@ ohos_shared_library("advertising") {
     "src/ad_init.cpp",
     "src/ad_load_napi_common.cpp",
     "src/advertising.cpp",
+    "src/ad_load_service.cpp"
   ]
 
   deps = [
     "${advertising_common_path}:advertising_common",
-    "${advertising_inner_path}:ads_inner",
     "//third_party/libuv:uv_static",
     "//third_party/jsoncpp:jsoncpp",
+    ":advertising_js",
+    ":advertising_abc",
   ]
 
   external_deps = [
@@ -76,4 +97,11 @@ ohos_shared_library("advertising") {
   relative_install_dir = "module"
   subsystem_name = "advertising"
   part_name = "advertising"
+}
+
+ohos_prebuilt_etc("ad_service_config_json") {
+  source = "resource/ad_service_config.json"
+  relative_install_dir = "cloud/advertising"
+  part_name = "advertising"
+  subsystem_name = "advertising"
 }

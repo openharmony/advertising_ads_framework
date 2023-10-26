@@ -23,11 +23,10 @@
 #include "want_agent_helper.h"
 #include "ad_hilog_wreapper.h"
 #include "ad_load_napi_common.h"
-#include "ad_service_client.h"
 #include "ad_inner_error_code.h"
 #include "ad_constant.h"
+#include "ad_load_service.h"
 #include "ability_manager_client.h"
-#include "ad_service_interface.h"
 #include "config_policy_utils.h"
 #include "advertising.h"
 
@@ -522,7 +521,7 @@ napi_value Advertising::LoadAd(napi_env env, napi_callback_info info)
         env, nullptr, resourceName,
         [](napi_env env, void *data) {
             auto *asyncContext = reinterpret_cast<AdvertisingRequestContext *>(data);
-            ErrCode errCode = AdvertisingServiceClient::GetInstance()->LoadAd(asyncContext->requestString,
+            ErrCode errCode = AdLoadService::GetInstance()->LoadAd(asyncContext->requestString,
                 asyncContext->optionString, asyncContext->adLoadCallback, LOAD_AD_TYPE);
             asyncContext->errorCode = errCode;
         },
@@ -613,7 +612,7 @@ napi_value Advertising::LoadAdWithMultiSlots(napi_env env, napi_callback_info in
         env, nullptr, resourceName,
         [](napi_env env, void *data) {
             auto *asyncContext = reinterpret_cast<MultiSlotsRequestContext *>(data);
-            ErrCode errCode = AdvertisingServiceClient::GetInstance()->LoadAd(asyncContext->mulitRequestString,
+            ErrCode errCode = AdLoadService::GetInstance()->LoadAd(asyncContext->mulitRequestString,
                 asyncContext->mulitOptionString, asyncContext->mulitAdLoadCallback, LOAD_MULTI_AD_TYPE);
             asyncContext->errorCode = errCode;
         },

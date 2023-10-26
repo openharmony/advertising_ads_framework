@@ -20,6 +20,11 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
+extern const char _binary_advertising_js_start[];
+extern const char _binary_advertising_js_end[];
+extern const char _binary_advertising_abc_start[];
+extern const char _binary_advertising_abc_end[];
+
 namespace OHOS {
 namespace CloudNapi {
 namespace AdsNapi {
@@ -52,6 +57,28 @@ static napi_module _module = {
     .nm_priv = ((void *)0),
     .reserved = { 0 }
 };
+
+extern "C" __attribute__((visibility("default"))) void NAPI_advertising_GetJSCode(const char** buf, int* bufLen)
+{
+    if (buf != nullptr) {
+        *buf = _binary_advertising_js_start;
+    }
+
+    if (bufLen != nullptr) {
+        *bufLen = _binary_advertising_js_end - _binary_advertising_js_start;
+    }
+}
+
+extern "C" __attribute__((visibility("default"))) void NAPI_advertising_GetABCCode(const char** buf, int* bufLen)
+{
+    if (buf != nullptr) {
+        *buf = _binary_advertising_abc_start;
+    }
+
+    if (bufLen != nullptr) {
+        *bufLen = _binary_advertising_abc_end - _binary_advertising_abc_start;
+    }
+}
 
 /*
  * Module register function
