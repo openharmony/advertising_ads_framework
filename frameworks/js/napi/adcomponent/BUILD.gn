@@ -36,7 +36,7 @@ ohos_shared_library("adcomponent") {
 
   external_deps = [ "napi:ace_napi" ]
 
-  relative_install_dir = "module/cloud"
+  relative_install_dir = "module/advertising"
   subsystem_name = "advertising"
   part_name = "advertising"
 }

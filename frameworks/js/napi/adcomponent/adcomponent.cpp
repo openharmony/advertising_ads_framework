@@ -29,7 +29,7 @@ extern const char _binary_adcomponent_abc_start[];
 extern const char _binary_adcomponent_abc_end[];
 
 // function name: NAPI_{ModuleName}_GetABCCode
-extern "C" __attribute__((visibility("default"))) void NAPI_cloud_AdComponent_GetABCCode(
+extern "C" __attribute__((visibility("default"))) void NAPI_advertising_AdComponent_GetABCCode(
     const char** buf, int* bufLen)
 {
     if (buf != nullptr) {
@@ -48,7 +48,7 @@ static napi_module adComponentModule = {
     .nm_version = 1,
     .nm_flags = 0,
     .nm_filename = nullptr,
-    .nm_modname = "cloud.AdComponent",
+    .nm_modname = "advertising.AdComponent",
     .nm_priv = ((void*)0),
     .reserved = { 0 },
 };
