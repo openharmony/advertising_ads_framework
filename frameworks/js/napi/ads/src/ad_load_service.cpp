@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <fstream>
 #include "json/json.h"
 #include "want.h"
 #include "want_params.h"
