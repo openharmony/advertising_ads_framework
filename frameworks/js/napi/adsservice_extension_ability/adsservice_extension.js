@@ -25,11 +25,11 @@ class AdsServiceExtensionAbility extends ExtensionAbility {
     return new AdsCoreServiceRpcObj('com.ohos.AdsCoreService', this.onLoadAd, this.onLoadAdWithMultiSlots);
   }
 
-  onLoadAd(adParam, adOptions) {
+  onLoadAd(adParam, adOptions, respCallback) {
     hilog.info(HILOG_DOMAIN_CODE, 'AdsServiceExtensionAbility', 'onLoadAd');
   }
 
-  onLoadAdWithMultiSlots(adParams, adOptions) {
+  onLoadAdWithMultiSlots(adParams, adOptions, respCallback) {
     hilog.info(HILOG_DOMAIN_CODE, 'AdsServiceExtensionAbility', 'onLoadAdWithMultiSlots');
   }
 
@@ -82,30 +82,16 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
       const adRequestParams = this.parseAdRequestParams(isMultiSlots, reqData, packageName, requestStartTime);
       const adOptions = this.parseAdOptions(reqData);
       // 3.请求广告业务处理
-      let ads;
-      let hasAds = false;
       try {
         if (isMultiSlots) {
           hilog.info(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', 'onLoadAdWithMultiSlots start');
-          ads = this.onLoadAdWithMultiSlots(adRequestParams, adOptions);
-          ads.forEach((value, key, map) => {
-            if (value.length > 0) {
-              hasAds = true;
-            }
-          })
+          this.onLoadAdWithMultiSlots(adRequestParams, adOptions, this.bizAdsReqCallback(code, replyRpcObj));
         } else {
           hilog.info(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', 'onLoadAd start');
-          ads = this.onLoadAd(adRequestParams[0], adOptions);
-          if (ads.length > 0) {
-            hasAds = true;
-          }
-        }
-        if (!hasAds) {
-          this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_LOAD_ADS_FAILURE, RpcReqCallbackMsg.LOAD_ADS_FAILURE);
-        } else {
-          this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_SUCCESS, toJSON(ads));
+          this.onLoadAd(adRequestParams[0], adOptions, this.bizAdsReqCallback(code, replyRpcObj));
         }
       } catch (error) {
+        hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `request ad failed, msg: ${error.message}`);
         this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_INTERNAL_ERROR, RpcReqCallbackMsg.INTERNAL_ERROR);
       }
       return true;
@@ -116,30 +102,60 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
     }
   }
 
+  private bizAdsReqCallback(code, replyRpcObj) {
+    return (respData) => {
+      let hasAds = false;
+      let respCode = RpcReqCallbackCode.CODE_SUCCESS;
+      let respMsg = RpcReqCallbackMsg.SUCCESS;
+      respData.forEach((value, key, map) => {
+        if (value.length > 0) {
+          hasAds = true;
+        }
+      })
+      let respAdsData = respData;
+      if (!hasAds) {
+        respCode = RpcReqCallbackCode.CODE_LOAD_ADS_FAILURE;
+        respMsg = RpcReqCallbackMsg.LOAD_ADS_FAILURE;
+      } else {
+        const isMultiSlots = this.isMultiSlotsReq(code);
+        if (!isMultiSlots) {
+          respAdsData = respData.values().next().value;
+        }
+        respMsg = toJSON(respAdsData);
+        hilog.debug(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `respMsg: ${respMsg}`);
+      }
+      this.sendMsgReq(code, replyRpcObj, respCode, respMsg);
+    }
+  }
+
   // 给NAPI响应数据
   private bizReqCallback(code, replyRpcObj) {
     return (respCode, respMsg) => {
-      const respData = rpc.MessageSequence.create();
-      /**
-       * 业务响应码
-       * CODE_SUCCESS = 200,
-       * CODE_INVALID_PARAMETERS = 401,
-       * CODE_INTERNAL_ERROR = 100001,
-       * CODE_LOAD_ADS_FAILURE = 100003,
-       */
-      respData.writeInt(respCode);
-      // 业务响应内容
-      respData.writeString(respMsg);
-      const reply = rpc.MessageSequence.create();
-      replyRpcObj.sendMessageRequest(code, respData, reply, new rpc.MessageOption(1))
-        .catch(e => {
-          hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `send message from kit to caller failed, error msg: ${e.message}`);
-        })
-        .finally(() => {
-          respData.reclaim();
-          reply.reclaim();
-        });
+      this.sendMsgReq(code, replyRpcObj, respCode, respMsg);
     }
+  }
+
+  private sendMsgReq(code, replyRpcObj, respCode, respMsg) {
+    const respData = rpc.MessageSequence.create();
+    /**
+     * 业务响应码
+     * CODE_SUCCESS = 200,
+     * CODE_INVALID_PARAMETERS = 401,
+     * CODE_INTERNAL_ERROR = 100001,
+     * CODE_LOAD_ADS_FAILURE = 100003,
+     */
+    respData.writeInt(respCode);
+    // 业务响应内容
+    respData.writeString(respMsg);
+    const reply = rpc.MessageSequence.create();
+    replyRpcObj.sendMessageRequest(code, respData, reply, new rpc.MessageOption(1))
+      .catch(e => {
+        hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `send message from kit to caller failed, error msg: ${e.message}`);
+      })
+      .finally(() => {
+        respData.reclaim();
+        reply.reclaim();
+      });
   }
 
   private validate(isMultiSlots, reqData) {
