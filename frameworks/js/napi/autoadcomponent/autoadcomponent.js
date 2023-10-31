@@ -30,7 +30,7 @@ class AutoAdComponent extends ViewPU {
     this.context = getContext(this);
     this.want = void 0;
     this.__adChangeStatus = new ObservedPropertySimplePU(0, this, 'adChangeStatus');
-    this.adsCount = void 0;
+    this.adsCount = 0;
     this.intervalId = void 0;
     this.freshInterval = void 0;
     this.refreshTime = void 0;
