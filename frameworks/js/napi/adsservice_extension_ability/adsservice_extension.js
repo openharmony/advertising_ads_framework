@@ -57,7 +57,7 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
     hilog.info(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `onRemoteMessageRequest, the code is: ${code}`);
 
     try {
-      const requestStartTime = Date.now().toString();
+      const requestStartTime = Date.now();
       // 读取Uid
       const uid = this.getCallingUid();
       const packageName = await BundleManager.getBundleNameByUid(uid);
