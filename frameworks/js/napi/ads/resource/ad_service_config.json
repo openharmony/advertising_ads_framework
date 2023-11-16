@@ -1,10 +1,10 @@
 {
     "_comment1":"the name of the bundle to be started",
-    "providerBundleName": [],
+    "providerBundleName": ["com.samples.AdsServiceDemo"],
     "_comment2":"the target service name which in the target bundle that needs to be connected",
-    "providerAbilityName": [],
+    "providerAbilityName": ["AdsCoreService"],
     "_comment3":"page name displaying full screen ads, such as rewarded ads",
-    "providerUIAbilityName": [],
+    "providerUIAbilityName": ["FullScreenAdAbility"],
     "_comment4":"page name displaying native ads",
-    "providerUEAAbilityName": []
+    "providerUEAAbilityName": ["AdsUIExtensionAbility"]
 }

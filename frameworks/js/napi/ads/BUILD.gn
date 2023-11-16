@@ -101,7 +101,7 @@ ohos_shared_library("advertising") {
 
 ohos_prebuilt_etc("ad_service_config_json") {
   source = "resource/ad_service_config.json"
-  relative_install_dir = "cloud/advertising"
+  relative_install_dir = "advertising/ads_framework"
   part_name = "advertising"
   subsystem_name = "advertising"
 }
