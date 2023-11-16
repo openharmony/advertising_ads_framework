@@ -56,7 +56,7 @@ class AdComponent extends ViewPU {
   getConfigJsonData() {
     let e = null;
     try {
-      const t = fs.openSync('/system/etc/cloud/advertising/ad_service_config.json');
+      const t = fs.openSync('/system/etc/advertising/ads_framkwork/ad_service_config.json');
       const o = new ArrayBuffer(READ_FILE_BUFFER_SIZE);
       fs.readSync(t.fd, o);
       let s = String.fromCharCode(...new Uint8Array(o));
