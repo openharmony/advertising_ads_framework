@@ -12,8 +12,8 @@
 # limitations under the License.
 
 import("//arkcompiler/ets_frontend/es2panda/es2abc_config.gni")
-import("//domains/advertising/advertising/advertising.gni")
 import("//build/ohos.gni")
+import("//domains/advertising/advertising/advertising.gni")
 
 es2abc_gen_abc("gen_advertising_abc") {
   src_js = rebase_path("src/advertising.js")
@@ -71,15 +71,15 @@ ohos_shared_library("advertising") {
     "src/ad_init.cpp",
     "src/ad_load_napi_common.cpp",
     "src/ad_load_service.cpp",
-    "src/advertising.cpp"
+    "src/advertising.cpp",
   ]
 
   deps = [
-    ":advertising_js",
     ":advertising_abc",
+    ":advertising_js",
     "${advertising_common_path}:advertising_common",
     "//third_party/jsoncpp:jsoncpp",
-    "//third_party/libuv:uv_static"
+    "//third_party/libuv:uv_static",
   ]
 
   external_deps = [
@@ -89,7 +89,7 @@ ohos_shared_library("advertising") {
     "config_policy:configpolicy_util",
     "hilog:libhilog",
     "ipc:ipc_core",
-    "napi:ace_napi"
+    "napi:ace_napi",
   ]
 
   relative_install_dir = "module"
