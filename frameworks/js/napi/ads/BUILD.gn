@@ -65,7 +65,7 @@ ohos_shared_library("advertising") {
     ubsan = true
   }
 
-  configs = [ ":native_module_config"]
+  configs = [ ":native_module_config" ]
 
   sources = [
     "src/ad_init.cpp",
