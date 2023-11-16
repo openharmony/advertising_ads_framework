@@ -11,9 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//arkcompiler/ets_frontend/es2panda/es2abc_config.gni")
 import("//domains/advertising/advertising/advertising.gni")
 import("//build/ohos.gni")
-import("//arkcompiler/ets_frontend/es2panda/es2abc_config.gni")
 
 es2abc_gen_abc("gen_advertising_abc") {
   src_js = rebase_path("src/advertising.js")
@@ -29,7 +29,8 @@ gen_js_obj("advertising_js") {
 }
 
 gen_js_obj("advertising_abc") {
-  input = get_label_info(":gen_advertising_abc", "target_out_dir") + "/advertising.abc"
+  input = get_label_info(":gen_advertising_abc", "target_out_dir") +
+          "/advertising.abc"
   output = target_out_dir + "/advertising_abc.o"
   dep = ":gen_advertising_abc"
 }
@@ -39,16 +40,13 @@ cflags = []
 config("native_module_config") {
   visibility = [ ":*" ]
 
-  include_dirs = [
-    "${advertising_common_path}/ipc/include",
-  ]
+  include_dirs = [ "${advertising_common_path}/ipc/include" ]
 
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
 
-  defines = [
-  ]
+  defines = []
 }
 
 ohos_shared_library("advertising") {
@@ -72,26 +70,26 @@ ohos_shared_library("advertising") {
   sources = [
     "src/ad_init.cpp",
     "src/ad_load_napi_common.cpp",
-    "src/advertising.cpp",
-    "src/ad_load_service.cpp"
+    "src/ad_load_service.cpp",
+    "src/advertising.cpp"
   ]
 
   deps = [
-    "${advertising_common_path}:advertising_common",
-    "//third_party/libuv:uv_static",
-    "//third_party/jsoncpp:jsoncpp",
     ":advertising_js",
     ":advertising_abc",
+    "${advertising_common_path}:advertising_common",
+    "//third_party/jsoncpp:jsoncpp",
+    "//third_party/libuv:uv_static"
   ]
 
   external_deps = [
     "ability_runtime:ability_manager",
     "ability_runtime:abilitykit_native",
+    "c_utils:utils",
+    "config_policy:configpolicy_util",
     "hilog:libhilog",
     "ipc:ipc_core",
-    "napi:ace_napi",
-    "c_utils:utils",
-    "config_policy:configpolicy_util"
+    "napi:ace_napi"
   ]
 
   relative_install_dir = "module"
