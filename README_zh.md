@@ -1,13 +1,13 @@
-# 广告框架服务部件
+# 广告服务框架部件
 
 ## 简介
 
-广告框架服务指导OEM厂商搭建广告平台，从而为媒体提供广告服务；同时指导媒体使用广告框架服务开放接口，无需集成SDK，轻松实现广告的接入。
+广告服务框架指导OEM厂商搭建广告平台，从而为媒体提供广告服务；同时指导媒体使用广告服务框架开放接口，无需集成SDK，轻松实现广告的接入。
 
 ## 目录
 
 ```
-/domain/advertising/advertising  # 广告框架服务部件业务代码
+/domain/advertising/advertising  # 广告服务框架部件业务代码
 ├── common                             # 公共引用
 ├── frameworks                         # 框架代码
 │   └── js                             # 外部接口实现
@@ -20,7 +20,7 @@
 
 ## 使用说明
 
-广告框架服务用于接收来自媒体的广告请求，进行处理后将请求转发到广告平台，广告平台需要找到广告内容给广告框架服务响应，用于后续的广告内容展示。
+广告服务框架用于接收来自媒体的广告请求，进行处理后将请求转发到广告平台，广告平台需要找到广告内容给广告服务框架响应，用于后续的广告内容展示。
 
 ### 创建广告平台
 
@@ -28,7 +28,7 @@
 
 1. 创建AdsServiceExtensionAbility的服务端组件
 
-   该组件是与广告框架服务交互的入口。
+   该组件是与广告服务框架交互的入口。
 
    ```javascript
    import AdsServiceExtensionAbility from '@ohos.advertising.AdsServiceExtensionAbility';
@@ -36,7 +36,7 @@
    import advertising from '@ohos.advertising';
    
    /**
-    * AdsExtensionAbility继承AdsServiceExtensionAbility类，实现onLoadAd和onLoadAdWithMultiSlots方法，获取广告内容并向广告框架服务返回广告数据。
+    * AdsExtensionAbility继承AdsServiceExtensionAbility类，实现onLoadAd和onLoadAdWithMultiSlots方法，获取广告内容并向广告服务框架返回广告数据。
     * 想要继承AdsServiceExtensionAbility类必须是系统应用，并申请ohos.permission.GET_BUNDLE_INFO_PRIVILEGED权限，
     * 同时module.json5中对应的extensionAbility的type属性对应的值需要设置为adsService。
     */
@@ -97,7 +97,7 @@
 
    providerBundleName：应用包名。AppScope下app.json5中的bundleName。
 
-   providerAbilityName：实现了ServiceExtensionAbility的服务端组件名称，该组件用于和广告框架服务交互。如上示例中的AdsExtensionAbility
+   providerAbilityName：实现了ServiceExtensionAbility的服务端组件名称，该组件用于和广告服务框架交互。如上示例中的AdsExtensionAbility
 
    providerUIAbilityName：实现了UIAbility的组件名称，该组件用于展示全屏广告。
 
@@ -134,7 +134,7 @@ commonEvent.publish("com.company.pps.action.PPS_REWARD_STATUS_CHANGED", options,
 
 ### 请求广告
 
-以媒体为例，描述如何使用广告框架服务开放接口。
+以媒体为例，描述如何使用广告服务框架开放接口。
 
 请求广告需要创建一个AdLoader对象，通过AdLoader的loadAd方法请求广告。然后通过AdLoadListener回调来监听广告的加载状态。
 
@@ -176,7 +176,7 @@ try {
 
 ### 展示全屏广告
 
-以媒体为例，描述如何使用广告框架服务开放接口。
+以媒体为例，描述如何使用广告服务框架开放接口。
 
 1. 事件订阅
 
@@ -329,7 +329,7 @@ export struct ShowAd {
 
 ### 展示非全屏广告
 
-以媒体为例，描述如何使用广告框架服务开放接口。
+以媒体为例，描述如何使用广告服务框架开放接口。
 
 在您的页面中使用AdComponent组件展示非全屏广告。
 

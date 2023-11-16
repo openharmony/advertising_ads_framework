@@ -102,7 +102,7 @@ class AutoAdComponent extends ViewPU {
   getConfigJsonData() {
     let e = null;
     try {
-      const t = fs.openSync('/system/etc/cloud/advertising/ad_service_config.json');
+      const t = fs.openSync('/system/etc/advertising/ads_framekwork/ad_service_config.json');
       const i = new ArrayBuffer(READ_FILE_BUFFER_SIZE);
       let o = fs.readSync(t.fd, i);
       fs.closeSync(t);

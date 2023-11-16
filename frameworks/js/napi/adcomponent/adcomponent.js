@@ -49,14 +49,14 @@ class AdComponent extends ViewPU {
     this.want = {
       bundleName: null == e ? void 0 : e.providerBundleName,
       abilityName: null == e ? void 0 : e.providerUEAAbilityName,
-      parameters: { ads: this.ads, displayOptions: this.displayOptions }
+      parameters: { ads: this.ads, displayOptions: this.displayOptions, 'ability.want.params.uiExtensionType': 'ads' }
     };
   }
 
   getConfigJsonData() {
     let e = null;
     try {
-      const t = fs.openSync('/system/etc/cloud/advertising/ad_service_config.json');
+      const t = fs.openSync('/system/etc/advertising/ads_framekwork/ad_service_config.json');
       const o = new ArrayBuffer(READ_FILE_BUFFER_SIZE);
       fs.readSync(t.fd, o);
       let s = String.fromCharCode(...new Uint8Array(o));
