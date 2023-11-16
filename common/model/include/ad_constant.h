@@ -36,7 +36,7 @@ static const int8_t CONNECT_TIME_OUT = 3;
 static const int32_t USER_ID = 100;
 
 // config
-static const std::string DEPENDENCY_CONFIG_FILE_RELATIVE_PATH = "etc/cloud/advertising/ad_service_config.json";
+static const std::string DEPENDENCY_CONFIG_FILE_RELATIVE_PATH = "etc/advertising/ads_framework/ad_service_config.json";
 
 // AdRequestParams-adId
 static const std::string AD_REQUEST_PARAM_ID = "adId";
