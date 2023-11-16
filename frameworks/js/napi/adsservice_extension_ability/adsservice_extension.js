@@ -183,8 +183,9 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
       hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `All ad ids are required`);
       return false;
     }
-    // check adType
-    return this.isValidAdType(adRequestParams[0].adType);
+    // check adType, adWidth and adHeight
+    return this.isValidAdType(adRequestParams[0].adType) &&
+      this.isValidAdWidthAndAdHeight(adRequestParams.adWidth, adRequestParams.adHeight);
   }
 
   private validateSingleSlotsReq(reqData) {
@@ -200,8 +201,9 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
       hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `adId is required`);
       return false;
     }
-    // check adType
-    return this.isValidAdType(adRequestParams.adType);
+    // check adType, adWidth and adHeight
+    return this.isValidAdType(adRequestParams.adType) &&
+      this.isValidAdWidthAndAdHeight(adRequestParams.adWidth, adRequestParams.adHeight);
   }
 
   private isValidAdType(adType) {
@@ -220,6 +222,14 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
       return false;
     }
     return true;
+  }
+
+  private isValidAdWidthAndAdHeight(adWidth, adHeight) {
+    if (isNumber(adWidth) && adWidth > 0 && isNumber(adHeight) && adHeight > 0) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private parseAdRequestParams(isMultiSlots, reqData, packageName, requestStartTime) {
@@ -530,6 +540,10 @@ function isPlain(obj) {
 
 function isString(obj) {
   return typeof obj === "string";
+}
+
+function isNumber(obj) {
+  return Number.isFinite(obj);
 }
 
 function isPrimitiveOrBoxed(obj) {
