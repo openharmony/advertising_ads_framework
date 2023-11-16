@@ -1,156 +1,129 @@
-# 广告服务部件
+# 广告框架服务部件
 
 ## 简介
 
-广告服务为您提供极简接入，无需集成SDK，轻松实现广告的接入。
+广告框架服务指导OEM厂商搭建广告平台，从而为媒体提供广告服务；同时指导媒体使用广告框架服务开放接口，无需集成SDK，轻松实现广告的接入。
 
 ## 目录
 
 ```
-/domain/advertising/advertising  # 广告服务部件业务代码
+/domain/advertising/advertising  # 广告框架服务部件业务代码
 ├── common                             # 公共引用
 ├── frameworks                         # 框架代码
 │   └── js                             # 外部接口实现
 │       └── napi                       # napi 外部接口实现
+├── interfaces                         # 接口文件
 ├── LICENSE                            # 证书文件
 ├── BUILD.gn                           # 编译入口
 └── bundle.json                        # 部件描述文件
 ```
 
-### 概念说明
-
-- SA
-
-  SA是SystemAbility的缩写，中文名叫系统元能力，运行在服务端的进程中，接收到外部的请求后进行处理并返回处理结果，对外提供服务。
-
 ## 使用说明
 
-广告SA用于接收来自媒体的广告请求，进行处理后将请求转发到广告平台，广告平台需要找到广告内容给SA响应，用于后续的广告内容展示。
+广告框架服务用于接收来自媒体的广告请求，进行处理后将请求转发到广告平台，广告平台需要找到广告内容给广告框架服务响应，用于后续的广告内容展示。
 
 ### 创建广告平台
 
-以APP开发者为例，描述如何创建广告平台并与系统交互。
+以OEM厂商为例，描述如何创建广告平台。
 
-1. 创建ServiceExtensionAbility的服务端组件
+1. 创建AdsServiceExtensionAbility的服务端组件
 
-   该组件是与SA交互的入口。
+   该组件是与广告框架服务交互的入口。
 
    ```javascript
-   export default class AdsCoreService extends ServiceExtensionAbility {
-     private descriptor = 'com.xxx.xxx';
+   import AdsServiceExtensionAbility from '@ohos.advertising.AdsServiceExtensionAbility';
+   import { RespCallback } from '@ohos.advertising.AdsServiceExtensionAbility';
+   import advertising from '@ohos.advertising';
    
-     onCreate(want) {
-       console.i(TAG, `service onCreate`);
+   /**
+    * AdsExtensionAbility继承AdsServiceExtensionAbility类，实现onLoadAd和onLoadAdWithMultiSlots方法，获取广告内容并向广告框架服务返回广告数据。
+    * 想要继承AdsServiceExtensionAbility类必须是系统应用，并申请ohos.permission.GET_BUNDLE_INFO_PRIVILEGED权限，
+    * 同时module.json5中对应的extensionAbility的type属性对应的值需要设置为adsService。
+    */
+   export default class AdsExtensionAbility extends AdsServiceExtensionAbility {
+     /**
+      * 请求广告接口，接受媒体单广告位广告请求
+      *
+      * @param adParam 媒体发送的单广告位广告请求参数
+      * @param adOptions 媒体发送的请求广告配置
+      * @param respCallback 广告请求结果回调方法
+      */
+     onLoadAd(adParam: advertising.AdRequestParms, adOptions: advertising.AdOptions, respCallback: RespCallback) {
+       // 返回的广告数据
+       const ads: Array<advertising.Advertisement> = [];
+       ads.push({adType: 7, uniqueId: '111111', rewardVerifyConfig: null, rewarded: false, clicked: false});
+       // 广告位ID
+       const slot: string = 'test1';
+       const resMap: Map<string, Array<advertising.Advertisement>> = new Map();
+       // 回调添加广告位对应的广告信息
+       respMap.set(slot, ads);
+       // 当resMap为空的时候，会触发广告请求失败
+       respCallback(respMap);
      }
    
-     onRequest(want, startId) {
-       console.i(TAG, `service onRequest`);
-     }
-   
-     onConnect(want) {
-       console.i(TAG, `service onConnect, want: ${JSON.stringify(want)}`);
-       return new AdsCoreServiceRpcObj(this.descriptor);
-     }
-   
-     onDisconnect(want) {
-       console.i(TAG, `service onDisconnect`);
-     }
-   
-     onDestroy() {
-       console.i(TAG, `service onDestory`);
+     /**
+      * 请求广告接口，接受媒体多广告位广告请求
+      *
+      * @param adParam 媒体发送的多广告位广告请求参数
+      * @param adOptions 媒体发送的请求广告配置
+      * @param respCallback 广告请求结果回调方法
+      */
+     onLoadAdWithMultiSlots(adParams: advertising.AdRequestParms[], adOptions: advertising.AdOptions, respCallback: RespCallback) {
+       // 返回的广告数据
+       const ads1: Array<advertising.Advertisement> = [];
+       ads1.push({adType: 7, uniqueId: '111111', rewardVerifyConfig: null, rewarded: false, clicked: false});
+       ads1.push({adType: 7, uniqueId: '222222', rewardVerifyConfig: null, rewarded: false, clicked: false});
+       // 广告位ID
+       const slot1: string = 'test1';
+       // 返回的广告数据
+       const ads2: Array<advertising.Advertisement> = [];
+       ads2.push({adType: 7, uniqueId: '333333', rewardVerifyConfig: null, rewarded: false, clicked: false});
+       ads2.push({adType: 7, uniqueId: '444444', rewardVerifyConfig: null, rewarded: false, clicked: false});
+       // 广告位ID
+       const slot2: string = 'test2';
+       const resMap: Map<string, Array<advertising.Advertisement>> = new Map();
+       // 回调添加广告位对应的广告信息
+       respMap.set(slot1, ads1);
+       respMap.set(slot2, ads2);
+       // 当resMap为空的时候，会触发广告请求失败
+       respCallback(respMap);
      }
    }
    ```
 
-2. 创建ServiceExtensionAbility服务端组件返回给SA的RPC对象
+2. 配置应用信息
 
-   该RPC对象用于接收SA请求并向SA发送回调数据。
-
-   ```javascript
-   import rpc from '@ohos.rpc';
-   import bundleManager from '@ohos.bundle.bundleManager';
-   
-   /**
-    * AdsCoreService返回给调用方的rpc对象，用于调用方向service发送数据
-    */
-   export default class AdsCoreServiceRpcObj extends rpc.RemoteObject {
-     constructor(descriptor) {
-       super(descriptor);
-     }
-   
-     /**
-      * 系统接口，接收SA请求
-      *
-      * @param code 对端发送的服务请求码。
-      * @param data 携带客户端调用参数的对象，客户端调用参数顺序为Uid、RemoteObject、AdRequestParams、AdOptions、自定义采集数据，必须按照此顺序读取。
-      * @param reply 写入结果的MessageSequence对象。
-      * @param options 指示操作是同步还是异步。
-      * @returns
-      */
-     async onRemoteMessageRequest(code: number, data: rpc.MessageSequence, reply: rpc.MessageSequence, options: rpc.MessageOption) {
-       // code：1，代表广告请求
-       console.info(`onRemoteMessageRequest, the code is: ${code}`);
-   
-       try {
-         // 1.读取广告请求数据，约定的数据读取顺序，不可更改
-         // 读取SA侧的rpc远程对象
-         const replyRpcObj: rpc.IRemoteObject = data.readRemoteObject();
-        const req = {
-          // 广告请求参数，数据结构参考API文档的AdRequestParams
-          reqParams: data.readString(),
-          // 广告配置参数，数据结构参考API文档的AdOptions
-          adOptions: data.readString(),
-          // 自定义采集数据
-          collectedData: data.readString(),
-        };
-        // 2.请求数据校验
-        // 3.请求广告处理
-        // 返回广告数据，参考API文档中的advertising.Advertisement
-        const ads: Array<advertising.Advertisement> = [];
-        // 4.给SA响应数据
-        const respData = rpc.MessageSequence.create();
-        /**
-         * 业务响应码
-         * CODE_SUCCESS = 200
-         * CODE_INVALID_PARAMETERS = 401
-         * CODE_INTERNAL_ERROR = 100001
-         * CODE_INIT_CONFIG_FAILURE = 100002
-         * CODE_LOAD_ADS_FAILURE = 100003
-         */
-        respData.writeInt(200);
-        respData.writeString(JSON.stringify(ads));
-        const reply = rpc.MessageSequence.create();
-        replyRpcObj.sendMessageRequest(code, respData, reply, new rpc.MessageOption(1))
-          .catch(e => {
-            console.error(`send message from kit to caller failed, error msg: ${e.message}`);
-          });
-        return true;
-       } catch (e) {
-         console.error(`handle rpc request failed, msg: ${e.message}`);
-         return false;
-       }
-     }
-   ```
-
-3. 配置应用信息
-
-   修改services/advertising_manager/resource/ad_service_config.json文件。
+   修改frameworks/js/napi/ads/resource/ad_service_config.json文件。
 
    providerBundleName：应用包名。AppScope下app.json5中的bundleName。
 
-   providerAbilityName：实现了ServiceExtensionAbility的服务端组件名称，该组件用于和SA交互。如上示例中的AdsCoreService
+   providerAbilityName：实现了ServiceExtensionAbility的服务端组件名称，该组件用于和广告框架服务交互。如上示例中的AdsExtensionAbility
 
    providerUIAbilityName：实现了UIAbility的组件名称，该组件用于展示全屏广告。
 
    providerUEAAbilityName：实现了UIExtensionAbility的组件名称，该组件用于展示非全屏广告。
 
-4. 全屏广告发布事件
+3. 全屏广告发布事件
    通过系统提供的公共事件能力将全屏广告的互动操作发送到APP
 ```javascript
 import commonEvent from '@ohos.commonEventManager';
 
-// 发布公共事件
-commonEvent.publish("event", (err) => {
+// 设置发布公共事件的通知
+const options: Record<string, Object> = {
+  'code': 1,
+  'parameters': {
+    // 广告页面变化状态
+    'reward_ad_status': 'onAdRewarded',
+    // 设置onAdRewarded状态对应的奖励信息
+    'reward_ad_data': {
+      rewardType: 'coin', // 奖励物品的名称
+      rewardAmount: 10 // 奖励物品的数量
+    }
+  }
+}
+
+// 发布公共事件，事件ID可自定义
+commonEvent.publish("com.company.pps.action.PPS_REWARD_STATUS_CHANGED", options, (err) => {
   if (err.code) {
     console.error("[CommonEvent]PublishCallBack err=" + JSON.stringify(err))
   } else {
@@ -160,6 +133,8 @@ commonEvent.publish("event", (err) => {
 ```
 
 ### 请求广告
+
+以媒体为例，描述如何使用广告框架服务开放接口。
 
 请求广告需要创建一个AdLoader对象，通过AdLoader的loadAd方法请求广告。然后通过AdLoadListener回调来监听广告的加载状态。
 
@@ -200,6 +175,8 @@ try {
 ```
 
 ### 展示全屏广告
+
+以媒体为例，描述如何使用广告框架服务开放接口。
 
 1. 事件订阅
 
@@ -351,6 +328,8 @@ export struct ShowAd {
 ```
 
 ### 展示非全屏广告
+
+以媒体为例，描述如何使用广告框架服务开放接口。
 
 在您的页面中使用AdComponent组件展示非全屏广告。
 
