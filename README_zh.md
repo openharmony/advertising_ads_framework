@@ -97,7 +97,7 @@
 
    providerBundleName：应用包名。AppScope下app.json5中的bundleName。
 
-   providerAbilityName：实现了ServiceExtensionAbility的服务端组件名称，该组件用于和广告服务框架交互。如上示例中的AdsExtensionAbility
+   providerAbilityName：实现了ServiceExtensionAbility的服务端组件名称，该组件用于和广告服务框架交互。如上示例中的AdsExtensionAbility。
 
    providerUIAbilityName：实现了UIAbility的组件名称，该组件用于展示全屏广告。
 
