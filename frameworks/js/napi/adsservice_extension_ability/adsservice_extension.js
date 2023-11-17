@@ -185,7 +185,7 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
     }
     // check adType, adWidth and adHeight
     return this.isValidAdType(adRequestParams[0].adType) &&
-      this.isValidAdWidthAndAdHeight(adRequestParams.adWidth, adRequestParams.adHeight);
+      this.isValidAdSize(adRequestParams[0].adWidth) && this.isValidAdSize(adRequestParams[0].adHeight);
   }
 
   private validateSingleSlotsReq(reqData) {
@@ -203,7 +203,7 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
     }
     // check adType, adWidth and adHeight
     return this.isValidAdType(adRequestParams.adType) &&
-      this.isValidAdWidthAndAdHeight(adRequestParams.adWidth, adRequestParams.adHeight);
+      this.isValidAdSize(adRequestParams.adWidth) && this.isValidAdSize(adRequestParams.adHeight);
   }
 
   private isValidAdType(adType) {
@@ -224,12 +224,14 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
     return true;
   }
 
-  private isValidAdWidthAndAdHeight(adWidth, adHeight) {
-    if (isNumber(adWidth) && adWidth > 0 && isNumber(adHeight) && adHeight > 0) {
+  private isValidAdSize(adSize) {
+    if (adSize == null) {
       return true;
-    } else {
-      return false;
     }
+    if (isNumber(adSize) && adSize > 0) {
+      return true;
+    }
+    return false;
   }
 
   private parseAdRequestParams(isMultiSlots, reqData, packageName, requestStartTime) {
@@ -543,7 +545,7 @@ function isString(obj) {
 }
 
 function isNumber(obj) {
-  return Number.isFinite(obj);
+  return Number.isInteger(obj);
 }
 
 function isPrimitiveOrBoxed(obj) {
