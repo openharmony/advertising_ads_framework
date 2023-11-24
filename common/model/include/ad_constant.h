@@ -113,6 +113,9 @@ static const std::string AD_DEFAULT_SHOW_AD_ABILITY_NAME = "";
 // AdDisplayOptions
 static const std::string AD_DISPLAY_OPTIONS = "AdDisplayOptions";
 
+// Instance key
+static const std::string FULL_SCREEN_SHOW_ONCE_KEY = "instanceKey";
+
 // Advertisement
 static const std::string AD_ADVERTISMENT = "Advertisement";
 } // namespace Cloud
