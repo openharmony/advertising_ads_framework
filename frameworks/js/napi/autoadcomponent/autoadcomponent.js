@@ -136,7 +136,8 @@ class AutoAdComponent extends ViewPU {
           e || hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'get config json failed');
           this.setWant(e);
         } catch (t) {
-          hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent', `open file failed with error:${t.code}, message:${t.message}`);
+          hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent',
+            `open file failed with error:${t.code}, message:${t.message}`);
           this.setWant(e);
         }
       } else {
