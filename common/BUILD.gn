@@ -15,12 +15,13 @@ import("//domains/advertising/advertising/advertising.gni")
 
 config("common_config") {
   include_dirs = [
+    "utils/include",
     "error_code",
     "ipc/include",
     "log/include",
     "model/include",
     "//commonlibrary/c_utils/base/include",
-    "//third_party/jsoncpp/include/json"
+    "//third_party/jsoncpp/include/json",
   ]
 }
 
@@ -28,17 +29,18 @@ ohos_source_set("advertising_common") {
   configs = [ ":common_config" ]
 
   sources = [
-    "ipc/src/ad_load_proxy.cpp",
     "ipc/src/ad_load_callback_stub.cpp",
+    "ipc/src/ad_load_proxy.cpp",
     "model/src/request_data.cpp",
+    "utils/src/ad_common_util.cpp",
   ]
 
-  deps = [
-    "//third_party/jsoncpp:jsoncpp",
-  ]
+  deps = [ "//third_party/jsoncpp:jsoncpp" ]
 
   external_deps = [
     "ability_base:want",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
     "hilog:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",

@@ -25,6 +25,7 @@
 #include "ad_load_napi_common.h"
 #include "ad_inner_error_code.h"
 #include "ad_constant.h"
+#include "ad_common_util.h"
 #include "ad_load_service.h"
 #include "ability_manager_client.h"
 #include "config_policy_utils.h"
@@ -429,6 +430,11 @@ napi_value Advertising::ShowAd(napi_env env, napi_callback_info info)
     want.SetElementName(bundleName, abilityName);
     want.SetParam(AD_DISPLAY_OPTIONS, displayOptionsString);
     want.SetParam("ability.params.backToOtherMissionStack", true);
+    std::string invokeBundleName = AdCommonUtil::GetBundleName();
+    if (invokeBundleName.empty()) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get current bundlename failed");
+    }
+    want.SetParam(FULL_SCREEN_SHOW_ONCE_KEY, invokeBundleName);
     ErrCode ret = AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want);
     if (ret != ERR_SEND_OK) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Fail to show ad, err:%{public}d", ret);
