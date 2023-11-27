@@ -35,6 +35,8 @@ gen_js_obj("adsservice_extension_context_abc") {
 }
 
 ohos_shared_library("adsserviceextensioncontext_napi") {
+  branch_protector_ret = "pac_ret"
+
   sources = [ "adsservice_extension_context_module.cpp" ]
 
   deps = [
@@ -45,6 +47,10 @@ ohos_shared_library("adsserviceextensioncontext_napi") {
   external_deps = [ "napi:ace_napi" ]
 
   sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../cfi_blocklist.txt"
     boundary_sanitize = true
     integer_overflow = true
     ubsan = true

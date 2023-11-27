@@ -11,25 +11,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//arkcompiler/ets_frontend/es2panda/es2abc_config.gni")
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
-import("//arkcompiler/ets_frontend/es2panda/es2abc_config.gni")
 
 es2abc_gen_abc("gen_adcomponent_abc") {
   src_js = rebase_path("adcomponent.js")
   dst_file = rebase_path(target_out_dir + "/adcomponent.abc")
   in_puts = [ "adcomponent.js" ]
   out_puts = [ target_out_dir + "/adcomponent.abc" ]
-  extra_args = [ "--module" ]  
+  extra_args = [ "--module" ]
 }
 
 gen_js_obj("adcomponent_abc") {
-  input = get_label_info(":gen_adcomponent_abc", "target_out_dir") + "/adcomponent.abc"
+  input = get_label_info(":gen_adcomponent_abc", "target_out_dir") +
+          "/adcomponent.abc"
   output = target_out_dir + "/adcomponent_abc.o"
   dep = ":gen_adcomponent_abc"
 }
 
 ohos_shared_library("adcomponent") {
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../cfi_blocklist.txt"
+    boundary_sanitize = true
+    integer_overflow = true
+    ubsan = true
+  }
+
   sources = [ "adcomponent.cpp" ]
 
   deps = [ ":adcomponent_abc" ]

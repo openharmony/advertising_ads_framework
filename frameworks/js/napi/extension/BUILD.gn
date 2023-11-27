@@ -11,16 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//domains/advertising/advertising/advertising.gni")
-import("//build/ohos.gni")
 import("//arkcompiler/ets_frontend/es2panda/es2abc_config.gni")
+import("//build/ohos.gni")
+import("//domains/advertising/advertising/advertising.gni")
 
 config("libadsservice_extension_private_config") {
   visibility = [ ":*" ]
 
-  include_dirs = [
-    "./include"
-  ]
+  include_dirs = [ "./include" ]
 
   cflags = []
 
@@ -28,27 +26,29 @@ config("libadsservice_extension_private_config") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
 
-  defines = [
-  ]
+  defines = []
 }
 
 ## Build libadsservice_extension.so
 ohos_shared_library("libadsservice_extension") {
+  branch_protector_ret = "pac_ret"
+
   sources = [
+    "src/adsservice_extension.cpp",
+    "src/adsservice_extension_context.cpp",
     "src/js_adsservice_extension.cpp",
     "src/js_adsservice_extension_context.cpp",
-    "src/adsservice_extension.cpp",
-    "src/adsservice_extension_context.cpp"
   ]
 
-  configs = [
-    ":libadsservice_extension_private_config"
-  ]
+  configs = [ ":libadsservice_extension_private_config" ]
 
-  deps = [
-  ]
+  deps = []
 
   sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../cfi_blocklist.txt"
     boundary_sanitize = true
     integer_overflow = true
     ubsan = true
@@ -56,7 +56,7 @@ ohos_shared_library("libadsservice_extension") {
 
   include_dirs = [
     "./include",
-    "//domains/advertising/advertising/common/log/include"
+    "//domains/advertising/advertising/common/log/include",
   ]
 
   external_deps = [
@@ -66,12 +66,12 @@ ohos_shared_library("libadsservice_extension") {
     "ability_runtime:extensionkit_native",
     "ability_runtime:napi_common",
     "ability_runtime:runtime",
+    "c_utils:utils",
     "hilog:libhilog",
-    "ipc:ipc_single",
     "ipc:ipc_core",
     "ipc:ipc_napi_common",
+    "ipc:ipc_single",
     "napi:ace_napi",
-    "c_utils:utils"
   ]
 
   subsystem_name = "advertising"
@@ -89,15 +89,19 @@ config("adsservice_extension_module_private_config") {
 
 ## Build libadsservice_extension_module.so
 ohos_shared_library("adsservice_extension_module") {
+  branch_protector_ret = "pac_ret"
+
   sources = [ "src/adsservice_extension_module_loader.cpp" ]
 
-  configs = [ ":adsservice_extension_module_private_config"]
+  configs = [ ":adsservice_extension_module_private_config" ]
 
-  deps = [
-    ":libadsservice_extension"
-  ]
+  deps = [ ":libadsservice_extension" ]
 
   sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../cfi_blocklist.txt"
     boundary_sanitize = true
     integer_overflow = true
     ubsan = true
@@ -105,20 +109,20 @@ ohos_shared_library("adsservice_extension_module") {
 
   include_dirs = [
     "./include",
-    "//domains/advertising/advertising/common/log/include"
+    "//domains/advertising/advertising/common/log/include",
   ]
 
   external_deps = [
     "ability_runtime:ability_context_native",
-    "ability_runtime:app_context",
-    "ability_runtime:runtime",
     "ability_runtime:ability_manager",
     "ability_runtime:abilitykit_native",
+    "ability_runtime:app_context",
+    "ability_runtime:runtime",
+    "c_utils:utils",
+    "config_policy:configpolicy_util",
     "hilog:libhilog",
     "ipc:ipc_core",
     "napi:ace_napi",
-    "c_utils:utils",
-    "config_policy:configpolicy_util"
   ]
 
   relative_install_dir = "extensionability/"

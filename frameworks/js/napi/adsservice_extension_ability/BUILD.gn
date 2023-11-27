@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//build/ohos.gni")
 import("//arkcompiler/ets_frontend/es2panda/es2abc_config.gni")
+import("//build/ohos.gni")
 
 es2abc_gen_abc("gen_adsservice_extension_abc") {
   src_js = rebase_path("adsservice_extension.js")
@@ -35,6 +35,8 @@ gen_js_obj("adsservice_extension_abc") {
 }
 
 ohos_shared_library("adsserviceextensionability_napi") {
+  branch_protector_ret = "pac_ret"
+
   sources = [ "adsservice_extension_module.cpp" ]
 
   deps = [
@@ -43,6 +45,10 @@ ohos_shared_library("adsserviceextensionability_napi") {
   ]
 
   sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../cfi_blocklist.txt"
     boundary_sanitize = true
     integer_overflow = true
     ubsan = true
