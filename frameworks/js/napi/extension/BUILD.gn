@@ -56,7 +56,7 @@ ohos_shared_library("libadsservice_extension") {
 
   include_dirs = [
     "./include",
-    "//domains/advertising/advertising/common/log/include",
+    "${advertising_common_path}/log/include",
   ]
 
   external_deps = [
@@ -109,7 +109,7 @@ ohos_shared_library("adsservice_extension_module") {
 
   include_dirs = [
     "./include",
-    "//domains/advertising/advertising/common/log/include",
+    "${advertising_common_path}/log/include",
   ]
 
   external_deps = [
