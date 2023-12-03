@@ -15,8 +15,13 @@
 
 // 首先需要通过requireInternal函数加载本模块
 const advertising = requireInternal('advertising');
+let fs = globalThis.requireNapi('file.fs');
+let configPolicy = globalThis.requireNapi('configPolicy');
 const hilog = globalThis.requireNapi('hilog');
+const READ_FILE_BUFFER_SIZE = 4096;
 const HILOG_DOMAIN_CODE = 65280;
+const INTERSTITIAL_AD_TYPE = 12;
+
 class AdLoader {
   constructor(context) {
     this.loader = new advertising.AdLoader(context);
@@ -47,10 +52,80 @@ function onAdLoadSuccessProxy(callBackListener) {
   };
 }
 
+function showAdProxy(ad, adOptions, context) {
+  hilog.info(HILOG_DOMAIN_CODE, 'showAdProxy', 'start to show ad');
+
+  if (ad?.adType == null || ad?.uniqueId == null) {
+    throw {
+      code: 401,
+      message: 'Invalid input parameter.'
+    }
+  }
+
+  if (adOptions == null) {
+    throw {
+      code: 401,
+      message: 'Invalid input parameter.'
+    }
+  }
+
+  if (ad.adType == INTERSTITIAL_AD_TYPE && !ad.isFullScreen) {
+    hilog.info(HILOG_DOMAIN_CODE, 'showAdProxy', 'into interstitial_ad_halfscreen');
+    getConfigJsonDataAndJump(ad, adOptions, context);
+  } else {
+    advertising.showAd(ad, adOptions, context);
+  }
+}
+
+function getConfigJsonDataAndJump(ad, adOptions, context) {
+  configPolicy.getOneCfgFile('etc/advertising/ads_framework/ad_service_config.json', ((t, o) => {
+    if (null != t) {
+      hilog.warn(HILOG_DOMAIN_CODE, 'showAdProxy', 'error occurs ' + t);
+    }
+    try {
+      const t = fs.openSync(o);
+      const i = new ArrayBuffer(READ_FILE_BUFFER_SIZE);
+      let s = fs.readSync(t.fd, i);
+      fs.closeSync(t);
+      let n = String.fromCharCode(...new Uint8Array(i.slice(0, s)));
+      n = n.replace(/[\r\n\t\"]/g, '').replace(/\s*/g, '').replace(/\[|\]/g, '');
+      let e = toMap(n);
+      hilog.info(HILOG_DOMAIN_CODE, 'showAdProxy', 'file succeed');
+      e || hilog.info(HILOG_DOMAIN_CODE, 'showAdProxy', 'get config json failed');
+      let want = {
+        bundleName: null == e ? void 0 : e.providerBundleName,
+        abilityName: null == e ? void 0 : e.providerHsAbilityName,
+        parameters: {
+          advertisement: ad,
+          adDisplayOptions: adOptions,
+        }
+      };
+      context.requestDialogService(want);
+    } catch (t) {
+      hilog.error(HILOG_DOMAIN_CODE, 'showAdProxy', `open file failed with error:${t.code}, message:${t.message}`);
+    }
+  }));
+}
+
+function toMap(e) {
+  const t = (e = e.replace(/[{}]/g, '')).split(',');
+  const o = {};
+  for (let e = 0; e < t.length; e++) {
+    const s = t[e];
+    const i = s.indexOf(':');
+    if (i > -1) {
+      const e = s.substring(0, i);
+      const t = s.substring(i + 1);
+      o[e] = t;
+    }
+  }
+  return o;
+}
+
 export default {
   // 注意：C/C++实现的NAPI模块中的接口如果需要对外暴露，都需要按这种形式来编写
   AdLoader: AdLoader,
-  showAd: advertising.showAd,
+  showAd: showAdProxy,
   Advertisement: advertising.Advertisement,
   AdRequestParams: advertising.AdRequestParams,
   AdOptions: advertising.AdOptions,
