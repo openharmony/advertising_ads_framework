@@ -120,7 +120,7 @@ class AutoAdComponent extends ViewPU {
         hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'error occurs ' + o);
         this.setWant(t);
       }
-    }))
+    }));
   }
   setWant(t) {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `setWant map ${t}`);
@@ -130,16 +130,16 @@ class AutoAdComponent extends ViewPU {
       parameters: {
         ads: this.ads,
         displayOptions: this.displayOptions,
-        "ability.want.params.uiExtensionType": 'ads'
+        'ability.want.params.uiExtensionType': 'ads'
       }
-    })
+    });
   }
   loadAd() {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'start load advertising.');
     let t = {
       onAdLoadFailure: (t, o) => {
         hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `request ad errorCode is: ${t}, errorMsg is: ${o}`);
-        this.interactionListener.onStatusChanged('onAdFail', null, t.toString())
+        this.interactionListener.onStatusChanged('onAdFail', null, t.toString());
       },
       onAdLoadSuccess: t => {
         hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'request ad success!');
@@ -154,12 +154,12 @@ class AutoAdComponent extends ViewPU {
           hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'send data.');
           this.remoteProxy.send({
             ads: t
-          })
+          });
         }
       }
     };
     this.loader.loadAd(this.adParam, this.adOptions, t);
-    this.refreshAd()
+    this.refreshAd();
   }
   initRefreshTime() {
     if (!(this.displayOptions && this.displayOptions.refreshTime &&
@@ -179,9 +179,9 @@ class AutoAdComponent extends ViewPU {
       this.isTaskRunning = !0;
       this.timeoutId = setTimeout((() => {
         hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `run task, timeoutId:${this.timeoutId}.`);
-        this.loadAd()
+        this.loadAd();
       }), this.refreshTime);
-      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `start next task timeoutId:${this.timeoutId}.`)
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `start next task timeoutId:${this.timeoutId}.`);
     }
   }
   aboutToAppear() {
@@ -189,7 +189,7 @@ class AutoAdComponent extends ViewPU {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `displayOptions:${JSON.stringify(this.displayOptions)}.`);
     this.loader = new advertising.AdLoader(this.context);
     this.isAutoRefresh = this.initRefreshTime();
-    this.loadAd()
+    this.loadAd();
   }
   aboutToDisappear() {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'aboutToDisappear.');
@@ -197,7 +197,7 @@ class AutoAdComponent extends ViewPU {
     if (null != this.timeoutId) {
       hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `stop refresh task, timeoutId:${this.timeoutId}.`);
       clearTimeout(this.timeoutId);
-      this.isTaskRunning = !1
+      this.isTaskRunning = !1;
     }
   }
   initialRender() {
@@ -206,17 +206,7 @@ class AutoAdComponent extends ViewPU {
       Row.create();
       Row.height('100%');
       Row.onVisibleAreaChange([0, 1], ((t, o) => {
-        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `isVisible:${t}, currentRatio:${o}`);
-        if (t && o >= 1) {
-          hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'component visible');
-          this.isTaskRunning || this.refreshAd()
-        }
-        if (!t && o <= 0) {
-          hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'component invisible');
-          hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `stop task, timeoutId:${this.timeoutId}.`);
-          clearTimeout(this.timeoutId);
-          this.isTaskRunning = !1
-        }
+        this.visibleAreaChange(t, o);
       }));
       o || Row.pop();
       ViewStackProcessor.StopGetAccessRecording();
@@ -224,7 +214,7 @@ class AutoAdComponent extends ViewPU {
     this.observeComponentCreation(((t, o) => {
       ViewStackProcessor.StartGetAccessRecordingFor(t);
       Column.create();
-      Column.width("100%");
+      Column.width('100%');
       o || Column.pop();
       ViewStackProcessor.StopGetAccessRecording();
     }));
@@ -247,7 +237,7 @@ class AutoAdComponent extends ViewPU {
           }));
           o || UIExtensionComponent.pop();
           ViewStackProcessor.StopGetAccessRecording();
-        }))
+        }));
       })) : If.branchId(1);
       o || If.pop();
       ViewStackProcessor.StopGetAccessRecording();
@@ -256,7 +246,19 @@ class AutoAdComponent extends ViewPU {
     Column.pop();
     Row.pop();
   }
-
+  visibleAreaChange(t, o) {
+    hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `isVisible:${t}, currentRatio:${o}`);
+    if (t && o >= 1) {
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'component visible');
+      this.isTaskRunning || this.refreshAd();
+    }
+    if (!t && o <= 0) {
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'component invisible');
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `stop task, timeoutId:${this.timeoutId}.`);
+      clearTimeout(this.timeoutId);
+      this.isTaskRunning = !1;
+    }
+  }
   rerender() {
     this.updateDirtyElements();
   }
