@@ -48,6 +48,7 @@ class AutoAdComponent extends ViewPU {
     this.isTaskRunning = !1;
     this.setInitiallyProvidedValue(o);
   }
+  
   setInitiallyProvidedValue(t) {
     void 0 !== t.context && (this.context = t.context);
     void 0 !== t.want && (this.want = t.want);
@@ -65,22 +66,28 @@ class AutoAdComponent extends ViewPU {
     void 0 !== t.isFirstLoad && (this.isFirstLoad = t.isFirstLoad);
     void 0 !== t.isTaskRunning && (this.isTaskRunning = t.isTaskRunning);
   }
+  
   updateStateVars(t) {
   }
+  
   purgeVariableDependenciesOnElmtId(t) {
     this.__showComponent.purgeDependencyOnElmtId(t);
   }
+  
   aboutToBeDeleted() {
     this.__showComponent.aboutToBeDeleted();
     SubscriberManager.Get().delete(this.id__());
     this.aboutToBeDeletedInternal();
   }
+  
   get showComponent() {
     return this.__showComponent.get();
   }
+  
   set showComponent(t) {
     this.__showComponent.set(t);
   }
+  
   toMap(t) {
     const o = (t = t.replace(/[{}]/g, '')).split(',');
     const i = {};
@@ -95,6 +102,7 @@ class AutoAdComponent extends ViewPU {
     }
     return i;
   }
+  
   getConfigJsonData() {
     let t = null;
     configPolicy.getOneCfgFile('etc/advertising/ads_framework/ad_service_config.json', ((o, i) => {
@@ -122,6 +130,7 @@ class AutoAdComponent extends ViewPU {
       }
     }));
   }
+  
   setWant(t) {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `setWant map ${t}`);
     t && (this.want = {
@@ -134,6 +143,7 @@ class AutoAdComponent extends ViewPU {
       }
     });
   }
+  
   loadAd() {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'start load advertising.');
     let t = {
@@ -161,6 +171,7 @@ class AutoAdComponent extends ViewPU {
     this.loader.loadAd(this.adParam, this.adOptions, t);
     this.refreshAd();
   }
+  
   initRefreshTime() {
     if (!(this.displayOptions && this.displayOptions.refreshTime &&
       typeof this.displayOptions.refreshTime === 'number' && this.displayOptions.refreshTime > 0)) {
@@ -173,6 +184,7 @@ class AutoAdComponent extends ViewPU {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `refreshTime is: ${this.refreshTime} ms.`);
     return !0;
   }
+  
   async refreshAd() {
     if (this.isAutoRefresh) {
       hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'start next task.');
@@ -184,6 +196,7 @@ class AutoAdComponent extends ViewPU {
       hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `start next task timeoutId:${this.timeoutId}.`);
     }
   }
+  
   aboutToAppear() {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'aboutToAppear.');
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `displayOptions:${JSON.stringify(this.displayOptions)}.`);
@@ -191,6 +204,7 @@ class AutoAdComponent extends ViewPU {
     this.isAutoRefresh = this.initRefreshTime();
     this.loadAd();
   }
+  
   aboutToDisappear() {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'aboutToDisappear.');
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `timeoutId is: ${this.timeoutId}.`);
@@ -200,6 +214,7 @@ class AutoAdComponent extends ViewPU {
       this.isTaskRunning = !1;
     }
   }
+  
   initialRender() {
     this.observeComponentCreation(((t, o) => {
       ViewStackProcessor.StartGetAccessRecordingFor(t);
@@ -246,6 +261,7 @@ class AutoAdComponent extends ViewPU {
     Column.pop();
     Row.pop();
   }
+  
   visibleAreaChange(t, o) {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `isVisible:${t}, currentRatio:${o}`);
     if (t && o >= 1) {
@@ -259,6 +275,7 @@ class AutoAdComponent extends ViewPU {
       this.isTaskRunning = !1;
     }
   }
+  
   rerender() {
     this.updateDirtyElements();
   }
