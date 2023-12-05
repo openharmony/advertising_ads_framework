@@ -55,18 +55,18 @@ function onAdLoadSuccessProxy(callBackListener) {
 function showAdProxy(ad, adOptions, context) {
   hilog.info(HILOG_DOMAIN_CODE, 'showAdProxy', 'start to show ad');
 
-  if (ad?.adType == null || ad?.uniqueId == null) {
+  if (ad?.adType === null || ad?.uniqueId === null) {
     throw {
       code: 401,
       message: 'Invalid input parameter.'
-    }
+    };
   }
 
-  if (adOptions == null) {
+  if (adOptions === null) {
     throw {
       code: 401,
       message: 'Invalid input parameter.'
-    }
+    };
   }
 
   if (ad.adType == INTERSTITIAL_AD_TYPE && !ad.isFullScreen) {
