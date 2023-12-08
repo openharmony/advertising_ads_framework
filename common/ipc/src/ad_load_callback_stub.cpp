@@ -38,15 +38,28 @@ inline std::string Str16ToStr8(const std::u16string &str)
     return result;
 }
 
-inline void CommonParse(AAFwk::Want &want, Json::Value &root)
+void CommonParse(AAFwk::Want &want, Json::Value &root)
 {
-    want.SetParam(AD_RESPONSE_AD_TYPE, root[AD_RESPONSE_AD_TYPE].asInt());
-    std::string rewardConfig = Json::FastWriter().write(root[AD_RESPONSE_REWARD_CONFIG]);
-    want.SetParam(AD_RESPONSE_REWARD_CONFIG, rewardConfig);
-    want.SetParam(AD_RESPONSE_UNIQUE_ID, root[AD_RESPONSE_UNIQUE_ID].asString());
-    want.SetParam(AD_RESPONSE_REWARDED, root[AD_RESPONSE_REWARDED].asBool());
-    want.SetParam(AD_RESPONSE_SHOWN, root[AD_RESPONSE_SHOWN].asBool());
-    want.SetParam(AD_RESPONSE_CLICKED, root[AD_RESPONSE_CLICKED].asBool());
+    Json::Value::Members members = root.getMemberNames();
+    for (auto iter = members.begin(); iter != members.end(); iter++) {
+        auto member = root[*iter];
+        auto key = std::string(*iter);
+        switch (member.type()) {
+            case Json::intValue:
+                want.SetParam(key, member.asInt());
+                break;
+            case Json::stringValue:
+                want.SetParam(key, member.asString());
+                break;
+            case Json::booleanValue:
+                want.SetParam(key, member.asBool());
+                break;
+            default:
+                std::string defaultValue = Json::FastWriter().write(member);
+                want.SetParam(key, defaultValue);
+                break;
+        }
+    }
 }
 
 inline void ParseSingleAd(std::vector<AAFwk::Want> &ads, Json::Value &root)
