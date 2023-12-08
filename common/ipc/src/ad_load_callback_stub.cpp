@@ -38,7 +38,7 @@ inline std::string Str16ToStr8(const std::u16string &str)
     return result;
 }
 
-inline void CommonParse(AAFwk::Want &want, Json::Value &root)
+void CommonParse(AAFwk::Want &want, Json::Value &root)
 {
     Json::Value::Members members = root.getMemberNames();
     for (auto iter = members.begin(); iter != members.end(); iter++) {
