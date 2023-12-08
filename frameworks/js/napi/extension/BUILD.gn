@@ -69,7 +69,7 @@ ohos_shared_library("libadsservice_extension") {
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_core",
-    "ipc:ipc_napi_common",
+    "ipc:ipc_napi",
     "ipc:ipc_single",
     "napi:ace_napi",
   ]
