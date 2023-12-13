@@ -274,6 +274,14 @@ napi_value GetWantProperty(const napi_env &env, napi_value &value, const std::st
     return NapiGetNull(env);
 }
 
+void NapiNumberAdParamHandler(const std::string &strName, int32_t displayOptionValue, Json::Value &root)
+{
+    if ((strName == "adWidth" || strName == "adHeight") && displayOptionValue == 0) {
+        return;
+    }
+    root[strName] = displayOptionValue;
+}
+
 napi_value ParseObjectFromJs(napi_env env, napi_value argv, Json::Value &root)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseObjectFromJs enter");
@@ -312,7 +320,7 @@ napi_value ParseObjectFromJs(napi_env env, napi_value argv, Json::Value &root)
             case napi_number: {
                 int32_t displayOptionValue = GetInt32FromValue(env, elementValue);
                 ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "napi_number key is : %{public}s ", strName.c_str());
-                root[strName] = displayOptionValue;
+                NapiNumberAdParamHandler(strName, displayOptionValue, root);
                 break;
             }
             default:
