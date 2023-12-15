@@ -149,12 +149,12 @@ class AutoAdComponent extends ViewPU {
     let t = {
       onAdLoadFailure: (t, o) => {
         hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `request ad errorCode is: ${t}, errorMsg is: ${o}`);
-        this.interactionListener.onStatusChanged('onAdFail', null, t.toString());
+        this.interactionListener.onStatusChanged('onAdFail', {}, t.toString());
       },
       onAdLoadSuccess: t => {
         hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'request ad success!');
         hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `adArray is : ${JSON.stringify(t)}`);
-        this.interactionListener.onStatusChanged('onAdLoad', null, null);
+        this.interactionListener.onStatusChanged('onAdLoad', {}, '');
         if (this.isFirstLoad) {
           this.ads = t;
           this.showComponent = !0;
