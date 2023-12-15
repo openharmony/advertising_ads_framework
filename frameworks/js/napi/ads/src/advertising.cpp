@@ -501,7 +501,9 @@ napi_value ParseContextForLoadAd(napi_env env, napi_callback_info info, Advertis
         return NapiGetNull(env);
     }
     std::string requestRootString = Json::FastWriter().write(requestRoot);
-    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestRootString is: %{public}s", requestRootString.c_str());
+    requestRoot["oaid"] = "********-****-****-************";
+    std::string requestParam = Json::FastWriter().write(requestRoot);
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{public}s", requestParam.c_str());
     context->requestString = requestRootString;
     // argv[1]
     Json::Value optionRoot;
@@ -592,7 +594,9 @@ napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info, Mult
         return NapiGetNull(env);
     }
     std::string requestRootString = Json::FastWriter().write(requestRoot);
-    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestRootString is: %{public}s", requestRootString.c_str());
+    requestRoot["oaid"] = "********-****-****-************";
+    std::string requestParam = Json::FastWriter().write(requestRoot);
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{public}s", requestParam.c_str());
     context->mulitRequestString = requestRootString;
     // argv[1]
     Json::Value optionRoot;
