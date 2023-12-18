@@ -597,9 +597,9 @@ napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info, Mult
     uint32_t length = 0;
     NAPI_CALL(env, napi_get_array_length(env, argv[0], &length));
     for (size_t i = 0; i < length; i++) {
-      Json::Value singleRoot = requestRoot[static_cast<int>(i)];
-      singleRoot["oaid"] = "********-****-****-************";
-      requestRoot[static_cast<int>(i)] = singleRoot;
+        Json::Value singleRoot = requestRoot[static_cast<int>(i)];
+        singleRoot["oaid"] = "********-****-****-************";
+        requestRoot[static_cast<int>(i)] = singleRoot;
     }
     std::string requestParam = Json::FastWriter().write(requestRoot);
     ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{public}s", requestParam.c_str());
