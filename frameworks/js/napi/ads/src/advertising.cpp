@@ -276,7 +276,7 @@ napi_value GetWantProperty(const napi_env &env, napi_value &value, const std::st
 
 void NapiNumberAdParamHandler(const std::string &strName, int32_t displayOptionValue, Json::Value &root)
 {
-    if ((strName == "adWidth" || strName == "adHeight") && displayOptionValue == 0) {
+    if ((strName == "adWidth" || strName == "adHeight" || strName == "adType") && displayOptionValue == 0) {
         return;
     }
     root[strName] = displayOptionValue;
