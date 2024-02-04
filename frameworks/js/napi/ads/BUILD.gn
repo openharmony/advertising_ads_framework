@@ -91,6 +91,7 @@ ohos_shared_library("advertising") {
   external_deps = [
     "ability_runtime:ability_manager",
     "ability_runtime:abilitykit_native",
+    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "config_policy:configpolicy_util",
     "hilog:libhilog",
