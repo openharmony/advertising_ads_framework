@@ -15,6 +15,7 @@
 
 // 首先需要通过requireInternal函数加载本模块
 const advertising = requireInternal('advertising');
+let bundleManager = requireNapi("bundle.bundleManager");
 let fs = globalThis.requireNapi('file.fs');
 let configPolicy = globalThis.requireNapi('configPolicy');
 const hilog = globalThis.requireNapi('hilog');
@@ -92,15 +93,20 @@ function getConfigJsonDataAndJump(ad, adOptions, context) {
       let e = toMap(n);
       hilog.info(HILOG_DOMAIN_CODE, 'showAdProxy', 'file succeed');
       e || hilog.info(HILOG_DOMAIN_CODE, 'showAdProxy', 'get config json failed');
+      let bundleFLags = bundleManager.BundleFlag.GET_BUNDLE_INFO_DEFAULT;
+      let bundleInfo = bundleManager.getBundleInfoForSelfSync(bundleFLags);
+      hilog.info(HILOG_DOMAIN_CODE, 'showAdProxy', `get calling bundlename is: ${bundleInfo.name}`);
       let want = {
         bundleName: null == e ? void 0 : e.providerBundleName,
-        abilityName: null == e ? void 0 : e.providerHsAbilityName,
+        abilityName: null == e ? void 0 : e.providerUEAAbilityName,
         parameters: {
-          advertisement: ad,
-          adDisplayOptions: adOptions,
+          ads: ad,
+          displayOptions: adOptions,
+          bundleName: bundleInfo.name,
+          'ability.want.params.uiExtensionType': 'ads'
         }
       };
-      context.requestDialogService(want);
+      context.requestModalUIExtension(want);
     } catch (t) {
       hilog.error(HILOG_DOMAIN_CODE, 'showAdProxy', `open file failed with error:${t.code}, message:${t.message}`);
     }
