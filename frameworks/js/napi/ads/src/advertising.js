@@ -70,8 +70,8 @@ function showAdProxy(ad, adOptions, context) {
     };
   }
 
-  if (ad.adType === INTERSTITIAL_AD_TYPE && !ad.isFullScreen) {
-    hilog.info(HILOG_DOMAIN_CODE, 'showAdProxy', 'into interstitial_ad_halfscreen');
+  if (ad.adType === INTERSTITIAL_AD_TYPE) {
+    hilog.info(HILOG_DOMAIN_CODE, 'showAdProxy', 'into interstitial ad');
     getConfigJsonDataAndJump(ad, adOptions, context);
   } else {
     advertising.showAd(ad, adOptions, context);
