@@ -59,7 +59,6 @@ ohos_shared_library("advertising") {
     "//domains/advertising/advertising/common/ipc/include",
     "//domains/advertising/advertising/common/model/include",
     "./include",
-    "//third_party/cJSON",
   ]
 
   sanitize = {
