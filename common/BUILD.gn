@@ -21,7 +21,7 @@ config("common_config") {
     "log/include",
     "model/include",
     "//commonlibrary/c_utils/base/include",
-    "//third_party/jsoncpp/include/json",
+    "//third_party/cJSON",
   ]
 }
 
@@ -40,9 +40,10 @@ ohos_source_set("advertising_common") {
     "ipc/src/ad_load_proxy.cpp",
     "model/src/request_data.cpp",
     "utils/src/ad_common_util.cpp",
+    "utils/src/ad_json_util.cpp",
   ]
 
-  deps = [ "//third_party/jsoncpp:jsoncpp" ]
+  deps = [ "//third_party/cJSON:cjson" ]
 
   external_deps = [
     "ability_base:want",
