@@ -39,13 +39,16 @@ using Want = OHOS::AAFwk::Want;
 static constexpr const int MAX_STRING_LENGTH = 65536;
 static const int32_t LOAD_AD_TYPE = 1;
 static const int32_t LOAD_MULTI_AD_TYPE = 2;
-static const int32_t SHOW_AD_PARA = 2;
+static const int32_t SHOW_AD_PARA = 3;
+static const int32_t SHOW_AD_MIN_PARA = 3;
+static const int32_t CONTEXT_INDEX = 2;
 static const int32_t AD_LOADER_PARA = 3;
 static const int32_t AD_STANDARD_SIZE = 6;
 const std::string AD_LOADER_CLASS_NAME = "AdLoader";
 const std::string DEFAULT_JSON_STR = "{}";
 thread_local napi_ref Advertising::adRef_ = nullptr;
 static const int32_t STR_MAX_SIZE = 256;
+static const int32_t INTERSTITIAL_AD_TYPE = 12;
 static const int32_t CUSTOM_DATA_MAX_SIZE = 1024 * 1024; // 1M
 
 napi_value NapiGetNull(napi_env env)
@@ -98,19 +101,21 @@ void GetCloudServiceProvider(CloudServiceProvider &cloudServiceProvider)
     cJSON *cloudServiceBundleName = cJSON_GetObjectItem(root, "providerBundleName");
     cJSON *cloudServiceAbilityName = cJSON_GetObjectItem(root, "providerAbilityName");
     cJSON *cloudServiceUIAbilityName = cJSON_GetObjectItem(root, "providerUIAbilityName");
+    cJSON *cloudServiceUEAAbilityName = cJSON_GetObjectItem(root, "providerUEAAbilityName");
     if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName) &&
         cJSON_IsArray(cloudServiceUIAbilityName)) {
         cloudServiceProvider.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
         cloudServiceProvider.abilityName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
         cloudServiceProvider.uiAbilityName = cJSON_GetArrayItem(cloudServiceUIAbilityName, 0)->valuestring;
+        cloudServiceProvider.ueaAbilityName = cJSON_GetArrayItem(cloudServiceUEAAbilityName, 0)->valuestring;
     }
     inFile.close();
     cJSON_Delete(root);
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI,
         "Cloud Service from config bundleName is %{public}s, abilityName is %{public}s, uiAbility is "
-        "%{public}s",
+        "%{public}s, ueaAbility is %{public}s",
         cloudServiceProvider.bundleName.c_str(), cloudServiceProvider.abilityName.c_str(),
-        cloudServiceProvider.uiAbilityName.c_str());
+        cloudServiceProvider.uiAbilityName.c_str(), cloudServiceProvider.ueaAbilityName.c_str());
 }
 
 napi_value GetLongStringProperty(const napi_env &env, napi_value &value, const std::string &key,
@@ -402,12 +407,104 @@ void AssembShowAdParas(Want &want, const Advertisment &advertisment, cJSON *root
     want.SetParam(AD_ADVERTISMENT, advertismentString);
 }
 
+void StartUIExtensionAbility(Want &want, std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext)
+{
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "begin StartUIExtensionAbility");
+    auto uiExtCallback = std::make_shared<UIExtensionCallback>(abilityContext);
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "set uiExtCallback");
+    OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
+        std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
+    };
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "set extensionCallbacks");
+    Ace::ModalUIExtensionConfig config;
+    config.isProhibitBack = true;
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "set config");
+    auto uiContent = abilityContext->GetUIContent();
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "set uiContent");
+    if (uiContent == nullptr) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "StartUIExtensionAbility fail uiContent is null");
+        return;
+    }
+    int32_t sessionId = uiContent->CreateModalUIExtension(want, extensionCallbacks, config);
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI,
+        "StartUIExtensionAbility CreateModalUIExtension session id is %{public}d", sessionId);
+    if (sessionId == 0) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "StartUIExtensionAbility CreateModalUIExtension fail");
+        return;
+    }
+    uiExtCallback->SetSessionId(sessionId);
+}
+
+bool GetContextFromJs(napi_env env, napi_value obj,
+    std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> &abilityContext)
+{
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseContextFromJs enter");
+    bool stageMode = false;
+    napi_status status = OHOS::AbilityRuntime::IsStageContext(env, obj, stageMode);
+    if (status != napi_ok || !stageMode) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "it is not a stage mode");
+        return false;
+    }
+
+    auto context = OHOS::AbilityRuntime::GetStageModeContext(env, obj);
+    if (context == nullptr) {
+        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "GetAbilityContext get context failed.");
+        return false;
+    }
+    abilityContext = OHOS::AbilityRuntime::Context::ConvertTo<OHOS::AbilityRuntime::AbilityContext>(context);
+    if (abilityContext == nullptr) {
+        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "GetAbilityContext AbilityRuntime convert context failed");
+        return false;
+    }
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "end ParseAbilityContextReq");
+    return true;
+}
+
+void DispatchShowAdHandler(napi_env env, napi_value &obj, Want &want,
+    const CloudServiceProvider &cloudServiceProvider, const Advertisment &advertisment)
+{
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "start DispatchShowAdHandler.");
+    std::string bundleName = cloudServiceProvider.bundleName;
+    std::string invokeBundleName = AdCommonUtil::GetBundleName();
+    if (invokeBundleName.empty()) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get current bundlename failed");
+    }
+    if (advertisment.adType == INTERSTITIAL_AD_TYPE) {
+        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "interstitial ad.");
+        if (obj == nullptr) {
+            ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "wrong number of showad arguments");
+            return;
+        }
+
+        std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext = nullptr;
+        if (!GetContextFromJs(env, obj, abilityContext)) {
+            ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "GetContextFromJs err.");
+            return;
+        }
+        std::string abilityName = cloudServiceProvider.ueaAbilityName;
+        want.SetElementName(bundleName, abilityName);
+        want.SetParam(AD_BUNDLE_NAME, invokeBundleName);
+        want.SetParam(AD_UI_EXTENSION_TYPE_KEY, AD_UI_EXTENSION_TYPE_VALUE);
+        StartUIExtensionAbility(want, abilityContext);
+    } else {
+        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "reward ad.");
+        std::string abilityName = cloudServiceProvider.uiAbilityName;
+        want.SetElementName(bundleName, abilityName);
+        want.SetParam(FULL_SCREEN_SHOW_ONCE_KEY, invokeBundleName);
+        want.SetParam("ability.params.backToOtherMissionStack", true);
+        ErrCode ret = AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want);
+        if (ret != ERR_SEND_OK) {
+            ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Fail to show ad, err:%{public}d", ret);
+        }
+    }
+}
+
 napi_value Advertising::ShowAd(napi_env env, napi_callback_info info)
 {
     size_t argc = SHOW_AD_PARA;
     napi_value argv[SHOW_AD_PARA] = {nullptr};
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, NULL, NULL));
-    if (argc < SHOW_AD_PARA) {
+    if (argc < SHOW_AD_MIN_PARA) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "wrong number of showad arguments");
         return NapiGetNull(env);
     }
@@ -434,20 +531,9 @@ napi_value Advertising::ShowAd(napi_env env, napi_callback_info info)
     cJSON_Delete(adRoot);
     CloudServiceProvider cloudServiceProvider;
     GetCloudServiceProvider(cloudServiceProvider);
-    std::string bundleName = cloudServiceProvider.bundleName;
-    std::string abilityName = cloudServiceProvider.uiAbilityName;
-    want.SetElementName(bundleName, abilityName);
     want.SetParam(AD_DISPLAY_OPTIONS, displayOptionsString);
-    want.SetParam("ability.params.backToOtherMissionStack", true);
-    std::string invokeBundleName = AdCommonUtil::GetBundleName();
-    if (invokeBundleName.empty()) {
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get current bundlename failed");
-    }
-    want.SetParam(FULL_SCREEN_SHOW_ONCE_KEY, invokeBundleName);
-    ErrCode ret = AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want);
-    if (ret != ERR_SEND_OK) {
-        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Fail to show ad, err:%{public}d", ret);
-    }
+    DispatchShowAdHandler(env, argv[CONTEXT_INDEX], want, cloudServiceProvider, advertisment);
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "end ShowAd");
     return NapiGetNull(env);
 }
 
@@ -698,6 +784,53 @@ napi_value Advertising::JsConstructor(napi_env env, napi_callback_info info)
     NAPI_CALL(env, napi_typeof(env, argv[0], &valueType));
     NAPI_ASSERT(env, valueType == napi_object, "ad loader expect the constructor to use the ability context");
     return thisVar;
+}
+
+UIExtensionCallback::UIExtensionCallback(std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext)
+{
+    abilityContext_ = abilityContext;
+}
+
+void UIExtensionCallback::SetSessionId(int32_t sessionId)
+{
+    sessionId_ = sessionId;
+}
+
+bool GetUIcontentFromBaseContext(OHOS::AbilityRuntime::AbilityContext *abilityContext,
+    Ace::UIContent *&uiContent)
+{
+    if (abilityContext == nullptr) {
+        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "abilityContext is nullptr");
+        return false;
+    }
+
+    if (abilityContext != nullptr) {
+        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get uiContext by ability context");
+        uiContent = abilityContext->GetUIContent();
+    } else {
+        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get uiContext failed.");
+        return false;
+    }
+
+    return true;
+}
+
+void UIExtensionCallback::CloseModalUI()
+{
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "CloseModalUI");
+    Ace::UIContent *uiContent;
+    if (!GetUIcontentFromBaseContext((this->abilityContext_).get(), uiContent)) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get uicontent error in release.");
+        return;
+    };
+    uiContent->CloseModalUIExtension(this->sessionId_);
+}
+
+void UIExtensionCallback::OnRelease(int32_t releaseCode)
+{
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI,
+        "UIExtensionComponent OnRelease(), releaseCode = %{public}d", releaseCode);
+    this->CloseModalUI();
 }
 } // namespace AdsNapi
 } // namespace CloudNapi

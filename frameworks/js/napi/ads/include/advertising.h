@@ -31,6 +31,10 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "errors.h"
+#include "ui_content.h"
+#include "ability_context.h"
+#include "napi_base_context.h"
+#include "ability.h"
 
 namespace OHOS {
 namespace CloudNapi {
@@ -105,6 +109,7 @@ struct CloudServiceProvider {
     std::string bundleName;
     std::string abilityName;
     std::string uiAbilityName;
+    std::string ueaAbilityName;
 };
 
 class Advertising {
@@ -132,6 +137,31 @@ public:
 
 private:
     void loadAd();
+};
+
+class UIExtensionCallback {
+public:
+    explicit UIExtensionCallback(std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext);
+    void SetSessionId(int32_t sessionId);
+    void OnRelease(int32_t releaseCode);
+    void OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result);
+    void OnReceive(const OHOS::AAFwk::WantParams& request);
+    void OnError(int32_t code, const std::string& name, const std::string& message);
+    void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
+    void OnDestroy();
+    void SendMessageBack();
+
+private:
+    int32_t sessionId_ = 0;
+    int32_t resultCode_ = 0;
+    std::string resultUri_ = "";
+    std::string resultMode_ = "";
+    std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext_;
+    std::condition_variable cbFinishCondition_;
+    std::mutex cbMutex_;
+    bool isCallbackReturned_ = false;
+
+    void CloseModalUI();
 };
 } // namespace AdsNapi
 } // namespace CloudNapi
