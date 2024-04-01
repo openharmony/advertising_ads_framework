@@ -84,7 +84,6 @@ ohos_shared_library("advertising") {
     ":advertising_abc",
     ":advertising_js",
     "${advertising_common_path}:advertising_common",
-    "//third_party/jsoncpp:jsoncpp",
     "//third_party/libuv:uv_static",
   ]
 
@@ -92,6 +91,7 @@ ohos_shared_library("advertising") {
     "ability_runtime:ability_manager",
     "ability_runtime:abilitykit_native",
     "bundle_framework:appexecfwk_core",
+    "cJSON:cjson",
     "c_utils:utils",
     "config_policy:configpolicy_util",
     "hilog:libhilog",

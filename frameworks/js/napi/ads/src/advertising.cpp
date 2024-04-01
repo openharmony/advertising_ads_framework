@@ -18,7 +18,7 @@
 #include <uv.h>
 #include "napi_common_want.h"
 #include "napi/native_common.h"
-#include "json/json.h"
+#include "cJSON.h"
 #include "securec.h"
 #include "want_agent_helper.h"
 #include "ad_hilog_wreapper.h"
@@ -26,6 +26,7 @@
 #include "ad_inner_error_code.h"
 #include "ad_constant.h"
 #include "ad_common_util.h"
+#include "ad_json_util.h"
 #include "ad_load_service.h"
 #include "ability_manager_client.h"
 #include "config_policy_utils.h"
@@ -82,33 +83,29 @@ void GetCloudServiceProvider(CloudServiceProvider &cloudServiceProvider)
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Parse realpath fail");
         return;
     }
-
-    std::ifstream ifs;
-    ifs.open(realPath);
-    if (!ifs) {
+    std::ifstream inFile(realPath, std::ios::in);
+    if (!inFile.is_open()) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Open file error.");
         return;
     }
-
-    Json::Value jsonValue;
-    Json::CharReaderBuilder builder;
-    builder["collectComments"] = true;
-    JSONCPP_STRING errs;
-    if (!parseFromStream(builder, ifs, &jsonValue, &errs)) {
-        ifs.close();
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Read file failed %{public}s.", errs.c_str());
+    std::string fileContent((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+    cJSON *root = cJSON_Parse(fileContent.c_str());
+    if (root == nullptr) {
+        ADS_HILOGE(ADS_MODULE_JS_NAPI, "Parse fileContent failed.");
+        inFile.close();
         return;
     }
-
-    Json::Value cloudServiceBundleName = jsonValue["providerBundleName"];
-    Json::Value cloudServiceAbilityName = jsonValue["providerAbilityName"];
-    Json::Value cloudServiceUIAbilityName = jsonValue["providerUIAbilityName"];
-    cloudServiceProvider.bundleName = cloudServiceBundleName[0].asString();
-    cloudServiceProvider.abilityName = cloudServiceAbilityName[0].asString();
-    cloudServiceProvider.uiAbilityName = cloudServiceUIAbilityName[0].asString();
-
-    ifs.close();
-
+    cJSON *cloudServiceBundleName = cJSON_GetObjectItem(root, "providerBundleName");
+    cJSON *cloudServiceAbilityName = cJSON_GetObjectItem(root, "providerAbilityName");
+    cJSON *cloudServiceUIAbilityName = cJSON_GetObjectItem(root, "providerUIAbilityName");
+    if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName) &&
+        cJSON_IsArray(cloudServiceUIAbilityName)) {
+        cloudServiceProvider.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
+        cloudServiceProvider.abilityName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
+        cloudServiceProvider.uiAbilityName = cJSON_GetArrayItem(cloudServiceUIAbilityName, 0)->valuestring;
+    }
+    inFile.close();
+    cJSON_Delete(root);
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI,
         "Cloud Service from config bundleName is %{public}s, abilityName is %{public}s, uiAbility is "
         "%{public}s",
@@ -274,15 +271,15 @@ napi_value GetWantProperty(const napi_env &env, napi_value &value, const std::st
     return NapiGetNull(env);
 }
 
-void NapiNumberAdParamHandler(const std::string &strName, int32_t displayOptionValue, Json::Value &root)
+void NapiNumberAdParamHandler(const std::string &strName, int32_t displayOptionValue, cJSON *root)
 {
     if ((strName == "adWidth" || strName == "adHeight" || strName == "adType") && displayOptionValue == 0) {
         return;
     }
-    root[strName] = displayOptionValue;
+    cJSON_AddItemToObject(root, strName.c_str(), cJSON_CreateNumber(displayOptionValue));
 }
 
-napi_value ParseObjectFromJs(napi_env env, napi_value argv, Json::Value &root)
+napi_value ParseObjectFromJs(napi_env env, napi_value argv, cJSON *root)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseObjectFromJs enter");
     napi_valuetype valuetype = napi_undefined;
@@ -307,14 +304,14 @@ napi_value ParseObjectFromJs(napi_env env, napi_value argv, Json::Value &root)
             case napi_string: {
                 std::string displayOptionValue = GetStringFromValueUtf8(env, elementValue);
                 ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "napi_string key is : %{public}s ", strName.c_str());
-                root[strName] = displayOptionValue;
+                cJSON_AddItemToObject(root, strName.c_str(), cJSON_CreateString(displayOptionValue.c_str()));
                 break;
             }
             case napi_boolean: {
                 bool displayOptionValue = false;
                 NAPI_CALL(env, napi_get_value_bool(env, elementValue, &displayOptionValue));
                 ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "napi_boolean key is : %{public}s ", strName.c_str());
-                root[strName] = displayOptionValue;
+                cJSON_AddItemToObject(root, strName.c_str(), cJSON_CreateBool(displayOptionValue));
                 break;
             }
             case napi_number: {
@@ -350,7 +347,7 @@ napi_value RemoveAlreadyParsedProperties(const napi_env &env, napi_value &argv,
     return NapiGetNull(env);
 }
 
-napi_value ParseAdvertismentByAd(napi_env &env, napi_value &argv, Advertisment &advertisment, Json::Value &root)
+napi_value ParseAdvertismentByAd(napi_env &env, napi_value &argv, Advertisment &advertisment, cJSON *root)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseAdvertismentByAd enter");
     napi_valuetype valuetype;
@@ -392,16 +389,16 @@ napi_value ParseAdvertismentByAd(napi_env &env, napi_value &argv, Advertisment &
     return NapiGetNull(env);
 }
 
-void AssembShowAdParas(Want &want, const Advertisment &advertisment, Json::Value &root)
+void AssembShowAdParas(Want &want, const Advertisment &advertisment, cJSON *root)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "AssembShowAdParas enter");
-    root[AD_RESPONSE_AD_TYPE] = advertisment.adType;
-    root[AD_RESPONSE_REWARD_CONFIG] = {{}, {}};
-    root[AD_RESPONSE_UNIQUE_ID] = advertisment.uniqueId;
-    root[AD_RESPONSE_REWARDED] = advertisment.rewarded;
-    root[AD_RESPONSE_SHOWN] = advertisment.shown;
-    root[AD_RESPONSE_CLICKED] = advertisment.clicked;
-    std::string advertismentString = Json::FastWriter().write(root);
+    cJSON_AddItemToObject(root, AD_RESPONSE_AD_TYPE.c_str(), cJSON_CreateNumber(advertisment.adType));
+    cJSON_AddItemToObject(root, AD_RESPONSE_REWARD_CONFIG.c_str(), nullptr);
+    cJSON_AddItemToObject(root, AD_RESPONSE_UNIQUE_ID.c_str(), cJSON_CreateString(advertisment.uniqueId.c_str()));
+    cJSON_AddItemToObject(root, AD_RESPONSE_REWARDED.c_str(), cJSON_CreateBool(advertisment.rewarded));
+    cJSON_AddItemToObject(root, AD_RESPONSE_SHOWN.c_str(), cJSON_CreateBool(advertisment.shown));
+    cJSON_AddItemToObject(root, AD_RESPONSE_CLICKED.c_str(), cJSON_CreateBool(advertisment.clicked));
+    std::string advertismentString = AdJsonUtil::ToString(root);
     want.SetParam(AD_ADVERTISMENT, advertismentString);
 }
 
@@ -414,23 +411,27 @@ napi_value Advertising::ShowAd(napi_env env, napi_callback_info info)
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "wrong number of showad arguments");
         return NapiGetNull(env);
     }
-    Json::Value adDisplayOptionsRoot;
+    cJSON *adDisplayOptionsRoot = cJSON_CreateObject();
     if (ParseObjectFromJs(env, argv[1], adDisplayOptionsRoot) == nullptr) { // 2 params
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseDisplayOptionsByShowAd failed");
         return NapiGetNull(env);
     }
-    std::string displayOptionsString =
-        adDisplayOptionsRoot.empty() ? DEFAULT_JSON_STR : Json::FastWriter().write(adDisplayOptionsRoot);
+    std::string displayOptionsString = DEFAULT_JSON_STR;
+    if (adDisplayOptionsRoot->child != nullptr) {
+        displayOptionsString = AdJsonUtil::ToString(adDisplayOptionsRoot);
+    }
+    cJSON_Delete(adDisplayOptionsRoot);
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "enter show ad display is %{public}s", displayOptionsString.c_str());
     Want want;
     Advertisment advertisment;
-    Json::Value adRoot;
+    cJSON *adRoot = cJSON_CreateObject();
     if (ParseAdvertismentByAd(env, argv[0], advertisment, adRoot) == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseAdvertismentByAd failed");
         return NapiGetNull(env);
     }
     // assemble
     AssembShowAdParas(want, advertisment, adRoot);
+    cJSON_Delete(adRoot);
     CloudServiceProvider cloudServiceProvider;
     GetCloudServiceProvider(cloudServiceProvider);
     std::string bundleName = cloudServiceProvider.bundleName;
@@ -495,24 +496,29 @@ napi_value ParseContextForLoadAd(napi_env env, napi_callback_info info, Advertis
     napi_value thisVar = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
     // argv[0]
-    Json::Value requestRoot;
+    cJSON *requestRoot = cJSON_CreateObject();
     if (ParseObjectFromJs(env, argv[0], requestRoot) == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseAdRequestByLoadAd failed");
         return NapiGetNull(env);
     }
-    std::string requestRootString = Json::FastWriter().write(requestRoot);
-    requestRoot["oaid"] = "********-****-****-************";
-    std::string requestParam = Json::FastWriter().write(requestRoot);
+    std::string requestRootString = AdJsonUtil::ToString(requestRoot);
+    cJSON_ReplaceItemInObject(requestRoot, "oaid", cJSON_CreateString("********-****-****-************"));
+    std::string requestParam = AdJsonUtil::ToString(requestRoot);
     ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{public}s", requestParam.c_str());
+    cJSON_Delete(requestRoot);
     context->requestString = requestRootString;
     // argv[1]
-    Json::Value optionRoot;
+    cJSON *optionRoot = cJSON_CreateObject();
     if (ParseObjectFromJs(env, argv[1], optionRoot) == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseAdOptionsByLoadAd failed");
         return NapiGetNull(env);
     }
-    std::string optionRootString = optionRoot.empty() ? DEFAULT_JSON_STR : Json::FastWriter().write(optionRoot);
+    std::string optionRootString = DEFAULT_JSON_STR;
+    if (optionRoot->child != nullptr) {
+        optionRootString = AdJsonUtil::ToString(optionRoot);
+    }
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "optionRootString is: %{public}s", optionRootString.c_str());
+    cJSON_Delete(optionRoot);
     context->optionString = optionRootString;
     // argv[2]
     AdJSCallback callback;
@@ -555,7 +561,7 @@ napi_value Advertising::LoadAd(napi_env env, napi_callback_info info)
     return NapiGetNull(env);
 }
 
-bool GetAdsArray(napi_env env, napi_value argv, Json::Value &root)
+bool GetAdsArray(napi_env env, napi_value argv, cJSON *root)
 {
     bool isArray = false;
     NAPI_CALL_BASE(env, napi_is_array(env, argv, &isArray), false);
@@ -571,12 +577,18 @@ bool GetAdsArray(napi_env env, napi_value argv, Json::Value &root)
     for (size_t i = 0; i < length; i++) {
         napi_value adParam = nullptr;
         NAPI_CALL_BASE(env, napi_get_element(env, argv, i, &adParam), false);
-        Json::Value singleRoot;
+        cJSON *singleRoot = cJSON_CreateObject();
         if (ParseObjectFromJs(env, adParam, singleRoot) == nullptr) {
+            cJSON_Delete(singleRoot);
             ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "multi slots parse single ad failed");
             return false;
         }
-        root[static_cast<int>(i)] = singleRoot;
+        if (!cJSON_AddItemToArray(root, singleRoot)) {
+            cJSON_Delete(singleRoot);
+            ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "add singleRoot to root failed");
+            return false;
+        }
+        cJSON_Delete(singleRoot);
     }
     return true;
 }
@@ -588,29 +600,32 @@ napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info, Mult
     napi_value thisVar = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
     // argv[0]
-    Json::Value requestRoot;
+    cJSON *requestRoot = cJSON_CreateArray();
     if (!GetAdsArray(env, argv[0], requestRoot)) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "GetAdsArray failed");
         return NapiGetNull(env);
     }
-    std::string requestRootString = Json::FastWriter().write(requestRoot);
-    uint32_t length = 0;
-    NAPI_CALL(env, napi_get_array_length(env, argv[0], &length));
-    for (size_t i = 0; i < length; i++) {
-        Json::Value singleRoot = requestRoot[static_cast<int>(i)];
-        singleRoot["oaid"] = "********-****-****-************";
-        requestRoot[static_cast<int>(i)] = singleRoot;
+    std::string requestRootString = AdJsonUtil::ToString(requestRoot);
+    int size = cJSON_GetArraySize(requestRoot);
+    for (int i = 0; i < size; i++) {
+        cJSON *item = cJSON_GetArrayItem(requestRoot, i);
+        cJSON_ReplaceItemInObject(item, "oaid", cJSON_CreateString("********-****-****-************"));
     }
-    std::string requestParam = Json::FastWriter().write(requestRoot);
+    std::string requestParam = AdJsonUtil::ToString(requestRoot);
     ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{public}s", requestParam.c_str());
+    cJSON_Delete(requestRoot);
     context->mulitRequestString = requestRootString;
     // argv[1]
-    Json::Value optionRoot;
+    cJSON *optionRoot = cJSON_CreateObject();
     if (ParseObjectFromJs(env, argv[1], optionRoot) == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "parse multi ad option failed");
         return NapiGetNull(env);
     }
-    std::string optionRootString = optionRoot.empty() ? DEFAULT_JSON_STR : Json::FastWriter().write(optionRoot);
+    std::string optionRootString = DEFAULT_JSON_STR;
+    if (optionRoot->child != nullptr) {
+        optionRootString = AdJsonUtil::ToString(optionRoot);
+    }
+    cJSON_Delete(optionRoot);
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "optionRootString is: %{public}s", optionRootString.c_str());
     context->mulitOptionString = optionRootString;
     //  argv[2]

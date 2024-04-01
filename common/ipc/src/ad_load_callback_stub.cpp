@@ -18,10 +18,11 @@
 #include <map>
 
 #include "want.h"
-#include "json/json.h"
+#include "cJSON.h"
 #include "ad_constant.h"
 #include "ad_hilog_wreapper.h"
 #include "ad_inner_error_code.h"
+#include "ad_json_util.h"
 #include "ad_load_callback_stub.h"
 
 namespace OHOS {
@@ -38,69 +39,75 @@ inline std::string Str16ToStr8(const std::u16string &str)
     return result;
 }
 
-void CommonParse(AAFwk::Want &want, Json::Value &root)
+void CommonParse(AAFwk::Want &want, cJSON *item)
 {
-    Json::Value::Members members = root.getMemberNames();
-    for (auto iter = members.begin(); iter != members.end(); iter++) {
-        auto member = root[*iter];
-        auto key = std::string(*iter);
-        switch (member.type()) {
-            case Json::intValue:
-                want.SetParam(key, member.asInt());
-                break;
-            case Json::stringValue:
-                want.SetParam(key, member.asString());
-                break;
-            case Json::booleanValue:
-                want.SetParam(key, member.asBool());
-                break;
-            default:
-                std::string defaultValue = Json::FastWriter().write(member);
-                want.SetParam(key, defaultValue);
-                break;
+    cJSON *node = nullptr;
+    cJSON_ArrayForEach(node, item)
+    {
+        if (node == nullptr || node->string == nullptr) {
+            continue;
+        }
+        if (cJSON_IsNumber(node)) {
+            want.SetParam(node->string, node->valueint);
+        } else if (cJSON_IsString(node)) {
+            std::string stringValue = node->valuestring;
+            want.SetParam(node->string, stringValue);
+        } else if (cJSON_IsBool(node)) {
+            bool boolValue = cJSON_IsTrue(node);
+            want.SetParam(node->string, boolValue);
+        } else {
+            std::string defaultValue = AdJsonUtil::ToString(node);
+            want.SetParam(node->string, defaultValue);
         }
     }
 }
 
-inline void ParseSingleAd(std::vector<AAFwk::Want> &ads, Json::Value &root)
+inline void ParseSingleAd(std::vector<AAFwk::Want> &ads, cJSON *item)
 {
     AAFwk::Want want;
-    CommonParse(want, root);
+    CommonParse(want, item);
     ads.emplace_back(want);
 }
 
 void ParseAdArray(std::string adsString, std::vector<AAFwk::Want> &ads)
 {
-    Json::Reader reader;
-    Json::Value root;
-    if (reader.parse(adsString, root)) {
-        if (root.type() == Json::arrayValue) {
-            uint32_t size = root.size();
-            ADS_HILOGW(OHOS::Cloud::ADS_MODULE_COMMON, "ads size is: %{public}u.", size);
-            for (uint32_t i = 0; i < size; i++) {
-                ParseSingleAd(ads, root[i]);
-            }
+    cJSON *root = cJSON_Parse(adsString.c_str());
+    if (!AdJsonUtil::IsValid(root)) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_COMMON, "parse kit return ad array failed");
+        return;
+    }
+    if (cJSON_IsArray(root)) {
+        int size = cJSON_GetArraySize(root);
+        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_COMMON, "ads size is: %{public}d.", size);
+        for (int i = 0; i < size; i++) {
+            cJSON *item = cJSON_GetArrayItem(root, i);
+            ParseSingleAd(ads, item);
         }
     }
+    cJSON_Delete(root);
 }
 
 void ParseAdMap(std::string adsString, std::map<std::string, std::vector<AAFwk::Want>> &ads)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_COMMON, "multi solts kit return enter");
-    Json::Reader reader;
-    Json::Value root;
-    bool parseResult = reader.parse(adsString, root);
-    if (!parseResult) {
-        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_COMMON, "parse ad map result is = %{public}d", parseResult);
+    cJSON *root = cJSON_Parse(adsString.c_str());
+    if (!AdJsonUtil::IsValid(root)) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_COMMON, "parse kit return ad map failed");
         return;
     }
-    for (Json::ValueIterator itr = root.begin(); itr != root.end(); itr++) {
-        std::string key = itr.key().asString();
+    cJSON *item = nullptr;
+    cJSON_ArrayForEach(item, root)
+    {
+        if (item == nullptr || item->string == nullptr) {
+            continue;
+        }
+        std::string key = item->string;
         std::vector<AAFwk::Want> want;
-        std::string value = Json::FastWriter().write(*itr);
+        std::string value = AdJsonUtil::ToString(item);
         ParseAdArray(value, want);
         ads[key] = want;
     }
+    cJSON_Delete(root);
 }
 
 int AdLoadCallbackStub::OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)

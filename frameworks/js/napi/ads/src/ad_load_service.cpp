@@ -14,7 +14,7 @@
  */
 
 #include <fstream>
-#include "json/json.h"
+#include "cJSON.h"
 #include "want.h"
 #include "want_params.h"
 #include "want_params_wrapper.h"
@@ -91,27 +91,27 @@ void AdLoadService::GetAdServiceElement(AdServiceElementName &adServiceElementNa
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Parse realpath fail");
         return;
     }
-    std::ifstream ifs;
-    ifs.open(realPath);
-    if (!ifs) {
+    std::ifstream inFile(realPath, std::ios::in);
+    if (!inFile.is_open()) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Open file error.");
         return;
     }
-    Json::Value jsonValue;
-    Json::CharReaderBuilder builder;
-    builder["collectComments"] = true;
-    JSONCPP_STRING errs;
-    if (!parseFromStream(builder, ifs, &jsonValue, &errs)) {
-        ifs.close();
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Read file failed %{public}s.", errs.c_str());
+    std::string fileContent((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+    cJSON *root = cJSON_Parse(fileContent.c_str());
+    if (root == nullptr) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseJsonFromFile failed.");
+        inFile.close();
         return;
     }
-    Json::Value cloudServiceBundleName = jsonValue["providerBundleName"];
-    Json::Value cloudServiceAbilityName = jsonValue["providerAbilityName"];
-    adServiceElementName.bundleName = cloudServiceBundleName[0].asString();
-    adServiceElementName.extensionName = cloudServiceAbilityName[0].asString();
+    cJSON *cloudServiceBundleName = cJSON_GetObjectItem(root, "providerBundleName");
+    cJSON *cloudServiceAbilityName = cJSON_GetObjectItem(root, "providerAbilityName");
+    if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName)) {
+        adServiceElementName.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
+        adServiceElementName.extensionName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
+    }
     adServiceElementName.userId = Cloud::USER_ID;
-    ifs.close();
+    inFile.close();
+    cJSON_Delete(root);
 }
 
 ErrCode AdLoadService::LoadAd(const std::string &request, const std::string &options,

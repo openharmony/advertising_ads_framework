@@ -27,6 +27,7 @@
           "ability_base",
           "ability_runtime",
           "bundle_framework",
+          "cJSON",
           "c_utils",
           "config_policy",
           "ipc",
@@ -36,7 +37,6 @@
           "samgr"
         ],
         "third_party": [
-          "jsoncpp",
           "libuv"
         ]
       },
