@@ -48,7 +48,6 @@ const std::string AD_LOADER_CLASS_NAME = "AdLoader";
 const std::string DEFAULT_JSON_STR = "{}";
 thread_local napi_ref Advertising::adRef_ = nullptr;
 static const int32_t STR_MAX_SIZE = 256;
-static const int32_t INTERSTITIAL_AD_TYPE = 12;
 static const int32_t CUSTOM_DATA_MAX_SIZE = 1024 * 1024; // 1M
 
 napi_value NapiGetNull(napi_env env)
@@ -461,7 +460,7 @@ bool GetContextFromJs(napi_env env, napi_value obj,
 }
 
 void DispatchShowAdHandler(napi_env env, napi_value &obj, Want &want,
-    const CloudServiceProvider &cloudServiceProvider, const Advertisment &advertisment)
+    const CloudServiceProvider &cloudServiceProvider, const cJSON *root)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "start DispatchShowAdHandler.");
     std::string bundleName = cloudServiceProvider.bundleName;
@@ -469,8 +468,9 @@ void DispatchShowAdHandler(napi_env env, napi_value &obj, Want &want,
     if (invokeBundleName.empty()) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get current bundlename failed");
     }
-    if (advertisment.adType == INTERSTITIAL_AD_TYPE) {
-        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "interstitial ad.");
+    cJSON* isModalWindow = cJSON_GetObjectItem(root, "isModalWindow");
+    if (isModalWindow != NULL && isModalWindow->type == cJSON_True) {
+        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "is modal window ad.");
         if (obj == nullptr) {
             ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "wrong number of showad arguments");
             return;
@@ -487,7 +487,7 @@ void DispatchShowAdHandler(napi_env env, napi_value &obj, Want &want,
         want.SetParam(AD_UI_EXTENSION_TYPE_KEY, AD_UI_EXTENSION_TYPE_VALUE);
         StartUIExtensionAbility(want, abilityContext);
     } else {
-        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "reward ad.");
+        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "is not modal window ad.");
         std::string abilityName = cloudServiceProvider.uiAbilityName;
         want.SetElementName(bundleName, abilityName);
         want.SetParam(FULL_SCREEN_SHOW_ONCE_KEY, invokeBundleName);
@@ -517,7 +517,6 @@ napi_value Advertising::ShowAd(napi_env env, napi_callback_info info)
     if (adDisplayOptionsRoot->child != nullptr) {
         displayOptionsString = AdJsonUtil::ToString(adDisplayOptionsRoot);
     }
-    cJSON_Delete(adDisplayOptionsRoot);
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "enter show ad display is %{public}s", displayOptionsString.c_str());
     Want want;
     Advertisment advertisment;
@@ -532,7 +531,8 @@ napi_value Advertising::ShowAd(napi_env env, napi_callback_info info)
     CloudServiceProvider cloudServiceProvider;
     GetCloudServiceProvider(cloudServiceProvider);
     want.SetParam(AD_DISPLAY_OPTIONS, displayOptionsString);
-    DispatchShowAdHandler(env, argv[CONTEXT_INDEX], want, cloudServiceProvider, advertisment);
+    DispatchShowAdHandler(env, argv[CONTEXT_INDEX], want, cloudServiceProvider, adDisplayOptionsRoot);
+    cJSON_Delete(adDisplayOptionsRoot);
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "end ShowAd");
     return NapiGetNull(env);
 }
