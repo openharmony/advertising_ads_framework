@@ -26,6 +26,7 @@
         "components": [
           "ability_base",
           "ability_runtime",
+          "ace_engine",
           "bundle_framework",
           "cJSON",
           "c_utils",

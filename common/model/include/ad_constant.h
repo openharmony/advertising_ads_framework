@@ -118,6 +118,12 @@ static const std::string FULL_SCREEN_SHOW_ONCE_KEY = "instanceKey";
 
 // Advertisement
 static const std::string AD_ADVERTISMENT = "Advertisement";
+
+static const std::string AD_BUNDLE_NAME = "bundleName";
+
+static const std::string AD_UI_EXTENSION_TYPE_KEY = "ability.want.params.uiExtensionType";
+
+static const std::string AD_UI_EXTENSION_TYPE_VALUE = "ads";
 } // namespace Cloud
 } // namespace OHOS
 #endif // OHOS_CLOUD_ADS_INIT_DEFINE_H

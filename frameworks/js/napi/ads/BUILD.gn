@@ -13,6 +13,7 @@
 
 import("//arkcompiler/ets_frontend/es2panda/es2abc_config.gni")
 import("//build/ohos.gni")
+import("//build/ohos/ace/ace.gni")
 import("//domains/advertising/advertising/advertising.gni")
 
 es2abc_gen_abc("gen_advertising_abc") {
@@ -88,8 +89,11 @@ ohos_shared_library("advertising") {
   ]
 
   external_deps = [
+    "ability_runtime:ability_context_native",
     "ability_runtime:ability_manager",
     "ability_runtime:abilitykit_native",
+    "ability_runtime:napi_base_context",
+    "ace_engine:ace_uicontent",
     "bundle_framework:appexecfwk_core",
     "cJSON:cjson",
     "c_utils:utils",
