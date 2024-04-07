@@ -674,7 +674,6 @@ bool GetAdsArray(napi_env env, napi_value argv, cJSON *root)
             ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "add singleRoot to root failed");
             return false;
         }
-        cJSON_Delete(singleRoot);
     }
     return true;
 }
@@ -692,13 +691,7 @@ napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info, Mult
         return NapiGetNull(env);
     }
     std::string requestRootString = AdJsonUtil::ToString(requestRoot);
-    int size = cJSON_GetArraySize(requestRoot);
-    for (int i = 0; i < size; i++) {
-        cJSON *item = cJSON_GetArrayItem(requestRoot, i);
-        cJSON_ReplaceItemInObject(item, "oaid", cJSON_CreateString("********-****-****-************"));
-    }
-    std::string requestParam = AdJsonUtil::ToString(requestRoot);
-    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{public}s", requestParam.c_str());
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{public}s", requestRootString.c_str());
     cJSON_Delete(requestRoot);
     context->mulitRequestString = requestRootString;
     // argv[1]
