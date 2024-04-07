@@ -47,17 +47,26 @@ void CommonParse(AAFwk::Want &want, cJSON *item)
         if (node == nullptr || node->string == nullptr) {
             continue;
         }
-        if (cJSON_IsNumber(node)) {
-            want.SetParam(node->string, node->valueint);
-        } else if (cJSON_IsString(node)) {
-            std::string stringValue = node->valuestring;
-            want.SetParam(node->string, stringValue);
-        } else if (cJSON_IsBool(node)) {
-            bool boolValue = cJSON_IsTrue(node);
-            want.SetParam(node->string, boolValue);
-        } else {
-            std::string defaultValue = AdJsonUtil::ToString(node);
-            want.SetParam(node->string, defaultValue);
+        std::string valuestring;
+        bool boolValue;
+        std::string defaultValue;
+        switch (node->type) {
+            case cJSON_Number:
+                want.SetParam(node->string, node->valueint);
+                break;
+            case cJSON_String:
+                valuestring = node->valuestring;
+                want.SetParam(node->string, valuestring);
+                break;
+            case cJSON_True:
+            case cJSON_False:
+                boolValue = cJSON_IsTrue(node);
+                want.SetParam(node->string, boolValue);
+                break;
+            default:
+                defaultValue = AdJsonUtil::ToString(node);
+                want.SetParam(node->string, defaultValue);
+                break;
         }
     }
 }
