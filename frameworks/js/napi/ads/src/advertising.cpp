@@ -76,16 +76,9 @@ std::string GetStringFromValueUtf8(napi_env env, napi_value value)
     return result;
 }
 
-void GetCloudServiceProvider(CloudServiceProvider &cloudServiceProvider)
+void GetAdConfigItem(const char *path, CloudServiceProvider &cloudServiceProvider)
 {
-    char pathBuff[MAX_PATH_LEN];
-    GetOneCfgFile(DEPENDENCY_CONFIG_FILE_RELATIVE_PATH.c_str(), pathBuff, MAX_PATH_LEN);
-    char realPath[PATH_MAX];
-    if (realpath(pathBuff, realPath) == nullptr) {
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Parse realpath fail");
-        return;
-    }
-    std::ifstream inFile(realPath, std::ios::in);
+    std::ifstream inFile(path, std::ios::in);
     if (!inFile.is_open()) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Open file error.");
         return;
@@ -115,6 +108,24 @@ void GetCloudServiceProvider(CloudServiceProvider &cloudServiceProvider)
         "%{public}s, ueaAbility is %{public}s",
         cloudServiceProvider.bundleName.c_str(), cloudServiceProvider.abilityName.c_str(),
         cloudServiceProvider.uiAbilityName.c_str(), cloudServiceProvider.ueaAbilityName.c_str());
+}
+
+void GetCloudServiceProvider(CloudServiceProvider &cloudServiceProvider)
+{
+    char pathBuff[MAX_PATH_LEN];
+    GetOneCfgFile(DEPENDENCY_CONFIG_FILE_EXT.c_str(), pathBuff, MAX_PATH_LEN);
+    char realPath[PATH_MAX];
+    if (realpath(pathBuff, realPath) == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get ext config fail, enter config");
+        GetOneCfgFile(Cloud::DEPENDENCY_CONFIG_FILE_RELATIVE_PATH.c_str(), pathBuff, MAX_PATH_LEN);
+        if (realpath(pathBuff, realPath) == nullptr) {
+            ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get config fail, return");
+            return;
+        }
+        GetAdConfigItem(realPath, cloudServiceProvider);
+    } else {
+        GetAdConfigItem(realPath, cloudServiceProvider);
+    }
 }
 
 napi_value GetLongStringProperty(const napi_env &env, napi_value &value, const std::string &key,

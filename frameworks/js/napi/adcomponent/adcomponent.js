@@ -64,29 +64,33 @@ class AdComponent extends ViewPU {
 
   getConfigJsonData() {
     let e = null;
-    configPolicy.getOneCfgFile('etc/advertising/ads_framework/ad_service_config.json', ((t, o) => {
-      if (null == t) {
-        hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'value is ' + o);
-        try {
-          const t = fs.openSync(o);
-          const i = new ArrayBuffer(READ_FILE_BUFFER_SIZE);
-          let s = fs.readSync(t.fd, i);
-          fs.closeSync(t);
-          let n = String.fromCharCode(...new Uint8Array(i.slice(0, s)));
-          n = n.replace(/[\r\n\t\"]/g, '').replace(/\s*/g, '').replace(/\[|\]/g, '');
-          e = this.toMap(n);
-          hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'file succeed');
-          e || hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'get config json failed');
-          this.setWant(e);
-        } catch (t) {
-          hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `open file failed with error:${t.code}, message:${t.message}`);
-          this.setWant(e);
-        }
-      } else {
-        hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'error occurs ' + t);
+    let o = null;
+    o = configPolicy.getOneCfgFileSync('etc/advertising/ads_framework/ad_service_config_ext.json');
+    if(o === null || o === "") {
+      hilog.warn(HILOG_DOMAIN_CODE, 'AdComponent', 'get ext config fail');
+      o = configPolicy.getOneCfgFileSync('etc/advertising/ads_framework/ad_service_config.json');
+      if(o === null || o === "") {
+        hilog.warn(HILOG_DOMAIN_CODE, 'AdComponent', 'get config fail');
         this.setWant(e);
+        return;
       }
-    }));
+    }
+    hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'value is ' + o);
+    try {
+      const t = fs.openSync(o);
+      const i = new ArrayBuffer(READ_FILE_BUFFER_SIZE);
+      let s = fs.readSync(t.fd, i);
+      fs.closeSync(t);
+      let n = String.fromCharCode(...new Uint8Array(i.slice(0, s)));
+      n = n.replace(/[\r\n\t\"]/g, '').replace(/\s*/g, '').replace(/\[|\]/g, '');
+      e = this.toMap(n);
+      hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'file succeed');
+      e || hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'get config json failed');
+      this.setWant(e);
+    } catch (t) {
+      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `open file failed with error:${t.code}, message:${t.message}`);
+      this.setWant(e);
+    }
   }
 
   setWant(e) {

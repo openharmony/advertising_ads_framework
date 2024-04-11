@@ -105,30 +105,34 @@ class AutoAdComponent extends ViewPU {
   
   getConfigJsonData() {
     let t = null;
-    configPolicy.getOneCfgFile('etc/advertising/ads_framework/ad_service_config.json', ((o, i) => {
-      if (null == o) {
-        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'value is ' + i);
-        try {
-          const o = fs.openSync(i);
-          const e = new ArrayBuffer(READ_FILE_BUFFER_SIZE);
-          let s = fs.readSync(o.fd, e);
-          fs.closeSync(o);
-          let n = String.fromCharCode(...new Uint8Array(e.slice(0, s)));
-          n = n.replace(/[\r\n\t\"]/g, '').replace(/\s*/g, '').replace(/\[|\]/g, '');
-          t = this.toMap(n);
-          hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'file succeed');
-          t || hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'get config json failed');
-          this.setWant(t);
-        } catch (o) {
-          hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent',
-            `open file failed with error:${o.code}, message:${o.message}`);
-          this.setWant(t);
-        }
-      } else {
-        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'error occurs ' + o);
+    let i = null;
+    i = configPolicy.getOneCfgFileSync('etc/advertising/ads_framework/ad_service_config_ext.json');
+    if(i === null || i === "") {
+      hilog.warn(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'get ext config fail');
+      i = configPolicy.getOneCfgFileSync('etc/advertising/ads_framework/ad_service_config.json');
+      if(i === null || i === "") {
+        hilog.warn(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'get config fail');
         this.setWant(t);
+        return;
       }
-    }));
+    }
+    hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'value is ' + i);
+    try {
+      const o = fs.openSync(i);
+      const e = new ArrayBuffer(READ_FILE_BUFFER_SIZE);
+      let s = fs.readSync(o.fd, e);
+      fs.closeSync(o);
+      let n = String.fromCharCode(...new Uint8Array(e.slice(0, s)));
+      n = n.replace(/[\r\n\t\"]/g, '').replace(/\s*/g, '').replace(/\[|\]/g, '');
+      t = this.toMap(n);
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'file succeed');
+      t || hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'get config json failed');
+      this.setWant(t);
+    } catch (o) {
+      hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent',
+        `open file failed with error:${o.code}, message:${o.message}`);
+      this.setWant(t);
+    }
   }
   
   setWant(t) {
