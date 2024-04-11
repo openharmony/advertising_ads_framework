@@ -85,33 +85,19 @@ sptr<AdLoadService> AdLoadService::GetInstance()
 void AdLoadService::GetAdServiceElement(AdServiceElementName &adServiceElementName)
 {
     char pathBuff[MAX_PATH_LEN];
-    GetOneCfgFile(Cloud::DEPENDENCY_CONFIG_FILE_RELATIVE_PATH.c_str(), pathBuff, MAX_PATH_LEN);
+    GetOneCfgFile(Cloud::DEPENDENCY_CONFIG_FILE_EXT.c_str(), pathBuff, MAX_PATH_LEN);
     char realPath[PATH_MAX];
     if (realpath(pathBuff, realPath) == nullptr) {
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Parse realpath fail");
-        return;
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get ext config fail, enter config");
+        GetOneCfgFile(Cloud::DEPENDENCY_CONFIG_FILE_RELATIVE_PATH.c_str(), pathBuff, MAX_PATH_LEN);
+        if (realpath(pathBuff, realPath) == nullptr) {
+            ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get config fail, return");
+            return;
+        }
+        GetConfigItem(realPath, adServiceElementName);
+    } else {
+        GetConfigItem(realPath, adServiceElementName);
     }
-    std::ifstream inFile(realPath, std::ios::in);
-    if (!inFile.is_open()) {
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Open file error.");
-        return;
-    }
-    std::string fileContent((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
-    cJSON *root = cJSON_Parse(fileContent.c_str());
-    if (root == nullptr) {
-        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseJsonFromFile failed.");
-        inFile.close();
-        return;
-    }
-    cJSON *cloudServiceBundleName = cJSON_GetObjectItem(root, "providerBundleName");
-    cJSON *cloudServiceAbilityName = cJSON_GetObjectItem(root, "providerAbilityName");
-    if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName)) {
-        adServiceElementName.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
-        adServiceElementName.extensionName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
-    }
-    adServiceElementName.userId = Cloud::USER_ID;
-    inFile.close();
-    cJSON_Delete(root);
 }
 
 ErrCode AdLoadService::LoadAd(const std::string &request, const std::string &options,
@@ -134,6 +120,31 @@ ErrCode AdLoadService::LoadAd(const std::string &request, const std::string &opt
         return Cloud::ERR_AD_COMMON_AD_CONNECT_KIT_ERROR;
     }
     return ERR_OK;
+}
+
+void AdLoadService::GetConfigItem(const char *path, AdServiceElementName &adServiceElementName)
+{
+    std::ifstream inFile(path, std::ios::in);
+    if (!inFile.is_open()) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Open file error.");
+        return;
+    }
+    std::string fileContent((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+    cJSON *root = cJSON_Parse(fileContent.c_str());
+    if (root == nullptr) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseJsonFromFile failed.");
+        inFile.close();
+        return;
+    }
+    cJSON *cloudServiceBundleName = cJSON_GetObjectItem(root, "providerBundleName");
+    cJSON *cloudServiceAbilityName = cJSON_GetObjectItem(root, "providerAbilityName");
+    if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName)) {
+        adServiceElementName.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
+        adServiceElementName.extensionName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
+    }
+    adServiceElementName.userId = Cloud::USER_ID;
+    inFile.close();
+    cJSON_Delete(root);
 }
 
 bool AdLoadService::ConnectAdKit(const sptr<Cloud::AdRequestData> &data, const sptr<Cloud::IAdLoadCallback> &callback,

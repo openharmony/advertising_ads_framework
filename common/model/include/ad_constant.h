@@ -38,6 +38,9 @@ static const int32_t USER_ID = 100;
 // config
 static const std::string DEPENDENCY_CONFIG_FILE_RELATIVE_PATH = "etc/advertising/ads_framework/ad_service_config.json";
 
+// config_ext
+static const std::string DEPENDENCY_CONFIG_FILE_EXT = "etc/advertising/ads_framework/ad_service_config_ext.json";
+
 // AdRequestParams-adId
 static const std::string AD_REQUEST_PARAM_ID = "adId";
 
