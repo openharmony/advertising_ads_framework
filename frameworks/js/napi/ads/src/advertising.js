@@ -57,14 +57,14 @@ function onAdLoadSuccessProxy(callBackListener) {
 }
 
 function getConfigJsonData() {
-  try {
-    let map = null;
-    let path = "";
+  let map = null;
+  let path = '';
+  try {  
     path = configPolicy.getOneCfgFileSync(ADS_SERVICE_CONFIG_EXT_FILE);
-    if (path === null || path === "") {
+    if (path === null || path === '') {
       hilog.warn(HILOG_DOMAIN_CODE, 'advertising', 'get ext config file failed');
       path = configPolicy.getOneCfgFileSync(ADS_SERVICE_CONFIG_FILE);
-      if (path === null || path === "") {
+      if (path === null || path === '') {
         hilog.warn(HILOG_DOMAIN_CODE, 'advertising', 'get config file failed');
         return map;
       }
@@ -75,7 +75,7 @@ function getConfigJsonData() {
     let readLen = fs.readSync(file.fd, buf);
     fs.closeSync(file);
     let fileContent = String.fromCharCode(...new Uint8Array(buf.slice(0, readLen)));
-    fileContent = fileContent.replace(/[\r\n\t\"]/g, "").replace(/\s*/g, "").replace(/\[|\]/g, "");
+    fileContent = fileContent.replace(/[\r\n\t\"]/g, '').replace(/\s*/g, '').replace(/\[|\]/g, '');
     hilog.info(HILOG_DOMAIN_CODE, 'advertising', `read file succeed`);
     map = toMap(fileContent);
     if (!map) {
@@ -85,15 +85,16 @@ function getConfigJsonData() {
   } catch (e) {
     hilog.error(HILOG_DOMAIN_CODE, 'advertising', `get config error, code:${e.code}, message:${e.message}`);
   }
+  return map;
 }
 
 function toMap(str) {
-  str = str.replace(/[{}]/g, "");
+  str = str.replace(/[{}]/g, '');
   const arr = str.split(',');
   const map = {};
   for (let index = 0; index < arr.length; index++) {
     const item = arr[index];
-    const i = item.indexOf(':')
+    const i = item.indexOf(':');
     if (i > -1) {
       const key = item.substring(0, i);
       const value = item.substring(i + 1);
@@ -133,7 +134,7 @@ class AdsJsBridge {
 
   invokeAsync(method, arg, callback) {
     hilog.info(HILOG_DOMAIN_CODE, 'advertising', `invokeAsync enter`);
-    if (method === null || arg === null || callback === null || (typeof callback !== "function")) {
+    if (method === null || arg === null || callback === null || (typeof callback !== 'function')) {
       hilog.error(HILOG_DOMAIN_CODE, 'advertising', `invokeAsync parameter error`);
       return;
     }
@@ -156,7 +157,7 @@ class AdsJsBridge {
             .finally(() => {
               data.reclaim();
               reply.reclaim();
-            })
+            });
         } catch (e) {
           hilog.error(HILOG_DOMAIN_CODE, 'advertising', `onConnect error, code:${e.code}, message:${e.message}`);
         }
@@ -165,7 +166,7 @@ class AdsJsBridge {
       },
       onFailed() {
       }
-    }
+    };
 
     try {
       const map = getConfigJsonData();
@@ -179,7 +180,7 @@ class AdsJsBridge {
       const want = {
         bundleName: bundleName,
         abilityName: abilityName
-      }
+      };
 
       this.context.connectServiceExtensionAbility(want, options);
     } catch (e) {
@@ -200,7 +201,7 @@ function registerWebAdInterface(controller, context) {
   }
   try {
     const adsJsBridge = new AdsJsBridge(context);
-    controller.registerJavaScriptProxy(adsJsBridge, "_OHAdsJsBridge", ["invokeAsync"]);
+    controller.registerJavaScriptProxy(adsJsBridge, '_OHAdsJsBridge', ['invokeAsync']);
     controller.refresh(); 
   } catch (e) {
     hilog.error(HILOG_DOMAIN_CODE, 'advertising', `registerWebAdInterface error, code:${e.code}, message:${e.message}`);
