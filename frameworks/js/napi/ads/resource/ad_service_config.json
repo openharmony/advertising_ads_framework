@@ -6,5 +6,7 @@
     "_comment3":"page name displaying full screen ads, such as rewarded ads",
     "providerUIAbilityName": ["FullScreenAdAbility"],
     "_comment4":"page name displaying native ads",
-    "providerUEAAbilityName": ["AdsUIExtensionAbility"]
+    "providerUEAAbilityName": ["AdsUIExtensionAbility"],
+    "_comment5":"js brigde ability",
+    "providerJSAbilityName": ["JsBridgeService"]
 }
