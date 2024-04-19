@@ -66,7 +66,6 @@ ohos_shared_library("advertising") {
     cfi = true
     cfi_cross_dso = true
     debug = false
-    blocklist = "../../../../cfi_blocklist.txt"
     boundary_sanitize = true
     integer_overflow = true
     ubsan = true
