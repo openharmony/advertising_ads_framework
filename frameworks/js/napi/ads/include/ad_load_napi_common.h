@@ -22,6 +22,7 @@
 #include <uv.h>
 #include <string>
 #include "ad_load_callback_stub.h"
+#include "ad_request_body_stub.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi/native_common.h"
@@ -41,8 +42,10 @@ struct AdJSCallback {
 
 struct AdCallbackParam {
     napi_env env = nullptr;
+    napi_deferred deferred;
     int32_t errCode;
     std::string errMsg;
+    std::string body;
     std::vector<AAFwk::Want> ads;
     std::map<std::string, std::vector<AAFwk::Want>> multiAds;
     AdJSCallback callback;
@@ -59,7 +62,18 @@ public:
 private:
     napi_env env_ = nullptr;
     AdJSCallback callback_;
-    bool InitAdLoadCallbackWorkEnv(napi_env env, uv_loop_s **loop, uv_work_t **work, AdCallbackParam **param);
+};
+
+class AdRequestBodyAsync : public AdRequestBodyStub {
+public:
+    explicit AdRequestBodyAsync(napi_env env, napi_deferred deferred);
+    ~AdRequestBodyAsync();
+
+    void OnRequestBodyReturn(const std::string &body, bool isResolved);
+
+private:
+    napi_env env_ = nullptr;
+    napi_deferred deferred_ = nullptr;
 };
 } // namespace AdsNapi
 } // namespace CloudNapi

@@ -216,6 +216,7 @@ export default {
   // 注意：C/C++实现的NAPI模块中的接口如果需要对外暴露，都需要按这种形式来编写
   AdLoader: AdLoader,
   showAd: advertising.showAd,
+  getAdRequestBody: advertising.getAdRequestBody,
   Advertisement: advertising.Advertisement,
   AdRequestParams: advertising.AdRequestParams,
   AdOptions: advertising.AdOptions,

@@ -105,6 +105,16 @@ struct MultiSlotsRequestContext {
     sptr<IAdLoadCallback> mulitAdLoadCallback = nullptr;
 };
 
+struct GetAdRequestBodyContext {
+    napi_env env;
+    napi_async_work asyncWork;
+    napi_deferred deferred;
+    int32_t errCode;
+    std::string parms;
+    std::string option;
+    std::string resultBody;
+};
+
 struct CloudServiceProvider {
     std::string bundleName;
     std::string abilityName;
@@ -120,6 +130,8 @@ public:
 
 private:
     static napi_value ShowAd(napi_env env, napi_callback_info info);
+
+    static napi_value GetAdRequestBody(napi_env env, napi_callback_info info);
 
     static napi_value LoadAd(napi_env env, napi_callback_info info);
 

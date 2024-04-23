@@ -21,6 +21,7 @@
 
 #include "iremote_broker.h"
 #include "iad_load_callback.h"
+#include "iad_request_body.h"
 #include "refbase.h"
 
 namespace OHOS {
@@ -41,6 +42,12 @@ public:
 
     virtual ErrCode SendAdLoadRequest(const sptr<AdRequestData> &data, const sptr<IAdLoadCallback> &callback,
         int32_t loadAdType) = 0;
+};
+
+class IAdRequestBodySend : public IRemoteBroker {
+    DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.Cloud.Ads.IAdRequestBodySend");
+
+    virtual void SendAdBodyRequest(const sptr<AdRequestData> &data, const sptr<IAdRequestBody> &callback) = 0;
 };
 } // namespace Cloud
 } // namespace OHOS

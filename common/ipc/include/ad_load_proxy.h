@@ -33,6 +33,13 @@ public:
 private:
     ErrCode SendAdLoadIpcRequest(int32_t code, MessageParcel &data);
 };
+
+class AdRequestBodySendProxy : public IRemoteProxy<IAdRequestBodySend> {
+public:
+    explicit AdRequestBodySendProxy(const sptr<IRemoteObject> &remote) : IRemoteProxy<IAdRequestBodySend>(remote) {}
+    virtual ~AdRequestBodySendProxy() {}
+    void SendAdBodyRequest(const sptr<AdRequestData> &data, const sptr<IAdRequestBody> &callback);
+};
 } // namespace Cloud
 } // namespace OHOS
 #endif // OHOS_CLOUD_ADVERTISING_LOAD_PROXY_H

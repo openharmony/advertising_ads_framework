@@ -46,12 +46,23 @@ void AdRequestConnection::OnAbilityConnectDone(const AppExecFwk::ElementName &el
     if (resultCode != ERR_OK) {
         return;
     }
-    proxy_ = (new (std::nothrow) Cloud::AdLoadSendRequestProxy(remoteObject));
-    if (proxy_ == nullptr) {
-        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ad load get send request proxy failed.");
-        return;
+    if (element.GetAbilityName() == currAdServiceElementName_.extensionName) {
+        proxy_ = (new (std::nothrow) Cloud::AdLoadSendRequestProxy(remoteObject));
+        if (proxy_ == nullptr) {
+            ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ad load get send request proxy failed.");
+            return;
+        }
+        proxy_->SendAdLoadRequest(data_, callback_, loadAdType_);
+    } else if (element.GetAbilityName() == currAdServiceElementName_.apiServiceName) {
+        bodyProxy_ = (new (std::nothrow) Cloud::AdRequestBodySendProxy(remoteObject));
+        if (bodyProxy_ == nullptr) {
+            ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "make ad request body proxy failed.");
+            return;
+        }
+        bodyProxy_->SendAdBodyRequest(data_, bodyCallback_);
+    } else {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "not match any service.");
     }
-    proxy_->SendAdLoadRequest(data_, callback_, loadAdType_);
 }
 
 void AdRequestConnection::OnAbilityDisconnectDone(const AppExecFwk::ElementName &element, int resultCode)
@@ -122,6 +133,34 @@ ErrCode AdLoadService::LoadAd(const std::string &request, const std::string &opt
     return ERR_OK;
 }
 
+int32_t AdLoadService::RequestAdBody(const std::string &request, const std::string &options,
+    const sptr<Cloud::IAdRequestBody> &callback)
+{
+    ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "enter RequestAdBody");
+    if (adServiceElementName_.bundleName.empty() || adServiceElementName_.extensionName.empty()) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "adServiceElementName is null, read from config");
+        GetAdServiceElement(adServiceElementName_);
+    }
+    if (callback == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ad load callback is null");
+        return Cloud::INNER_ERR;
+    }
+    auto *data = new (std::nothrow) Cloud::AdRequestData(request, options, "");
+    OHOS::AAFwk::Want connectionWant;
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "connect extension ability, apiServiceName is %{public}s,",
+        adServiceElementName_.apiServiceName.c_str());
+    connectionWant.SetElementName(adServiceElementName_.bundleName, adServiceElementName_.apiServiceName);
+    sptr<AdRequestConnection> serviceConnection =
+        new (std::nothrow) AdRequestConnection(data, callback, adServiceElementName_);
+    ErrCode errCode = AAFwk::AbilityManagerClient::GetInstance()->ConnectAbility(connectionWant, serviceConnection,
+        adServiceElementName_.userId);
+    if (errCode != ERR_OK) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "failed to connect ability");
+        return Cloud::INNER_ERR;
+    }
+    return Cloud::ERR_SEND_OK;
+}
+
 void AdLoadService::GetConfigItem(const char *path, AdServiceElementName &adServiceElementName)
 {
     std::ifstream inFile(path, std::ios::in);
@@ -138,9 +177,12 @@ void AdLoadService::GetConfigItem(const char *path, AdServiceElementName &adServ
     }
     cJSON *cloudServiceBundleName = cJSON_GetObjectItem(root, "providerBundleName");
     cJSON *cloudServiceAbilityName = cJSON_GetObjectItem(root, "providerAbilityName");
-    if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName)) {
+    cJSON *apiServiceName = cJSON_GetObjectItem(root, "providerApiAbilityName");
+    if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName) &&
+        cJSON_IsArray(apiServiceName)) {
         adServiceElementName.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
         adServiceElementName.extensionName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
+        adServiceElementName.apiServiceName = cJSON_GetArrayItem(apiServiceName, 0)->valuestring;
     }
     adServiceElementName.userId = Cloud::USER_ID;
     inFile.close();
@@ -156,7 +198,8 @@ bool AdLoadService::ConnectAdKit(const sptr<Cloud::AdRequestData> &data, const s
         adServiceElementName_.userId);
     OHOS::AAFwk::Want connectionWant;
     connectionWant.SetElementName(adServiceElementName_.bundleName, adServiceElementName_.extensionName);
-    sptr<AdRequestConnection> serviceConnection = new (std::nothrow) AdRequestConnection(data, callback, loadAdType);
+    sptr<AdRequestConnection> serviceConnection =
+        new (std::nothrow) AdRequestConnection(data, callback, loadAdType, adServiceElementName_);
     ErrCode errCode = AAFwk::AbilityManagerClient::GetInstance()->ConnectExtensionAbility(connectionWant,
         serviceConnection, adServiceElementName_.userId);
     if (errCode != ERR_OK) {
