@@ -16,36 +16,105 @@
 let fs = globalThis.requireNapi('file.fs');
 let hilog = globalThis.requireNapi('hilog');
 let configPolicy = globalThis.requireNapi('configPolicy');
+let LightWeightMap = globalThis.requireNapi('util.LightWeightMap');
+let rpc = globalThis.requireNapi('rpc');
+let util = globalThis.requireNapi('util');
 const READ_FILE_BUFFER_SIZE = 4096;
 const HILOG_DOMAIN_CODE = 65280;
+const DEFAULT_MIN_SHOW_RATIO = 50;
+const CUSTOMIZED_RENDERING = 3;
+const CLICK = 0;
+const IMP = 1;
+const CLOSE = 2;
+const CODE_SUCCESS = 200;
 
 class AdComponent extends ViewPU {
-  constructor(e, t, o, s = -1) {
-    super(e, o, s);
-    this.ads = void 0;
-    this.displayOptions = void 0;
-    this.interactionListener = void 0;
-    this.want = void 0;
-    this.__showComponent = new ObservedPropertySimplePU(!1, this, 'showComponent');
-    this.setInitiallyProvidedValue(t);
+  constructor(x, p1, q1, r = -1, r1 = undefined, s1) {
+    super(x, q1, r, s1);
+    if (typeof r1 === 'function') {
+      this.paramsGenerator_ = r1;
+    }
+    this.ads = [];
+    this.displayOptions = {};
+    this.interactionListener = null;
+    this.want = null;
+    this.map = new LightWeightMap();
+    this.ratios = [];
+    this.remoteObj = null;
+    this.connection = 0;
+    this.isAdRenderer = false;
+    this.context = getContext(this);
+    this.minEffectiveShowRatio = 1;
+    this.eventUniqueId = '';
+    this.uniqueId = '';
+    this.__showComponent = new ObservedPropertySimplePU(false, this, 'showComponent');
+    this.__Behavior = new ObservedPropertySimplePU(HitTestMode.Default, this, 'Behavior');
+    this.adRenderer = this.Component;
+    this.setInitiallyProvidedValue(p1);
   }
 
-  setInitiallyProvidedValue(e) {
-    void 0 !== e.ads && (this.ads = e.ads);
-    void 0 !== e.displayOptions && (this.displayOptions = e.displayOptions);
-    void 0 !== e.interactionListener && (this.interactionListener = e.interactionListener);
-    void 0 !== e.want && (this.want = e.want);
-    void 0 !== e.showComponent && (this.showComponent = e.showComponent);
+  setInitiallyProvidedValue(p1) {
+    if (p1.ads !== undefined) {
+      this.ads = p1.ads;
+    }
+    if (p1.displayOptions !== undefined) {
+      this.displayOptions = p1.displayOptions;
+    }
+    if (p1.interactionListener !== undefined) {
+      this.interactionListener = p1.interactionListener;
+    }
+    if (p1.want !== undefined) {
+      this.want = p1.want;
+    }
+    if (p1.map !== undefined) {
+      this.map = p1.map;
+    }
+    if (p1.ratios !== undefined) {
+      this.ratios = p1.ratios;
+    }
+    if (p1.remoteObj !== undefined) {
+      this.remoteObj = p1.remoteObj;
+    }
+    if (p1.connection !== undefined) {
+      this.connection = p1.connection;
+    }
+    if (p1.isAdRenderer !== undefined) {
+      this.isAdRenderer = p1.isAdRenderer;
+    }
+    if (p1.context !== undefined) {
+      this.context = p1.context;
+    }
+    if (p1.minEffectiveShowRatio !== undefined) {
+      this.minEffectiveShowRatio = p1.minEffectiveShowRatio;
+    }
+    if (p1.eventUniqueId !== undefined) {
+      this.eventUniqueId = p1.eventUniqueId;
+    }
+    if (p1.uniqueId !== undefined) {
+      this.uniqueId = p1.uniqueId;
+    }
+    if (p1.showComponent !== undefined) {
+      this.showComponent = p1.showComponent;
+    }
+    if (p1.Behavior !== undefined) {
+      this.Behavior = p1.Behavior;
+    }
+    if (p1.adRenderer !== undefined) {
+      this.adRenderer = p1.adRenderer;
+    }
   }
 
-  updateStateVars(e) {}
+  updateStateVars(p1) {
+  }
 
-  purgeVariableDependenciesOnElmtId(e) {
-    this.__showComponent.purgeDependencyOnElmtId(e);
+  purgeVariableDependenciesOnElmtId(o1) {
+    this.__showComponent.purgeDependencyOnElmtId(o1);
+    this.__Behavior.purgeDependencyOnElmtId(o1);
   }
 
   aboutToBeDeleted() {
     this.__showComponent.aboutToBeDeleted();
+    this.__Behavior.aboutToBeDeleted();
     SubscriberManager.Get().delete(this.id__());
     this.aboutToBeDeletedInternal();
   }
@@ -54,115 +123,286 @@ class AdComponent extends ViewPU {
     return this.__showComponent.get();
   }
 
-  set showComponent(e) {
-    this.__showComponent.set(e);
+  set showComponent(n1) {
+    this.__showComponent.set(n1);
+  }
+
+  get Behavior() {
+    return this.__Behavior.get();
+  }
+
+  set Behavior(n1) {
+    this.__Behavior.set(n1);
+  }
+
+  getRatios() {
+    var t;
+    if (((t = this.ads[0]) === null || t === void 0 ? void 0 : t.adType) === 3) {
+      let k1 = [];
+      for (let m1 = 0; m1 <= 100; m1 += 5) {
+        k1.push(m1 / 100);
+      }
+      hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent minEffectiveShowRatio:${this.minEffectiveShowRatio / 100}`);
+      k1.push(this.minEffectiveShowRatio / 100);
+      const l1 = k1.filter((m1, d, k1) => {
+        return k1.indexOf(m1, 0) === d;
+      });
+      hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent ratios: ${l1}`);
+      return l1;
+    }
+    else {
+      hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent ratios: ${[0, 1]}`);
+      return [0, 1];
+    }
+  }
+
+  createRpcData(u, w) {
+    let y = rpc.MessageSequence.create();
+    y.writeInt(u);
+    y.writeString(this.eventUniqueId);
+    y.writeString(this.uniqueId);
+    if (w) {
+      y.writeString(this.getMillis());
+      y.writeInt(w);
+    }
+    return y;
+  }
+
+  initIds() {
+    var t;
+    this.eventUniqueId = util.generateRandomUUID(true);
+    this.uniqueId = (t = this.ads[0]) === null || t === void 0 ? void 0 : t.uniqueId;
+  }
+
+  getMillis() {
+    return Date.now().toString();
+  }
+
+  getMillisStr() {
+    return Date.now().toString();
+  }
+
+  async sendDataRequest(u, w) {
+    var t;
+    const y = this.createRpcData(u, w);
+    if (this.remoteObj === null) {
+      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent onConnect failed.`);
+      return;
+    }
+    let g1 = new rpc.MessageOption();
+    let h1 = rpc.MessageSequence.create();
+    await ((t = this.remoteObj) === null || t === void 0 ? void 0 :
+    t.sendMessageRequest(CUSTOMIZED_RENDERING, y, h1, g1).then((i1) => {
+      hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent sendRequest. result: ${JSON.stringify(i1)}`);
+      let j1 = i1.reply.readInt();
+      hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'AdComponent rpc reply code is : ' + j1);
+      if (j1 === -1 || (u === CLOSE && j1 === CODE_SUCCESS)) {
+        hilog.warn(HILOG_DOMAIN_CODE, 'AdComponent', `reply code is: ${j1}, event type code is : ${u}.`);
+        this.remoteObj = null;
+        this.disconnectServiceExtAbility();
+      }
+    }).catch((j) => {
+      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent sendRequest error. code: ${j.code}, message : ${j.message}`);
+    }));
   }
 
   aboutToAppear() {
+    hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent aboutToAppear.`);
+    this.ratios = this.getRatios();
     this.getConfigJsonData();
   }
 
-  getConfigJsonData() {
-    let e = null;
-    let o = null;
-    o = configPolicy.getOneCfgFileSync('etc/advertising/ads_framework/ad_service_config_ext.json');
-    if(o === null || o === "") {
-      hilog.warn(HILOG_DOMAIN_CODE, 'AdComponent', 'get ext config fail');
-      o = configPolicy.getOneCfgFileSync('etc/advertising/ads_framework/ad_service_config.json');
-      if(o === null || o === "") {
-        hilog.warn(HILOG_DOMAIN_CODE, 'AdComponent', 'get config fail');
-        this.setWant(e);
-        return;
-      }
-    }
-    hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'value is ' + o);
-    try {
-      const t = fs.openSync(o);
-      const i = new ArrayBuffer(READ_FILE_BUFFER_SIZE);
-      let s = fs.readSync(t.fd, i);
-      fs.closeSync(t);
-      let n = String.fromCharCode(...new Uint8Array(i.slice(0, s)));
-      n = n.replace(/[\r\n\t\"]/g, '').replace(/\s*/g, '').replace(/\[|\]/g, '');
-      e = this.toMap(n);
-      hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'file succeed');
-      e || hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'get config json failed');
-      this.setWant(e);
-    } catch (t) {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `open file failed with error:${t.code}, message:${t.message}`);
-      this.setWant(e);
+  async aboutToDisappear() {
+    hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent aboutToDisappear.`);
+    if (this.connection) {
+      await this.sendDataRequest(CLOSE, 0);
     }
   }
 
-  setWant(e) {
-    if (e) {
+  disconnectServiceExtAbility() {
+    hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent disconnectServiceExtAbility`);
+    this.context.disconnectServiceExtensionAbility(this.connection).then(() => {
+      hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent disconnectServiceExtAbility success.`);
+    }).catch((f1) => {
+      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent',
+        `AdComponent disconnectAbility failed. code: ${f1.code}, message : ${f1.message}`);
+    });
+  }
+
+  initImpressionCondition() {
+    var t, d1;
+    this.minEffectiveShowRatio =
+      (d1 = (t = this.ads[0]) === null || t === void 0 ? void 0 : t.minEffectiveShowRatio) !== null &&
+        d1 !== void 0 ? d1 : DEFAULT_MIN_SHOW_RATIO;
+  }
+
+  initAdRender() {
+    var t, d1, e1;
+    if (((t = this.ads[0]) === null || t === void 0 ? void 0 : t.adType) === 3 &&
+      ((d1 = this.ads[0]) === null || d1 === void 0 ? void 0 : d1.creativeType) !== 99 &&
+      ((e1 = this.ads[0]) === null || e1 === void 0 ? void 0 : e1.canSelfRendering)) {
+      hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent initAdRender self rendering.`);
+      this.isAdRenderer = true;
+      this.Behavior = HitTestMode.Block;
+      this.initIds();
+      this.initImpressionCondition();
+      this.connectServiceExtAbility();
+    }
+    else {
+      this.showComponent = true;
+    }
+  }
+
+  connectServiceExtAbility() {
+    hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent connectServiceExtAbility`);
+    let a1 = {
+      bundleName: this.map.get('providerBundleName'),
+      abilityName: this.map.get('apiServiceName'),
+    };
+    this.connection = this.context.connectServiceExtensionAbility(a1, {
+      onConnect: (b1, c1) => {
+        var t;
+        hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent onConnect success.`);
+        if (c1 === null) {
+          hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent onConnect remote is null.`);
+          return;
+        }
+        this.remoteObj = c1;
+        this.showComponent = true;
+        (t = this.interactionListener) === null || t === void 0 ? void 0 :
+        t.onStatusChanged('onConnect', this.ads[0], 'onAdRenderer connect api service.');
+      },
+      onDisconnect: () => {
+        hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent onDisconnect`);
+      },
+      onFailed: () => {
+        hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent onFailed`);
+      }
+    });
+    hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent connectServiceExtAbility result: ${this.connection}`);
+  }
+
+  Component(x = null) {
+    this.observeComponentCreation2((r, s) => {
+      UIExtensionComponent.create(this.want);
+      UIExtensionComponent.onReceive((y) => {
+        var t;
+        let z = y;
+        (t = this.interactionListener) === null || t === void 0 ? void 0 : t.onStatusChanged(z.status, z.ad, z.data);
+      });
+      UIExtensionComponent.width('100%');
+      UIExtensionComponent.height('100%');
+    }, UIExtensionComponent);
+  }
+
+  initialRender() {
+    this.observeComponentCreation2((r, s) => {
+      Row.create();
+      Row.height('100%');
+    }, Row);
+    this.observeComponentCreation2((r, s) => {
+      If.create();
+      if (this.showComponent) {
+        this.ifElseBranchUpdateFunction(0, () => {
+          this.observeComponentCreation2((r, s) => {
+            Column.create();
+            Column.width('100%');
+            Column.hitTestBehavior(this.Behavior);
+            Column.onVisibleAreaChange(this.ratios, (v, w) => {
+              if (this.isAdRenderer) {
+                hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent isVisible is :${v}, currentRatio is :${w}`);
+                const u = IMP;
+                this.sendDataRequest(u, w);
+              }
+            });
+            Column.onClick(() => {
+              var t;
+              if (this.isAdRenderer) {
+                hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'AdComponent onClick');
+                const u = CLICK;
+                this.sendDataRequest(u);
+                (t = this.interactionListener) === null || t === void 0 ? void 0 :
+                t.onStatusChanged('onAdClick', this.ads[0], 'onAdRenderer click');
+              }
+            });
+          }, Column);
+          this.adRenderer.bind(this)();
+          Column.pop();
+        });
+      }
+      else {
+        this.ifElseBranchUpdateFunction(1, () => {
+        });
+      }
+    }, If);
+    If.pop();
+    Row.pop();
+  }
+
+  getConfigJsonData() {
+    let i = '';
+    i = configPolicy.getOneCfgFileSync('etc/advertising/ads_framework/ad_service_config_ext.json');
+    if (i === null || i === '') {
+      hilog.warn(HILOG_DOMAIN_CODE, 'AdComponent', 'get ext config fail');
+      i = configPolicy.getOneCfgFileSync('etc/advertising/ads_framework/ad_service_config.json');
+      if (i === null || i === '') {
+        hilog.warn(HILOG_DOMAIN_CODE, 'AdComponent', 'get config fail');
+        this.setWant();
+        return;
+      }
+    }
+    try {
+      const k = fs.openSync(i);
+      const l = new ArrayBuffer(READ_FILE_BUFFER_SIZE);
+      let m = fs.readSync(k.fd, l);
+      fs.closeSync(k);
+      let n = String.fromCharCode(...new Uint8Array(l.slice(0, m)));
+      const b = new RegExp('\[\\r\\n\\t\\\"\]', 'g');
+      const o = new RegExp('\\s*', 'g');
+      const p = new RegExp('\\\[\|\\\]', 'g');
+      n = n.replace(b, '').replace(o, '').replace(p, '');
+      this.toMap(n);
+      hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `file succeed`);
+      if (!this.map) {
+        hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `get config json failed`);
+      }
+      this.setWant();
+    }
+    catch (j) {
+      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `open file failed with error:${j.code}, message:${j.message}`);
+      this.setWant();
+    }
+  }
+
+  setWant() {
+    hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `setWant map ${this.map.toString()}`);
+    if (this.map) {
       this.want = {
-        bundleName: null == e ? void 0 : e.providerBundleName,
-        abilityName: null == e ? void 0 : e.providerUEAAbilityName,
+        bundleName: this.map.get('providerBundleName'),
+        abilityName: this.map.get('providerUEAAbilityName'),
         parameters: {
           ads: this.ads,
           displayOptions: this.displayOptions,
           'ability.want.params.uiExtensionType': 'ads'
         }
       };
-      this.showComponent = !0;
     }
+    this.initAdRender();
   }
 
-  toMap(e) {
-    const t = (e = e.replace(/[{}]/g, '')).split(',');
-    const o = {};
-    for (let e = 0; e < t.length; e++) {
-      const s = t[e];
-      const i = s.indexOf(':');
-      if (i > -1) {
-        const e = s.substring(0, i);
-        const t = s.substring(i + 1);
-        o[e] = t;
+  toMap(a) {
+    const b = new RegExp('\[\{\}\]', 'g');
+    a = a.replace(b, '');
+    const c = a.split(',');
+    for (let d = 0; d < c.length; d++) {
+      const e = c[d];
+      const f = e.indexOf(':');
+      if (f > -1) {
+        const g = e.substring(0, f);
+        const h = e.substring(f + 1);
+        this.map.set(g, h);
       }
     }
-    return o;
-  }
-
-  initialRender() {
-    this.observeComponentCreation(((e, t) => {
-      ViewStackProcessor.StartGetAccessRecordingFor(e);
-      Row.create();
-      Row.height('100%');
-      t || Row.pop();
-      ViewStackProcessor.StopGetAccessRecording();
-    }));
-
-    this.observeComponentCreation(((e, t) => {
-      ViewStackProcessor.StartGetAccessRecordingFor(e);
-      Column.create();
-      Column.width('100%');
-      t || Column.pop();
-      ViewStackProcessor.StopGetAccessRecording();
-    }));
-
-    this.observeComponentCreation(((e, t) => {
-      ViewStackProcessor.StartGetAccessRecordingFor(e);
-      If.create();
-      this.showComponent ? this.ifElseBranchUpdateFunction(0, (() => {
-        this.observeComponentCreation(((e, t) => {
-          ViewStackProcessor.StartGetAccessRecordingFor(e);
-          UIExtensionComponent.create(this.want);
-          UIExtensionComponent.onReceive((e => {
-            this.interactionListener.onStatusChanged(e.status, e.ad, e.data);
-          }));
-          UIExtensionComponent.width('100%');
-          UIExtensionComponent.height('100%');
-          t || UIExtensionComponent.pop();
-          ViewStackProcessor.StopGetAccessRecording();
-        }));
-      })) : If.branchId(1);
-      t || If.pop();
-      ViewStackProcessor.StopGetAccessRecording();
-    }));
-
-    If.pop();
-    Column.pop();
-    Row.pop();
   }
 
   rerender() {
@@ -170,4 +410,6 @@ class AdComponent extends ViewPU {
   }
 }
 
-export default { AdComponent };
+export default {
+  AdComponent
+};
