@@ -295,6 +295,39 @@ class AdComponent extends ViewPU {
     }, UIExtensionComponent);
   }
 
+  onAreaClick() {
+    var t;
+    if (this.isAdRenderer) {
+      hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'AdComponent onClick');
+      const u = CLICK;
+      this.sendDataRequest(u);
+      (t = this.interactionListener) === null || t === void 0 ? void 0 :
+      t.onStatusChanged('onAdClick', this.ads[0], 'onAdRenderer click');
+    }
+  }
+
+  onColumnStateChange() {
+    Column.create();
+    Column.width('100%');
+    Column.hitTestBehavior(this.Behavior);
+    Column.onVisibleAreaChange(this.ratios, (v, w) => {
+      if (this.isAdRenderer) {
+        hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent isVisible is :${v}, currentRatio is :${w}`);
+        const u = IMP;
+        this.sendDataRequest(u, w);
+      }
+    });
+    Column.onClick(() => this.onAreaClick());
+  }
+
+  updateView() {
+    this.ifElseBranchUpdateFunction(0, () => {
+      this.observeComponentCreation2((r, s) => this.onColumnStateChange(), Column);
+      this.adRenderer.bind(this)();
+      Column.pop();
+    });
+  }
+
   initialRender() {
     this.observeComponentCreation2((r, s) => {
       Row.create();
@@ -303,32 +336,7 @@ class AdComponent extends ViewPU {
     this.observeComponentCreation2((r, s) => {
       If.create();
       if (this.showComponent) {
-        this.ifElseBranchUpdateFunction(0, () => {
-          this.observeComponentCreation2((r, s) => {
-            Column.create();
-            Column.width('100%');
-            Column.hitTestBehavior(this.Behavior);
-            Column.onVisibleAreaChange(this.ratios, (v, w) => {
-              if (this.isAdRenderer) {
-                hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent isVisible is :${v}, currentRatio is :${w}`);
-                const u = IMP;
-                this.sendDataRequest(u, w);
-              }
-            });
-            Column.onClick(() => {
-              var t;
-              if (this.isAdRenderer) {
-                hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'AdComponent onClick');
-                const u = CLICK;
-                this.sendDataRequest(u);
-                (t = this.interactionListener) === null || t === void 0 ? void 0 :
-                t.onStatusChanged('onAdClick', this.ads[0], 'onAdRenderer click');
-              }
-            });
-          }, Column);
-          this.adRenderer.bind(this)();
-          Column.pop();
-        });
+        this.updateView();
       }
       else {
         this.ifElseBranchUpdateFunction(1, () => {
@@ -339,17 +347,25 @@ class AdComponent extends ViewPU {
     Row.pop();
   }
 
-  getConfigJsonData() {
+  getConfigPath() {
     let i = '';
     i = configPolicy.getOneCfgFileSync('etc/advertising/ads_framework/ad_service_config_ext.json');
     if (i === null || i === '') {
       hilog.warn(HILOG_DOMAIN_CODE, 'AdComponent', 'get ext config fail');
       i = configPolicy.getOneCfgFileSync('etc/advertising/ads_framework/ad_service_config.json');
-      if (i === null || i === '') {
-        hilog.warn(HILOG_DOMAIN_CODE, 'AdComponent', 'get config fail');
-        this.setWant();
-        return;
-      }
+    }
+    if (i === null || i === '') {
+      hilog.warn(HILOG_DOMAIN_CODE, 'AdComponent', 'get config fail');
+      this.setWant();
+      return '';
+    }
+    return i;
+  }
+
+  getConfigJsonData() {
+    const i = this.getConfigPath();
+    if (i === '') {
+      return;
     }
     try {
       const k = fs.openSync(i);
