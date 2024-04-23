@@ -136,7 +136,7 @@ class AdComponent extends ViewPU {
   }
 
   getRatios() {
-    var t;
+    let t;
     if (((t = this.ads[0]) === null || t === void 0 ? void 0 : t.adType) === 3) {
       let k1 = [];
       for (let m1 = 0; m1 <= 100; m1 += 5) {
@@ -169,7 +169,7 @@ class AdComponent extends ViewPU {
   }
 
   initIds() {
-    var t;
+    let t;
     this.eventUniqueId = util.generateRandomUUID(true);
     this.uniqueId = (t = this.ads[0]) === null || t === void 0 ? void 0 : t.uniqueId;
   }
@@ -183,7 +183,7 @@ class AdComponent extends ViewPU {
   }
 
   async sendDataRequest(u, w) {
-    var t;
+    let t;
     const y = this.createRpcData(u, w);
     if (this.remoteObj === null) {
       hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent onConnect failed.`);
@@ -230,14 +230,17 @@ class AdComponent extends ViewPU {
   }
 
   initImpressionCondition() {
-    var t, d1;
+    let t;
+    let	d1;
     this.minEffectiveShowRatio =
       (d1 = (t = this.ads[0]) === null || t === void 0 ? void 0 : t.minEffectiveShowRatio) !== null &&
         d1 !== void 0 ? d1 : DEFAULT_MIN_SHOW_RATIO;
   }
 
   initAdRender() {
-    var t, d1, e1;
+    let t;
+	let d1;
+	let	e1;
     if (((t = this.ads[0]) === null || t === void 0 ? void 0 : t.adType) === 3 &&
       ((d1 = this.ads[0]) === null || d1 === void 0 ? void 0 : d1.creativeType) !== 99 &&
       ((e1 = this.ads[0]) === null || e1 === void 0 ? void 0 : e1.canSelfRendering)) {
@@ -261,7 +264,7 @@ class AdComponent extends ViewPU {
     };
     this.connection = this.context.connectServiceExtensionAbility(a1, {
       onConnect: (b1, c1) => {
-        var t;
+        let t;
         hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent onConnect success.`);
         if (c1 === null) {
           hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent onConnect remote is null.`);
@@ -286,7 +289,7 @@ class AdComponent extends ViewPU {
     this.observeComponentCreation2((r, s) => {
       UIExtensionComponent.create(this.want);
       UIExtensionComponent.onReceive((y) => {
-        var t;
+        let t;
         let z = y;
         (t = this.interactionListener) === null || t === void 0 ? void 0 : t.onStatusChanged(z.status, z.ad, z.data);
       });
@@ -296,7 +299,7 @@ class AdComponent extends ViewPU {
   }
 
   onAreaClick() {
-    var t;
+    let t;
     if (this.isAdRenderer) {
       hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'AdComponent onClick');
       const u = CLICK;
