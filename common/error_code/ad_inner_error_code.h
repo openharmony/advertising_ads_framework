@@ -75,6 +75,9 @@ const int32_t ERR_AD_COMMON_AD_REQUEST_TO_JSON_ERROR = 15;
 // show ad fail
 const int32_t ERR_AD_COMMON_AD_SHOW_AD_ERROR = 16;
 
+// ad body request fail
+static const std::string AD_REQUEST_BODY_MSG = "body reuqest failed";
+
 enum AdsError : int32_t {
     ERR_SEND_OK = 0,
     PARAM_ERR = 401,

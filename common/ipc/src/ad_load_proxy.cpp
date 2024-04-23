@@ -74,5 +74,32 @@ ErrCode AdLoadSendRequestProxy::SendAdLoadIpcRequest(int32_t code, MessageParcel
     }
     return result;
 }
+
+void AdRequestBodySendProxy::SendAdBodyRequest(const sptr<AdRequestData> &data, const sptr<IAdRequestBody> &callback)
+{
+    if (callback == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_SERVICE, "callback is null");
+        return;
+    }
+    MessageParcel dataParcel;
+    if (!dataParcel.WriteRemoteObject(callback->AsObject())) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "failed to WriteRemoteObject");
+        return;
+    }
+    if (!dataParcel.WriteString16(Str8ToStr16(data->adRequest))) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "failed to adRequest");
+        return;
+    }
+    if (!dataParcel.WriteString16(Str8ToStr16(data->adOption))) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "failed to adOption");
+        return;
+    }
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    ErrCode result = remote->SendRequest(static_cast<uint32_t>(IAdRequestBody::Message::REQUEST_BODY_CODE), dataParcel,
+        reply, option);
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_SERVICE, "AdRequestBodySendProxy SendRequest result = %{public}d", result);
+}
 } // namespace Cloud
 } // namespace OHOS

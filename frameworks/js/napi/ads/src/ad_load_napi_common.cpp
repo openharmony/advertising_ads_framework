@@ -22,6 +22,7 @@
 #include "ad_hilog_wreapper.h"
 #include "iad_load_callback.h"
 #include "ad_inner_error_code.h"
+#include "ad_napi_common_error.h"
 #include "ad_load_napi_common.h"
 
 namespace OHOS {
@@ -47,12 +48,7 @@ inline int32_t ErrCodeConvert(int32_t kitErrCode)
     }
 }
 
-AdLoadListenerCallback::AdLoadListenerCallback(napi_env env, AdJSCallback callback) : env_(env), callback_(callback) {}
-
-AdLoadListenerCallback::~AdLoadListenerCallback() {}
-
-bool AdLoadListenerCallback::InitAdLoadCallbackWorkEnv(napi_env env, uv_loop_s **loop, uv_work_t **work,
-    AdCallbackParam **param)
+bool InitAdLoadCallbackWorkEnv(napi_env env, uv_loop_s **loop, uv_work_t **work, AdCallbackParam **param)
 {
     napi_get_uv_event_loop(env, loop);
     if (*loop == nullptr) {
@@ -75,6 +71,10 @@ bool AdLoadListenerCallback::InitAdLoadCallbackWorkEnv(napi_env env, uv_loop_s *
     (*param)->env = env;
     return true;
 }
+
+AdLoadListenerCallback::AdLoadListenerCallback(napi_env env, AdJSCallback callback) : env_(env), callback_(callback) {}
+
+AdLoadListenerCallback::~AdLoadListenerCallback() {}
 
 void UvQueneWorkOnAdLoadSuccess(uv_work_t *work, int status)
 {
@@ -204,6 +204,63 @@ void AdLoadListenerCallback::OnAdLoadFailure(int32_t resultCode, const std::stri
     work->data = reinterpret_cast<void *>(param);
     uv_queue_work(
         loop, work, [](uv_work_t *work) {}, UvQueneWorkOnAdLoadFailed);
+}
+
+AdRequestBodyAsync::AdRequestBodyAsync(napi_env env, napi_deferred deferred) : env_(env), deferred_(deferred) {}
+
+AdRequestBodyAsync::~AdRequestBodyAsync() {}
+
+void UvQueueWorkOnAdRequestBody(uv_work_t *work, int status)
+{
+    if (work == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "work is null");
+        return;
+    }
+    if (work->data == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "work data is null");
+        return;
+    }
+    napi_handle_scope scope = nullptr;
+    AdCallbackParam *data = reinterpret_cast<AdCallbackParam *>(work->data);
+    napi_open_handle_scope(data->env, &scope);
+    if (scope == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "open scope failed");
+        delete data;
+        work->data = nullptr;
+        return;
+    }
+    napi_value result = nullptr;
+    if (data->errCode == ERR_SEND_OK) {
+        napi_create_string_utf8(data->env, data->body.c_str(), NAPI_AUTO_LENGTH, &result);
+        napi_resolve_deferred(data->env, data->deferred, result);
+    } else {
+        napi_value error = nullptr;
+        int32_t jsErrorCode = data->errCode;
+        std::string jsErrorMsg = data->body;
+        error = GenerateAdBusinessError(data->env, jsErrorCode, jsErrorMsg);
+        napi_reject_deferred(data->env, data->deferred, error);
+    }
+    napi_close_handle_scope(data->env, scope);
+    delete data;
+    data = nullptr;
+    delete work;
+}
+
+void AdRequestBodyAsync::OnRequestBodyReturn(const std::string &body, bool isResolved)
+{
+    uv_loop_s *loop = nullptr;
+    uv_work_t *work = nullptr;
+    AdCallbackParam *param = nullptr;
+    if (!InitAdLoadCallbackWorkEnv(env_, &loop, &work, &param)) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "failed to init ad request body work environment");
+        return;
+    }
+    param->errCode = isResolved ? ERR_SEND_OK : INNER_ERR;
+    param->body = body;
+    param->deferred = deferred_;
+    work->data = reinterpret_cast<void *>(param);
+    uv_queue_work_with_qos(
+        loop, work, [](uv_work_t *work) {}, UvQueueWorkOnAdRequestBody, uv_qos_default);
 }
 } // namespace AdsNapi
 } // namespace CloudNapi

@@ -28,6 +28,7 @@
 #include "ad_load_proxy.h"
 #include "iad_load_proxy.h"
 #include "iad_load_callback.h"
+#include "iad_request_body.h"
 
 namespace OHOS {
 namespace CloudNapi {
@@ -35,6 +36,7 @@ namespace AdsNapi {
 struct AdServiceElementName {
     std::string bundleName;
     std::string extensionName;
+    std::string apiServiceName;
     int userId;
 };
 
@@ -45,6 +47,8 @@ public:
     ~AdLoadService();
     ErrCode LoadAd(const std::string &request, const std::string &options, const sptr<Cloud::IAdLoadCallback> &callback,
         int32_t loadAdType);
+    int32_t RequestAdBody(const std::string &request, const std::string &options,
+        const sptr<Cloud::IAdRequestBody> &callback);
     void GetAdServiceElement(AdServiceElementName &adServiceElementName);
 
 private:
@@ -59,8 +63,11 @@ private:
 class AdRequestConnection : public AAFwk::AbilityConnectionStub {
 public:
     AdRequestConnection(const sptr<Cloud::AdRequestData> &data, const sptr<Cloud::IAdLoadCallback> &callback,
-        int32_t loadAdType)
-        : data_(data), callback_(callback), loadAdType_(loadAdType) {};
+        int32_t loadAdType, AdServiceElementName &element)
+        : data_(data), callback_(callback), loadAdType_(loadAdType), currAdServiceElementName_(element){};
+    AdRequestConnection(const sptr<Cloud::AdRequestData> &data, const sptr<Cloud::IAdRequestBody> &callback,
+        AdServiceElementName &element)
+        : data_(data), bodyCallback_(callback), currAdServiceElementName_(element){};
     ~AdRequestConnection() = default;
     void OnAbilityConnectDone(const AppExecFwk::ElementName &element, const sptr<IRemoteObject> &remoteObject,
         int32_t resultCode) override;
@@ -69,8 +76,11 @@ public:
 private:
     sptr<Cloud::AdRequestData> data_;
     sptr<Cloud::IAdLoadCallback> callback_;
+    sptr<Cloud::IAdRequestBody> bodyCallback_;
     int32_t loadAdType_;
-    sptr<Cloud::AdLoadSendRequestProxy> proxy_ { nullptr };
+    sptr<Cloud::AdLoadSendRequestProxy> proxy_{ nullptr };
+    sptr<Cloud::AdRequestBodySendProxy> bodyProxy_{ nullptr };
+    AdServiceElementName currAdServiceElementName_;
 };
 } // namespace AdsNapi
 } // namespace CloudNapi
