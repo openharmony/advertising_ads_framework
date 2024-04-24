@@ -26,6 +26,13 @@ const JS_BRIDGE_RPC_CODE = 1;
 const ADS_SERVICE_CONFIG_EXT_FILE = 'etc/advertising/ads_framework/ad_service_config_ext.json';
 const ADS_SERVICE_CONFIG_FILE = 'etc/advertising/ads_framework/ad_service_config.json';
 
+const AdsError = {
+  ERR_SEND_OK: 0,
+  PARAM_ERR: 401,
+  INNER_ERR: 21800001,
+  REQUEST_FAIL: 21800003
+};
+
 class AdLoader {
   constructor(context) {
     this.loader = new advertising.AdLoader(context);
@@ -41,25 +48,45 @@ class AdLoader {
 
   loadAd(adParams, adOptions, listener) {
     hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'start to load ad');
-    this.loader.loadAd(adParams, adOptions, listener);
+    this.loader.loadAd(adParams, adOptions, {
+      onAdLoadFailure: listener?.onAdLoadFailure,
+      onAdLoadSuccess: onSingleSlotAdLoadSuccessProxy(listener),
+    });
   }
 }
 
 function onAdLoadSuccessProxy(callBackListener) {
   return (multiSlotsAds) => {
     hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'on receive loading-ad resp');
-    const resultMap = new Map();
-    Object.keys(multiSlotsAds)?.forEach(key => {
-      resultMap.set(key, multiSlotsAds[key]);
-    });
-    callBackListener.onAdLoadSuccess(resultMap);
+    try {
+      const resultMap = new Map();
+      const adsObj = JSON.parse(multiSlotsAds);
+      Object.keys(adsObj)?.forEach(key => {
+        resultMap.set(key, adsObj[key]);
+      });
+      callBackListener?.onAdLoadSuccess(resultMap);
+    } catch (error) {
+      listener?.onAdLoadFailure(AdsError.REQUEST_FAIL, error.message);
+    }
+  };
+}
+
+function onSingleSlotAdLoadSuccessProxy(callBackListener) {
+  return (ads) => {
+    hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'on receive loading single slot ad resp');
+    try {
+      const adsArray = JSON.parse(ads);
+      callBackListener?.onAdLoadSuccess(adsArray);
+    } catch (error) {
+      listener?.onAdLoadFailure(AdsError.REQUEST_FAIL, error.message);
+    }
   };
 }
 
 function getConfigJsonData() {
   let map = null;
   let path = '';
-  try {  
+  try {
     path = configPolicy.getOneCfgFileSync(ADS_SERVICE_CONFIG_EXT_FILE);
     if (path === null || path === '') {
       hilog.warn(HILOG_DOMAIN_CODE, 'advertising', 'get ext config file failed');
@@ -202,7 +229,7 @@ function registerWebAdInterface(controller, context) {
   try {
     const adsJsBridge = new AdsJsBridge(context);
     controller.registerJavaScriptProxy(adsJsBridge, '_OHAdsJsBridge', ['invokeAsync']);
-    controller.refresh(); 
+    controller.refresh();
   } catch (e) {
     hilog.error(HILOG_DOMAIN_CODE, 'advertising', `registerWebAdInterface error, code:${e.code}, message:${e.message}`);
     throw {

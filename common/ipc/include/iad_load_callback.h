@@ -28,8 +28,8 @@ class IAdLoadCallback : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.cloud.Ads.IAdLoadCallback");
 
-    virtual void OnAdLoadSuccess(const std::vector<AAFwk::Want> &result) = 0;
-    virtual void OnAdLoadMultiSlotsSuccess(const std::map<std::string, std::vector<AAFwk::Want>> &result) = 0;
+    virtual void OnAdLoadSuccess(const std::string &result) = 0;
+    virtual void OnAdLoadMultiSlotsSuccess(const std::string &result) = 0;
     virtual void OnAdLoadFailure(int32_t resultCode, const std::string &resultMsg) = 0;
 
     enum class Message {

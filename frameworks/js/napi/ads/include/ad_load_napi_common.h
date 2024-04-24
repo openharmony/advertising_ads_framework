@@ -46,8 +46,8 @@ struct AdCallbackParam {
     int32_t errCode;
     std::string errMsg;
     std::string body;
-    std::vector<AAFwk::Want> ads;
-    std::map<std::string, std::vector<AAFwk::Want>> multiAds;
+    std::string ads;
+    std::string multiAds;
     AdJSCallback callback;
 };
 
@@ -55,8 +55,8 @@ class AdLoadListenerCallback : public AdLoadCallbackStub {
 public:
     explicit AdLoadListenerCallback(napi_env env, AdJSCallback callback);
     ~AdLoadListenerCallback();
-    void OnAdLoadSuccess(const std::vector<AAFwk::Want> &result) override;
-    void OnAdLoadMultiSlotsSuccess(const std::map<std::string, std::vector<AAFwk::Want>> &result) override;
+    void OnAdLoadSuccess(const std::string &result) override;
+    void OnAdLoadMultiSlotsSuccess(const std::string &result) override;
     void OnAdLoadFailure(int32_t resultCode, const std::string &resultMsg) override;
 
 private:
