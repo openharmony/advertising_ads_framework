@@ -52,7 +52,7 @@ void CommonParse(AAFwk::Want &want, cJSON *item)
         std::string defaultValue;
         switch (node->type) {
             case cJSON_Number:
-                want.SetParam(node->string, node->valueint);
+                want.SetParam(node->string, cJSON_GetNumberValue(node));
                 break;
             case cJSON_String:
                 valuestring = node->valuestring;
@@ -127,9 +127,7 @@ int AdLoadCallbackStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mess
             ADS_HILOGI(OHOS::Cloud::ADS_MODULE_COMMON, "single slot kit return code = %{public}u", resultCode);
             std::string resultMsg = Str16ToStr8(data.ReadString16());
             if (resultCode == LOAD_AD_SUCCESS) {
-                std::vector<AAFwk::Want> ads;
-                ParseAdArray(resultMsg, ads);
-                OnAdLoadSuccess(ads);
+                OnAdLoadSuccess(resultMsg);
             } else {
                 OnAdLoadFailure(resultCode, resultMsg);
             }
@@ -140,9 +138,7 @@ int AdLoadCallbackStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mess
             ADS_HILOGI(OHOS::Cloud::ADS_MODULE_COMMON, "multi slots kit return code = %{public}u", resultCode);
             std::string msg = Str16ToStr8(data.ReadString16());
             if (resultCode == LOAD_AD_SUCCESS) {
-                std::map<std::string, std::vector<AAFwk::Want>> adsMap;
-                ParseAdMap(msg, adsMap);
-                OnAdLoadMultiSlotsSuccess(adsMap);
+                OnAdLoadMultiSlotsSuccess(msg);
             } else {
                 OnAdLoadFailure(resultCode, msg);
             }
