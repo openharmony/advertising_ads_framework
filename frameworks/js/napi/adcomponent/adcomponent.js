@@ -239,8 +239,8 @@ class AdComponent extends ViewPU {
 
   initAdRender() {
     let t;
-	let d1;
-	let	e1;
+    let d1;
+    let	e1;
     if (((t = this.ads[0]) === null || t === void 0 ? void 0 : t.adType) === 3 &&
       ((d1 = this.ads[0]) === null || d1 === void 0 ? void 0 : d1.creativeType) !== 99 &&
       ((e1 = this.ads[0]) === null || e1 === void 0 ? void 0 : e1.canSelfRendering)) {
@@ -260,7 +260,7 @@ class AdComponent extends ViewPU {
     hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent connectServiceExtAbility`);
     let a1 = {
       bundleName: this.map.get('providerBundleName'),
-      abilityName: this.map.get('apiServiceName'),
+      abilityName: this.map.get('providerApiAbilityName'),
     };
     this.connection = this.context.connectServiceExtensionAbility(a1, {
       onConnect: (b1, c1) => {
