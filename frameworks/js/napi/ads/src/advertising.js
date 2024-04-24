@@ -23,6 +23,8 @@ const rpc = globalThis.requireNapi('rpc');
 const HILOG_DOMAIN_CODE = 65280;
 const READ_FILE_BUFFER_SIZE = 4096;
 const JS_BRIDGE_RPC_CODE = 1;
+const PARSE_RESP_RPC_CODE = 2;
+const CODE_SUCCESS = 200;
 const ADS_SERVICE_CONFIG_EXT_FILE = 'etc/advertising/ads_framework/ad_service_config_ext.json';
 const ADS_SERVICE_CONFIG_FILE = 'etc/advertising/ads_framework/ad_service_config.json';
 
@@ -239,11 +241,117 @@ function registerWebAdInterface(controller, context) {
   }
 }
 
+class ParseAdResponseRpcObj extends rpc.RemoteObject {
+  constructor(descriptor, listener) {
+    super(descriptor);
+    this.listener = listener;
+  }
+
+  onRemoteMessageRequest(code, data, reply, options) {
+    hilog.info(HILOG_DOMAIN_CODE, 'advertising', `onRemoteMessageRequest enter`);
+    if (code !== PARSE_RESP_RPC_CODE) {
+      hilog.error(HILOG_DOMAIN_CODE, 'advertising', `onRemoteMessageRequest code error`);
+      return false;
+    }
+    try {
+      const respCode = data.readInt();
+      const adsMapJsonStr = data.readString();
+      if (respCode === CODE_SUCCESS) {
+        this.listener?.onAdLoadSuccess(new Map(Object.entries(JSON.parse(adsMapJsonStr))));
+      } else {
+        this.listener?.onAdLoadFailure(respCode, 'parseAdResponse error');
+      }
+      return true;
+    } catch (e) {
+      hilog.error(HILOG_DOMAIN_CODE, 'advertising', `handle rpc error, code:${e.code}, message:${e.message}`);
+      return false;
+    }
+  }
+}
+
+function parseAdResponse(adResponse, listener, context) {
+  hilog.info(HILOG_DOMAIN_CODE, 'advertising', `parseAdResponse enter`);
+  if (adResponse === null || listener === null || context === null) {
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `The parameters cannot be empty.`);
+    throw {
+      code: AdsError.PARAM_ERR,
+      message: 'Invalid input parameter. The parameters cannot be empty.'
+    };
+  }
+
+  try {
+    let options = {
+      onConnect(elementName, remote) {
+        try {
+          // 拼接发送给服务端的数据
+          let data = rpc.MessageSequence.create();
+          data.writeRemoteObject(new ParseAdResponseRpcObj('com.ohos.ParseAdResponseRpcObj', listener));
+          data.writeString(adResponse);
+
+          const reply = rpc.MessageSequence.create();
+          const option = new rpc.MessageOption();
+
+          remote.sendMessageRequest(PARSE_RESP_RPC_CODE, data, reply, option)
+            .catch((e) => {
+              hilog.error(HILOG_DOMAIN_CODE, 'advertising',
+                `sendMessageRequest error, code:${e.code}, message:${e.message}`);
+              throw {
+                code: AdsError.INNER_ERR,
+                message: 'An error occurred during RPC send message request.'
+              };
+            })
+            .finally(() => {
+              data.reclaim();
+              reply.reclaim();
+            });
+        } catch (e) {
+          hilog.error(HILOG_DOMAIN_CODE, 'advertising', `onConnect error, code:${e.code}, message:${e.message}`);
+          throw {
+            code: AdsError.INNER_ERR,
+            message: 'An error occurred during RPC connection interaction.'
+          };
+        }
+      },
+      onDisconnect() {
+      },
+      onFailed() {
+        throw {
+          code: AdsError.PARAM_ERR,
+          message: 'RPC connection failed.'
+        };
+      }
+    };
+    const map = getConfigJsonData();
+    const bundleName = map?.providerBundleName;
+    const abilityName = map?.providerApiAbilityName;
+    if (!bundleName || !abilityName) {
+      hilog.error(HILOG_DOMAIN_CODE, 'advertising', `bundleName or abilityName is null`);
+      throw {
+        code: AdsError.INNER_ERR,
+        message: 'System internal error.'
+      };
+    }
+    const want = {
+      bundleName: bundleName,
+      abilityName: abilityName
+    };
+
+    context.connectServiceExtensionAbility(want, options);
+  } catch (e) {
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `parseAdResponse error, code:${e.code}, message:${e.message}`);
+    throw {
+      code: AdsError.INNER_ERR,
+      message: 'System internal error.'
+    };
+  }
+}
+
 export default {
   // 注意：C/C++实现的NAPI模块中的接口如果需要对外暴露，都需要按这种形式来编写
   AdLoader: AdLoader,
   showAd: advertising.showAd,
   getAdRequestBody: advertising.getAdRequestBody,
+  parseAdResponse: parseAdResponse,
   Advertisement: advertising.Advertisement,
   AdRequestParams: advertising.AdRequestParams,
   AdOptions: advertising.AdOptions,
