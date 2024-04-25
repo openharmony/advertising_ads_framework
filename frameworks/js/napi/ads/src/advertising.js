@@ -271,70 +271,12 @@ class ParseAdResponseRpcObj extends rpc.RemoteObject {
 
 function parseAdResponse(adResponse, listener, context) {
   hilog.info(HILOG_DOMAIN_CODE, 'advertising', `parseAdResponse enter`);
-  if (adResponse === null || listener === null || context === null) {
-    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `The parameters cannot be empty.`);
-    throw {
-      code: AdsError.PARAM_ERR,
-      message: 'Invalid input parameter. The parameters cannot be empty.'
-    };
-  }
+  validateParams(adResponse, listener, context);
 
   try {
-    let options = {
-      onConnect(elementName, remote) {
-        try {
-          // 拼接发送给服务端的数据
-          let data = rpc.MessageSequence.create();
-          data.writeRemoteObject(new ParseAdResponseRpcObj('com.ohos.ParseAdResponseRpcObj', listener));
-          data.writeString(adResponse);
-
-          const reply = rpc.MessageSequence.create();
-          const option = new rpc.MessageOption();
-
-          remote.sendMessageRequest(PARSE_RESP_RPC_CODE, data, reply, option)
-            .catch((e) => {
-              hilog.error(HILOG_DOMAIN_CODE, 'advertising',
-                `sendMessageRequest error, code:${e.code}, message:${e.message}`);
-              throw {
-                code: AdsError.INNER_ERR,
-                message: 'An error occurred during RPC send message request.'
-              };
-            })
-            .finally(() => {
-              data.reclaim();
-              reply.reclaim();
-            });
-        } catch (e) {
-          hilog.error(HILOG_DOMAIN_CODE, 'advertising', `onConnect error, code:${e.code}, message:${e.message}`);
-          throw {
-            code: AdsError.INNER_ERR,
-            message: 'An error occurred during RPC connection interaction.'
-          };
-        }
-      },
-      onDisconnect() {
-      },
-      onFailed() {
-        throw {
-          code: AdsError.PARAM_ERR,
-          message: 'RPC connection failed.'
-        };
-      }
-    };
-    const map = getConfigJsonData();
-    const bundleName = map?.providerBundleName;
-    const abilityName = map?.providerApiAbilityName;
-    if (!bundleName || !abilityName) {
-      hilog.error(HILOG_DOMAIN_CODE, 'advertising', `bundleName or abilityName is null`);
-      throw {
-        code: AdsError.INNER_ERR,
-        message: 'System internal error.'
-      };
-    }
-    const want = {
-      bundleName: bundleName,
-      abilityName: abilityName
-    };
+    const options = createConnectionOptions(listener, adResponse);
+    const { bundleName, abilityName } = getConfigData();
+    const want = { bundleName, abilityName };
 
     context.connectServiceExtensionAbility(want, options);
   } catch (e) {
@@ -344,6 +286,75 @@ function parseAdResponse(adResponse, listener, context) {
       message: 'System internal error.'
     };
   }
+}
+
+function validateParams(adResponse, listener, context) {
+  if (adResponse === null || listener === null || context === null) {
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `The parameters cannot be empty.`);
+    throw {
+      code: AdsError.PARAM_ERR,
+      message: 'Invalid input parameter. The parameters cannot be empty.'
+    };
+  }
+}
+
+function createConnectionOptions(listener, adResponse) {
+  return {
+    onConnect(elementName, remote) {
+      sendRPCMessage(listener, adResponse, remote);
+    },
+    onDisconnect() {},
+    onFailed() {
+      throw {
+        code: AdsError.PARAM_ERR,
+        message: 'RPC connection failed.'
+      };
+    }
+  };
+}
+
+function sendRPCMessage(listener, adResponse, remote) {
+  try {
+    let data = rpc.MessageSequence.create();
+    data.writeRemoteObject(new ParseAdResponseRpcObj('com.ohos.ParseAdResponseRpcObj', listener));
+    data.writeString(adResponse);
+
+    const reply = rpc.MessageSequence.create();
+    const option = new rpc.MessageOption();
+
+    remote.sendMessageRequest(PARSE_RESP_RPC_CODE, data, reply, option)
+      .catch((e) => {
+        hilog.error(HILOG_DOMAIN_CODE, 'advertising', `sendMessageRequest error, code:${e.code}, message:${e.message}`);
+        throw {
+          code: AdsError.INNER_ERR,
+          message: 'An error occurred during RPC send message request.'
+        };
+      })
+      .finally(() => {
+        data.reclaim();
+        reply.reclaim();
+      });
+  } catch (e) {
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `onConnect error, code:${e.code}, message:${e.message}`);
+    throw {
+      code: AdsError.INNER_ERR,
+      message: 'An error occurred during RPC connection interaction.'
+    };
+  }
+}
+
+function getConfigData() {
+  const map = getConfigJsonData();
+  const bundleName = map?.providerBundleName;
+  const abilityName = map?.providerApiAbilityName;
+  if (!bundleName || !abilityName) {
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `bundleName or abilityName is null`);
+    throw {
+      code: AdsError.INNER_ERR,
+      message: 'System internal error.'
+    };
+  }
+  return { bundleName, abilityName };
 }
 
 export default {
