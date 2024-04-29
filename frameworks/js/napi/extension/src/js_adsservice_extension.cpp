@@ -52,6 +52,10 @@ napi_value AttachAdsServiceExtensionContext(napi_env env, void *value, void *)
     napi_coerce_to_native_binding_object(
         env, contextObj, DetachCallbackFunc, AttachAdsServiceExtensionContext, value, nullptr);
     auto workContext = new (std::nothrow) std::weak_ptr<AdsServiceExtensionContext>(ptr);
+    if (workContext == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "workContext is null.");
+        return nullptr;
+    }
     napi_wrap(env, contextObj, workContext,
         [](napi_env, void *data, void *) {
             ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI,
