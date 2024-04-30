@@ -161,7 +161,7 @@ class AdComponent extends ViewPU {
     y.writeInt(u);
     y.writeString(this.eventUniqueId);
     y.writeString(this.uniqueId);
-    if (w) {
+    if (w !== null && w !== undefined) {
       y.writeString(this.getMillis());
       y.writeInt(w);
     }
