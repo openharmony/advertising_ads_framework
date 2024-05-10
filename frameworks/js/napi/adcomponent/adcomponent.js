@@ -163,7 +163,7 @@ class AdComponent extends ViewPU {
     y.writeString(this.uniqueId);
     if (w !== null && w !== undefined) {
       y.writeString(this.getMillis());
-      y.writeInt(w);
+      y.writeFloat(w);
     }
     return y;
   }
