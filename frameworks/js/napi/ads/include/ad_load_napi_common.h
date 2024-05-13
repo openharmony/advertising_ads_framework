@@ -69,7 +69,7 @@ public:
     explicit AdRequestBodyAsync(napi_env env, napi_deferred deferred);
     ~AdRequestBodyAsync();
 
-    void OnRequestBodyReturn(const std::string &body, bool isResolved);
+    void OnRequestBodyReturn(int32_t resultCode, const std::string &body, bool isResolved);
 
 private:
     napi_env env_ = nullptr;
