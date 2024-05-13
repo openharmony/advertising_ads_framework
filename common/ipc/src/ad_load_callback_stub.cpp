@@ -83,6 +83,7 @@ void ParseAdArray(std::string adsString, std::vector<AAFwk::Want> &ads)
     cJSON *root = cJSON_Parse(adsString.c_str());
     if (!AdJsonUtil::IsValid(root)) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_COMMON, "parse kit return ad array failed");
+        cJSON_Delete(root);
         return;
     }
     if (cJSON_IsArray(root)) {
@@ -102,6 +103,7 @@ void ParseAdMap(std::string adsString, std::map<std::string, std::vector<AAFwk::
     cJSON *root = cJSON_Parse(adsString.c_str());
     if (!AdJsonUtil::IsValid(root)) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_COMMON, "parse kit return ad map failed");
+        cJSON_Delete(root);
         return;
     }
     cJSON *item = nullptr;

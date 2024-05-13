@@ -178,6 +178,13 @@ void AdLoadService::GetConfigItem(const char *path, AdServiceElementName &adServ
     cJSON *cloudServiceBundleName = cJSON_GetObjectItem(root, "providerBundleName");
     cJSON *cloudServiceAbilityName = cJSON_GetObjectItem(root, "providerAbilityName");
     cJSON *apiServiceName = cJSON_GetObjectItem(root, "providerApiAbilityName");
+    if (cloudServiceBundleName == nullptr || cloudServiceAbilityName == nullptr ||
+        apiServiceName == nullptr) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_GetObjectItem VALUE IS NULL");
+        inFile.close();
+        cJSON_Delete(root);
+        return;
+    }
     if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName) &&
         cJSON_IsArray(apiServiceName)) {
         adServiceElementName.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
