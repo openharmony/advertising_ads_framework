@@ -97,7 +97,7 @@ void GetAdConfigItem(const char *path, CloudServiceProvider &cloudServiceProvide
     cJSON *cloudServiceBundleName = cJSON_GetObjectItem(root, "providerBundleName");
     cJSON *cloudServiceAbilityName = cJSON_GetObjectItem(root, "providerAbilityName");
     cJSON *cloudServiceUEAAbilityName = cJSON_GetObjectItem(root, "providerUEAAbilityName");
-    if (cloudServiceBundleName == nullptr || cloudServiceAbilityName == nullptr || 
+    if (cloudServiceBundleName == nullptr || cloudServiceAbilityName == nullptr ||
         cloudServiceUEAAbilityName == nullptr) {
         ADS_HILOGE(ADS_MODULE_JS_NAPI, "cJSON_GetObjectItem VALUE IS NULL.");
         inFile.close();
@@ -684,7 +684,7 @@ bool GetAdsArray(napi_env env, napi_value argv, cJSON *root)
             ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "add singleRoot to root failed");
             return false;
         }
-         cJSON_Delete(singleRoot);
+        cJSON_Delete(singleRoot);
     }
     return true;
 }
