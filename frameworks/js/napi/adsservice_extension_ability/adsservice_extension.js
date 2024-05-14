@@ -91,12 +91,12 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
           this.onLoadAd(adRequestParams[0], adOptions, this.bizAdsReqCallback(code, replyRpcObj));
         }
       } catch (error) {
-        hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `request ad failed: msg: ${error.message}`);
+        hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `request ad failed, msg: ${error.message}`);
         this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_INTERNAL_ERROR, RpcReqCallbackMsg.INTERNAL_ERROR);
       }
       return true;
     } catch (e) {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `handle rpc request failed, msg: ${JSON.stringify(e)}`);
+      hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `handle rpc request failed, msg: ${e.message}`);
       this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_INTERNAL_ERROR, RpcReqCallbackMsg.INTERNAL_ERROR);
       return false;
     }
