@@ -39,7 +39,7 @@ int32_t AdRequestBodyStub::OnRemoteRequest(uint32_t code, MessageParcel &data, M
         std::string resultMsg = Str16ToStr8(data.ReadString16());
         ADS_HILOGD(OHOS::Cloud::ADS_MODULE_COMMON, "request body return code = %{public}u", resultCode);
         bool isResolved = (resultCode == IPC_SUCCESS && !resultMsg.empty());
-        OnRequestBodyReturn(resultMsg, isResolved);
+        OnRequestBodyReturn(resultCode, resultMsg, isResolved);
     } else {
         ADS_HILOGD(OHOS::Cloud::ADS_MODULE_COMMON, "no business, code = %{public}u, flags = %{public}u", code,
             option.GetFlags());

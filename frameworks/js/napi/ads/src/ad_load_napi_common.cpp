@@ -235,7 +235,7 @@ void UvQueueWorkOnAdRequestBody(uv_work_t *work, int status)
     delete work;
 }
 
-void AdRequestBodyAsync::OnRequestBodyReturn(const std::string &body, bool isResolved)
+void AdRequestBodyAsync::OnRequestBodyReturn(int32_t resultCode, const std::string &body, bool isResolved)
 {
     uv_loop_s *loop = nullptr;
     uv_work_t *work = nullptr;
@@ -244,7 +244,7 @@ void AdRequestBodyAsync::OnRequestBodyReturn(const std::string &body, bool isRes
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "failed to init ad request body work environment");
         return;
     }
-    param->errCode = isResolved ? ERR_SEND_OK : INNER_ERR;
+    param->errCode = isResolved ? ERR_SEND_OK : resultCode;
     param->body = body;
     param->deferred = deferred_;
     work->data = reinterpret_cast<void *>(param);

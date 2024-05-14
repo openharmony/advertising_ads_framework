@@ -25,7 +25,7 @@ namespace Cloud {
 class IAdRequestBody : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.cloud.Ads.IAdRequestBody");
-    virtual void OnRequestBodyReturn(const std::string &body, bool isResolved) = 0;
+    virtual void OnRequestBodyReturn(int32_t resultCode, const std::string &body, bool isResolved) = 0;
 
     enum class Message {
         REQUEST_BODY_CODE = 1,
