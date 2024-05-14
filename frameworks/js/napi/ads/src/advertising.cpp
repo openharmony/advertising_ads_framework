@@ -51,6 +51,7 @@ const std::string AD_LOADER_CLASS_NAME = "AdLoader";
 const std::string DEFAULT_JSON_STR = "{}";
 thread_local napi_ref Advertising::adRef_ = nullptr;
 static const int32_t STR_MAX_SIZE = 256;
+static const int32_t PARAM_ERROR_CODE = 401;
 static const int32_t CUSTOM_DATA_MAX_SIZE = 1024 * 1024; // 1M
 
 napi_value NapiGetNull(napi_env env)
@@ -515,6 +516,8 @@ napi_value Advertising::ShowAd(napi_env env, napi_callback_info info)
     }
     cJSON *adDisplayOptionsRoot = cJSON_CreateObject();
     if (ParseObjectFromJs(env, argv[1], adDisplayOptionsRoot) == nullptr) { // 2 params
+        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(),
+            "Parameter error. options is null. ErrorCode 401.");
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseDisplayOptionsByShowAd failed");
         cJSON_Delete(adDisplayOptionsRoot);
         return NapiGetNull(env);
@@ -528,6 +531,7 @@ napi_value Advertising::ShowAd(napi_env env, napi_callback_info info)
     Advertisment advertisment;
     cJSON *adRoot = cJSON_CreateObject();
     if (ParseAdvertismentByAd(env, argv[0], advertisment, adRoot) == nullptr) {
+        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Parameter error. ad is null. ErrorCode 401.");
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseAdvertismentByAd failed");
         cJSON_Delete(adRoot);
         cJSON_Delete(adDisplayOptionsRoot);
@@ -684,7 +688,6 @@ bool GetAdsArray(napi_env env, napi_value argv, cJSON *root)
             ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "add singleRoot to root failed");
             return false;
         }
-        cJSON_Delete(singleRoot);
     }
     return true;
 }
@@ -771,6 +774,9 @@ napi_value ParseAdRequestBodyParms(napi_env env, napi_callback_info info, GetAdR
     cJSON *parms = cJSON_CreateArray();
     if (!GetAdsArray(env, argv[0], parms)) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "parse get request body parms failed");
+        cJSON_Delete(parms);
+        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(),
+            "Parameter error. parms is null. ErrorCode 401");
         return NapiGetNull(env);
     }
     std::string parmsString = AdJsonUtil::ToString(parms);
@@ -781,6 +787,9 @@ napi_value ParseAdRequestBodyParms(napi_env env, napi_callback_info info, GetAdR
     cJSON *optionsObject = cJSON_CreateObject();
     if (ParseObjectFromJs(env, argv[1], optionsObject) == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "parse get request body options failed");
+        cJSON_Delete(optionsObject);
+        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(),
+            "Parameter error. options is null. ErrorCode 401");
         return NapiGetNull(env);
     }
     std::string optionString = DEFAULT_JSON_STR;
@@ -833,12 +842,10 @@ napi_value Advertising::GetAdRequestBody(napi_env env, napi_callback_info info)
     NAPI_CALL(env, napi_create_promise(env, &deferred, &promise));
     reuqestBodyContext->deferred = deferred;
     ParseAdRequestBodyParms(env, info, reuqestBodyContext);
-    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "1111");
     napi_value functionName = nullptr;
     NAPI_CALL(env, napi_create_string_latin1(env, "GetAdRequestBody", NAPI_AUTO_LENGTH, &functionName));
     NAPI_CALL(env, napi_create_async_work(env, nullptr, functionName, ExecuteCBWithPromise, CompleteCBWithPromise,
         reinterpret_cast<void *> (reuqestBodyContext), &reuqestBodyContext->asyncWork));
-    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "2222");
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, reuqestBodyContext->asyncWork, napi_qos_default));
     return promise;
 }
