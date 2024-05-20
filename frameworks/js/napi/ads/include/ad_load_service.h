@@ -77,7 +77,7 @@ private:
     sptr<Cloud::AdRequestData> data_;
     sptr<Cloud::IAdLoadCallback> callback_;
     sptr<Cloud::IAdRequestBody> bodyCallback_;
-    int32_t loadAdType_;
+    int32_t loadAdType_{0};
     sptr<Cloud::AdLoadSendRequestProxy> proxy_{ nullptr };
     sptr<Cloud::AdRequestBodySendProxy> bodyProxy_{ nullptr };
     AdServiceElementName currAdServiceElementName_;
