@@ -107,9 +107,15 @@ void GetAdConfigItem(const char *path, CloudServiceProvider &cloudServiceProvide
     }
     if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName) &&
         cJSON_IsArray(cloudServiceUEAAbilityName)) {
-        cloudServiceProvider.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
-        cloudServiceProvider.abilityName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
-        cloudServiceProvider.ueaAbilityName = cJSON_GetArrayItem(cloudServiceUEAAbilityName, 0)->valuestring;
+            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceBundleName, 0))) {
+                cloudServiceProvider.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
+            }
+            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceAbilityName, 0))) {
+                cloudServiceProvider.abilityName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
+            }
+            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceUEAAbilityName, 0))) {
+                cloudServiceProvider.ueaAbilityName = cJSON_GetArrayItem(cloudServiceUEAAbilityName, 0)->valuestring;
+            }
     }
     inFile.close();
     cJSON_Delete(root);
