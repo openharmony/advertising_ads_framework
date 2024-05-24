@@ -89,10 +89,12 @@ ohos_shared_library("advertising") {
   ]
 
   external_deps = [
+    "ability_runtime:ability_connect_callback_stub",
     "ability_runtime:ability_context_native",
     "ability_runtime:ability_manager",
     "ability_runtime:abilitykit_native",
     "ability_runtime:napi_base_context",
+    "ability_runtime:napi_common",
     "ace_engine:ace_uicontent",
     "bundle_framework:appexecfwk_core",
     "cJSON:cjson",
