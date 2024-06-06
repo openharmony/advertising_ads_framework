@@ -81,6 +81,7 @@ static const std::string AD_REQUEST_BODY_MSG = "body reuqest failed";
 enum AdsError : int32_t {
     ERR_SEND_OK = 0,
     PARAM_ERR = 401,
+    DEVICE_ERR = 801,
     INNER_ERR = 21800001,
     REQUEST_FAIL = 21800003,
 };
