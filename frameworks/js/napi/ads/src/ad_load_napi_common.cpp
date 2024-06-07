@@ -43,6 +43,8 @@ inline int32_t ErrCodeConvert(int32_t kitErrCode)
             return PARAM_ERR;
         case static_cast<int32_t>(Cloud::IAdLoadCallback::Message::AD_LOAD_FAIL):
             return REQUEST_FAIL;
+        case static_cast<int32_t>(Cloud::IAdLoadCallback::Message::DEVICE_NOT_SUPPORT_ERROR):
+            return DEVICE_ERR;
         default:
             return INNER_ERR;
     }

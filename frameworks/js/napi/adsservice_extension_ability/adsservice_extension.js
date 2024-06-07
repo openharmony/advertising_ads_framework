@@ -91,8 +91,12 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
           this.onLoadAd(adRequestParams[0], adOptions, this.bizAdsReqCallback(code, replyRpcObj));
         }
       } catch (error) {
-        hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `request ad failed, msg: ${error.message}`);
-        this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_INTERNAL_ERROR, RpcReqCallbackMsg.INTERNAL_ERROR);
+        hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `request ad failed, msg: ${error.message}, code: ${error.code}`);
+        if (error.code === RpcReqCallbackCode.CODE_DEVICE_NOT_SUPPORT) {
+          this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_DEVICE_NOT_SUPPORT, error.message);
+        } else {
+          this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_INTERNAL_ERROR, RpcReqCallbackMsg.INTERNAL_ERROR);
+        }
       }
       return true;
     } catch (e) {
@@ -339,6 +343,7 @@ const COMMA = ',';
 const RpcReqCallbackCode = {
   CODE_SUCCESS: 200,
   CODE_INVALID_PARAMETERS: 401,
+  CODE_DEVICE_NOT_SUPPORT: 801,
   CODE_INTERNAL_ERROR: 100001,
   CODE_INIT_CONFIG_FAILURE: 100002,
   CODE_LOAD_ADS_FAILURE: 100003,

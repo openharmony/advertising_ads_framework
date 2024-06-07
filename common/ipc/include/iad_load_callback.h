@@ -36,6 +36,7 @@ public:
         AD_LOAD = 1,
         MULTI_AD_LOAD = 2,
         AD_LOAD_PARAMS_ERROR = 401,
+        DEVICE_NOT_SUPPORT_ERROR = 801,
         AD_LOAD_INNER_ERROR = 100001,
         AD_LOAD_FAIL = 100003,
     };
