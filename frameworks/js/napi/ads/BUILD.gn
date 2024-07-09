@@ -89,7 +89,7 @@ ohos_shared_library("advertising") {
   ]
 
   external_deps = [
-    "ability_runtime:ability_context_callback_stub",
+    "ability_runtime:ability_connect_callback_stub",
     "ability_runtime:ability_context_native",
     "ability_runtime:ability_manager",
     "ability_runtime:abilitykit_native",
