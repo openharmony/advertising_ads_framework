@@ -352,7 +352,7 @@ const RpcReqCallbackCode = {
 const RpcReqCallbackMsg = {
   SUCCESS: '',
   INTERNAL_ERROR: 'biz service internal error',
-  LOAD_ADS_FAILURE: 'Load ads failure',
+  LOAD_ADS_FAILURE: 'Failed to load the ad request.',
 }
 
 const RpcReqCallbackErrorMsg_401 = {
