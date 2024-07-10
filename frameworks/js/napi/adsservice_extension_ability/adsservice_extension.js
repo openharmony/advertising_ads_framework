@@ -32,7 +32,6 @@ class AdsServiceExtensionAbility extends ExtensionAbility {
   onLoadAdWithMultiSlots(adParams, adOptions, respCallback) {
     hilog.info(HILOG_DOMAIN_CODE, 'AdsServiceExtensionAbility', 'onLoadAdWithMultiSlots');
   }
-
 }
 
 /**
@@ -74,9 +73,10 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
       const isMultiSlots = this.isMultiSlotsReq(code);
       // 2.数据类型转换
       // 参数校验
-      if (!this.validate(isMultiSlots, reqData)) {
+      const validateErrorMsg = this.validate(isMultiSlots, reqData);
+      if (validateErrorMsg) {
         hilog.info(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `the request params is invalid`);
-        this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_INVALID_PARAMETERS, RpcReqCallbackMsg.INVALID_PARAMETERS);
+        this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_INVALID_PARAMETERS, validateErrorMsg);
 		return true;
       }
       const adRequestParams = this.parseAdRequestParams(isMultiSlots, reqData, packageName, requestStartTime);
@@ -91,8 +91,12 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
           this.onLoadAd(adRequestParams[0], adOptions, this.bizAdsReqCallback(code, replyRpcObj));
         }
       } catch (error) {
-        hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `request ad failed, msg: ${error.message}`);
-        this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_INTERNAL_ERROR, RpcReqCallbackMsg.INTERNAL_ERROR);
+        hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `request ad failed, msg: ${error.message}, code: ${error.code}`);
+        if (error.code === RpcReqCallbackCode.CODE_DEVICE_NOT_SUPPORT) {
+          this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_DEVICE_NOT_SUPPORT, error.message);
+        } else {
+          this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_INTERNAL_ERROR, RpcReqCallbackMsg.INTERNAL_ERROR);
+        }
       }
       return true;
     } catch (e) {
@@ -102,6 +106,7 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
     }
   }
 
+  // 给NAPI响应数据-广告数据
   private bizAdsReqCallback(code, replyRpcObj) {
     return (respData) => {
       let hasAds = false;
@@ -128,7 +133,7 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
     }
   }
 
-  // 给NAPI响应数据
+  // 给NAPI响应数据-其他异常数据
   private bizReqCallback(code, replyRpcObj) {
     return (respCode, respMsg) => {
       this.sendMsgReq(code, replyRpcObj, respCode, respMsg);
@@ -170,22 +175,34 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
     try {
       adRequestParams = JSON.parse(reqData.reqParams);
     } catch (error) {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `adRequestParams is not a json string`);
-      return false;
+      hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', RpcReqCallbackErrorMsg_401.AD_REQUEST_PARAMS_NOT_JSON_ERROR);
+      return RpcReqCallbackErrorMsg_401.AD_REQUEST_PARAMS_NOT_JSON_ERROR;
     }
     // array is not empty
     if (adRequestParams.length === 0) {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `adRequestParams array is empty`);
-      return false;
+      hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', RpcReqCallbackErrorMsg_401.MULTI_AD_REQUEST_PARAMS_EMPTY_ERROR);
+      return RpcReqCallbackErrorMsg_401.MULTI_AD_REQUEST_PARAMS_EMPTY_ERROR;
     }
     // adId is required
     if (adRequestParams.some((adReqParam) => { adReqParam.adId && adReqParam.adId.trim().length === 0 })) {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `All ad ids are required`);
-      return false;
+      hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', RpcReqCallbackErrorMsg_401.MULTI_AD_IDS_NECESSARY_ERROR);
+      return RpcReqCallbackErrorMsg_401.MULTI_AD_IDS_NECESSARY_ERROR;
     }
     // check adType, adWidth and adHeight
-    return this.isValidAdType(adRequestParams[0].adType) &&
-      this.isValidAdSize(adRequestParams[0].adWidth) && this.isValidAdSize(adRequestParams[0].adHeight);
+    let errorMsg = '';
+    const AdTypeErrorMsg = this.isValidAdType(adRequestParams[0].adType);
+    if (AdTypeErrorMsg) {
+      errorMsg += AdTypeErrorMsg;
+    }
+    const AdWidthErrorMsg = this.isValidAdSize(adRequestParams[0].adWidth, "adWidth");
+    if (AdWidthErrorMsg) {
+      errorMsg += AdWidthErrorMsg;
+    }
+    const adHeightErrorMsg = this.isValidAdSize(adRequestParams[0].adHeight, "adHeight")
+    if (adHeightErrorMsg) {
+      errorMsg += adHeightErrorMsg;
+    }
+    return errorMsg;
   }
 
   private validateSingleSlotsReq(reqData) {
@@ -193,17 +210,29 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
     try {
       adRequestParams = JSON.parse(reqData.reqParams);
     } catch (error) {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `adRequestParams is not a json string`);
-      return false;
+      hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', RpcReqCallbackErrorMsg_401.AD_REQUEST_PARAMS_NOT_JSON_ERROR);
+      return RpcReqCallbackErrorMsg_401.AD_REQUEST_PARAMS_NOT_JSON_ERROR;
     }
     // adId is required
     if (!adRequestParams.adId) {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `adId is required`);
-      return false;
+      hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', RpcReqCallbackErrorMsg_401.AD_ID_NECESSARY_ERROR);
+      return RpcReqCallbackErrorMsg_401.AD_ID_NECESSARY_ERROR;
     }
     // check adType, adWidth and adHeight
-    return this.isValidAdType(adRequestParams.adType) &&
-      this.isValidAdSize(adRequestParams.adWidth) && this.isValidAdSize(adRequestParams.adHeight);
+    let errorMsg = '';
+    const AdTypeErrorMsg = this.isValidAdType(adRequestParams.adType);
+    if (AdTypeErrorMsg) {
+      errorMsg += AdTypeErrorMsg;
+    }
+    const AdWidthErrorMsg = this.isValidAdSize(adRequestParams.adWidth, "adWidth");
+    if (AdWidthErrorMsg) {
+      errorMsg += AdWidthErrorMsg;
+    }
+    const adHeightErrorMsg = this.isValidAdSize(adRequestParams.adHeight, "adHeight")
+    if (adHeightErrorMsg) {
+      errorMsg += adHeightErrorMsg;
+    }
+    return errorMsg;
   }
 
   private isValidAdType(adType) {
@@ -219,19 +248,20 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
     ];
     if (!isUndefined(adType) && adType !== -1 && adTypeArray.indexOf(adType) === -1) {
       hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `adType ${adType} is invalid`);
-      return false;
+      return `adType ${adType} is invalid, ${RpcReqCallbackErrorMsg_401.AD_TYPE_ERROR};\n`;
     }
-    return true;
+    return null;
   }
 
-  private isValidAdSize(adSize) {
+  private isValidAdSize(adSize, typeName) {
+    hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `typeName = ${typeName}`);
     if (adSize == null) {
-      return true;
+      return null;
     }
     if (isNumber(adSize) && adSize > 0) {
-      return true;
+      return null;
     }
-    return false;
+    return `${typeName} ${adSize} is invalid, ${typeName} ${RpcReqCallbackErrorMsg_401.AD_SIZE_ERROR};\n`;
   }
 
   private parseAdRequestParams(isMultiSlots, reqData, packageName, requestStartTime) {
@@ -313,6 +343,7 @@ const COMMA = ',';
 const RpcReqCallbackCode = {
   CODE_SUCCESS: 200,
   CODE_INVALID_PARAMETERS: 401,
+  CODE_DEVICE_NOT_SUPPORT: 801,
   CODE_INTERNAL_ERROR: 100001,
   CODE_INIT_CONFIG_FAILURE: 100002,
   CODE_LOAD_ADS_FAILURE: 100003,
@@ -320,9 +351,17 @@ const RpcReqCallbackCode = {
 
 const RpcReqCallbackMsg = {
   SUCCESS: '',
-  INVALID_PARAMETERS: 'Invalid adRequestParams',
   INTERNAL_ERROR: 'biz service internal error',
-  LOAD_ADS_FAILURE: 'Load ads failure',
+  LOAD_ADS_FAILURE: 'Failed to load the ad request.',
+}
+
+const RpcReqCallbackErrorMsg_401 = {
+  AD_REQUEST_PARAMS_NOT_JSON_ERROR:`adRequestParams is not a json string`,
+  MULTI_AD_REQUEST_PARAMS_EMPTY_ERROR:`adRequestParams array is empty`,
+  AD_ID_NECESSARY_ERROR:`adId is required`,
+  MULTI_AD_IDS_NECESSARY_ERROR:`All ad ids are required`,
+  AD_TYPE_ERROR:`adType must be number and valid`,
+  AD_SIZE_ERROR:`must be number and greater than zero`,
 }
 
 /**

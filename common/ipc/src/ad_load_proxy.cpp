@@ -35,6 +35,7 @@ ErrCode AdLoadSendRequestProxy::SendAdLoadRequest(const sptr<AdRequestData> &req
 {
     if (callback == nullptr) {
         ADS_HILOGI(OHOS::Cloud::ADS_MODULE_SERVICE, "callback is null");
+        return ERR_AD_COMMON_NAPI_CALLBACK_NULL_ERROR;
     }
     MessageParcel data;
     if (!data.WriteRemoteObject(callback->AsObject())) {

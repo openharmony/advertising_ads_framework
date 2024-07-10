@@ -187,9 +187,15 @@ void AdLoadService::GetConfigItem(const char *path, AdServiceElementName &adServ
     }
     if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName) &&
         cJSON_IsArray(apiServiceName)) {
-        adServiceElementName.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
-        adServiceElementName.extensionName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
-        adServiceElementName.apiServiceName = cJSON_GetArrayItem(apiServiceName, 0)->valuestring;
+            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceBundleName, 0))) {
+                adServiceElementName.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
+            }
+            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceAbilityName, 0))) {
+                adServiceElementName.extensionName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
+            }
+            if (cJSON_IsString(cJSON_GetArrayItem(apiServiceName, 0))) {
+                adServiceElementName.apiServiceName = cJSON_GetArrayItem(apiServiceName, 0)->valuestring;
+            }
     }
     adServiceElementName.userId = Cloud::USER_ID;
     inFile.close();

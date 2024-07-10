@@ -25,6 +25,7 @@ const READ_FILE_BUFFER_SIZE = 4096;
 const JS_BRIDGE_RPC_CODE = 1;
 const PARSE_RESP_RPC_CODE = 2;
 const CODE_SUCCESS = 200;
+const CODE_DEVICE_NOT_SUPPORT = 801;
 const ADS_SERVICE_CONFIG_EXT_FILE = 'etc/advertising/ads_framework/ad_service_config_ext.json';
 const ADS_SERVICE_CONFIG_FILE = 'etc/advertising/ads_framework/ad_service_config.json';
 
@@ -32,7 +33,8 @@ const AdsError = {
   ERR_SEND_OK: 0,
   PARAM_ERR: 401,
   INNER_ERR: 21800001,
-  REQUEST_FAIL: 21800003
+  REQUEST_FAIL: 21800003,
+  PARSE_RESPONSE_ERROR: 21800005
 };
 
 class AdLoader {
@@ -258,8 +260,12 @@ class ParseAdResponseRpcObj extends rpc.RemoteObject {
       const adsMapJsonStr = data.readString();
       if (respCode === CODE_SUCCESS) {
         this.listener?.onAdLoadSuccess(new Map(Object.entries(JSON.parse(adsMapJsonStr))));
+      } else if (respCode === CODE_DEVICE_NOT_SUPPORT) {
+        this.listener?.onAdLoadFailure(respCode, 'Device not supported');
+      } else if (respCode === AdsError.PARSE_RESPONSE_ERROR) {
+        this.listener?.onAdLoadFailure(respCode, 'Failed to parse the ad response.');
       } else {
-        this.listener?.onAdLoadFailure(respCode, 'parseAdResponse error');
+        this.listener?.onAdLoadFailure(respCode, 'System internal error');
       }
       return true;
     } catch (e) {
@@ -290,7 +296,7 @@ function parseAdResponse(adResponse, listener, context) {
 
 function validateParams(adResponse, listener, context) {
   if (adResponse === null || listener === null || context === null) {
-    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `The parameters cannot be empty.`);
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `The parameters cannot be empty, error code 401.`);
     throw {
       code: AdsError.PARAM_ERR,
       message: 'Invalid input parameter. The parameters cannot be empty.'
