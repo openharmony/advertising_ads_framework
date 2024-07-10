@@ -185,8 +185,7 @@ class AdsJsBridge {
 
           remote.sendMessageRequest(JS_BRIDGE_RPC_CODE, data, reply, option)
             .catch((e) => {
-              hilog.error(HILOG_DOMAIN_CODE, 'advertising',
-                `sendMessageRequest error, code:${e.code}, message:${e.message}`);
+              hilog.error(HILOG_DOMAIN_CODE, 'advertising', `sendMessageRequest error, code:${e.code}, message:${e.message}`);
             })
             .finally(() => {
               data.reclaim();
