@@ -305,10 +305,10 @@ function validateParams(adResponse, listener, context) {
     };
   }
   if (adResponse.length > PARSE_RESP_LENGTH_LIMIT) {
-    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `adResponse length too large.`);
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `The parameter adResponse is too long.`);
     throw {
       code: AdsError.PARAM_ERR,
-      message: 'Invalid input parameter. adResponse length too large.'
+      message: 'Invalid input parameter. The parameter adResponse is too long.'
     };
   }
 }
