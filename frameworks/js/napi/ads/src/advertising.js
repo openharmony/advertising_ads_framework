@@ -22,6 +22,8 @@ const rpc = globalThis.requireNapi('rpc');
 
 const HILOG_DOMAIN_CODE = 65280;
 const READ_FILE_BUFFER_SIZE = 4096;
+const RPC_STRING_LENGTH = 32768;
+const PARSE_RESP_LENGTH_LIMIT = 52428800;
 const JS_BRIDGE_RPC_CODE = 1;
 const PARSE_RESP_RPC_CODE = 2;
 const CODE_SUCCESS = 200;
@@ -302,6 +304,13 @@ function validateParams(adResponse, listener, context) {
       message: 'Invalid input parameter. The parameters cannot be empty.'
     };
   }
+  if (adResponse.length > PARSE_RESP_LENGTH_LIMIT) {
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `The parameter adResponse is too long.`);
+    throw {
+      code: AdsError.PARAM_ERR,
+      message: 'Invalid input parameter. The parameter adResponse is too long.'
+    };
+  }
 }
 
 function createConnectionOptions(listener, adResponse) {
@@ -309,7 +318,8 @@ function createConnectionOptions(listener, adResponse) {
     onConnect(elementName, remote) {
       sendRPCMessage(listener, adResponse, remote);
     },
-    onDisconnect() {},
+    onDisconnect() {
+    },
     onFailed() {
       throw {
         code: AdsError.PARAM_ERR,
@@ -323,7 +333,7 @@ function sendRPCMessage(listener, adResponse, remote) {
   try {
     let data = rpc.MessageSequence.create();
     data.writeRemoteObject(new ParseAdResponseRpcObj('com.ohos.ParseAdResponseRpcObj', listener));
-    data.writeString(adResponse);
+    data.writeStringArray(splitString(adResponse, RPC_STRING_LENGTH));
 
     const reply = rpc.MessageSequence.create();
     const option = new rpc.MessageOption();
@@ -361,6 +371,14 @@ function getConfigData() {
     };
   }
   return { bundleName, abilityName };
+}
+
+function splitString(str, length) {
+  let result = [];
+  for (let i = 0; i < str.length; i += length) {
+    result.push(str.slice(i, i + length));
+  }
+  return result;
 }
 
 export default {
