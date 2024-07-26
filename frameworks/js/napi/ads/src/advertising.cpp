@@ -439,7 +439,7 @@ void StartUIExtensionAbility(Want &want, std::shared_ptr<OHOS::AbilityRuntime::A
     auto uiExtCallback = std::make_shared<UIExtensionCallback>(abilityContext);
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "set uiExtCallback");
     OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
-        std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
+        [uiExtCallback](int32_t releaseCode) { uiExtCallback->OnRelease(releaseCode); },
     };
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "set extensionCallbacks");
     Ace::ModalUIExtensionConfig config;
