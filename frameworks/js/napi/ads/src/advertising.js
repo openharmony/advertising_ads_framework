@@ -374,7 +374,7 @@ function getConfigData() {
 }
 
 function splitString(str, length) {
-  let result = [];
+  let result = [''];
   for (let i = 0; i < str.length; i += length) {
     result.push(str.slice(i, i + length));
   }
