@@ -150,7 +150,8 @@ class AdsJsClientRpcObj extends rpc.RemoteObject {
       return false;
     }
     try {
-      const readstr = data.readString();
+      const buffer = data.readStringArray();
+      const readstr = buffer.join('');
       this.callback(readstr);
       return true;
     } catch (e) {
@@ -172,14 +173,42 @@ class AdsJsBridge {
       return;
     }
 
-    let options = {
+    if (arg.length > PARSE_RESP_LENGTH_LIMIT) {
+      hilog.error(HILOG_DOMAIN_CODE, 'advertising', `invokeAsync parameter arg is too long`);
+      return;
+    }
+
+    try {
+      const map = getConfigJsonData();
+      const bundleName = map?.providerBundleName;
+      const abilityName = map?.providerJSAbilityName;
+      if (!bundleName || !abilityName) {
+        hilog.error(HILOG_DOMAIN_CODE, 'advertising', `bundleName or abilityName is null`);
+        callback(null);
+        return;
+      }
+
+      const options = this.createOptions(method, arg, callback);
+      const want = {
+        bundleName: bundleName,
+        abilityName: abilityName
+      };
+      this.context.connectServiceExtensionAbility(want, options);
+    } catch (e) {
+      callback(null);
+      hilog.error(HILOG_DOMAIN_CODE, 'advertising', `invokeAsync error, code:${e.code}, message:${e.message}`);
+    }
+  }
+
+  createOptions(method, arg, callback) {
+    return {
       onConnect(elementName, remote) {
         try {
           // 拼接发送给服务端的数据
           let data = rpc.MessageSequence.create();
           data.writeRemoteObject(new AdsJsClientRpcObj('com.ohos.AdsJsClientRpcObj', callback));
           data.writeString(method);
-          data.writeString(arg);
+          data.writeStringArray(splitString((arg), RPC_STRING_LENGTH));
           const reply = rpc.MessageSequence.create();
           const option = new rpc.MessageOption();
 
@@ -200,26 +229,6 @@ class AdsJsBridge {
       onFailed() {
       }
     };
-
-    try {
-      const map = getConfigJsonData();
-      const bundleName = map?.providerBundleName;
-      const abilityName = map?.providerJSAbilityName;
-      if (!bundleName || !abilityName) {
-        hilog.error(HILOG_DOMAIN_CODE, 'advertising', `bundleName or abilityName is null`);
-        callback(null);
-        return;
-      }
-      const want = {
-        bundleName: bundleName,
-        abilityName: abilityName
-      };
-
-      this.context.connectServiceExtensionAbility(want, options);
-    } catch (e) {
-      callback(null);
-      hilog.error(HILOG_DOMAIN_CODE, 'advertising', `invokeAsync error, code:${e.code}, message:${e.message}`);
-    }
   }
 }
 
