@@ -188,7 +188,7 @@ class AdsJsBridge {
         return;
       }
 
-      const options = this.createOptions(method, arg, callback);
+      const options = createJsbOptions(method, arg, callback);
       const want = {
         bundleName: bundleName,
         abilityName: abilityName
@@ -199,36 +199,40 @@ class AdsJsBridge {
       hilog.error(HILOG_DOMAIN_CODE, 'advertising', `invokeAsync error, code:${e.code}, message:${e.message}`);
     }
   }
+}
 
-  createOptions(method, arg, callback) {
-    return {
-      onConnect(elementName, remote) {
-        try {
-          // 拼接发送给服务端的数据
-          let data = rpc.MessageSequence.create();
-          data.writeRemoteObject(new AdsJsClientRpcObj('com.ohos.AdsJsClientRpcObj', callback));
-          data.writeString(method);
-          data.writeStringArray(splitString((arg), RPC_STRING_LENGTH));
-          const reply = rpc.MessageSequence.create();
-          const option = new rpc.MessageOption();
+function createJsbOptions(method, arg, callback) {
+  return {
+    onConnect(elementName, remote) {
+      sendJsbRpcMessage(method, arg, callback, remote);
+    },
+    onDisconnect() {
+    },
+    onFailed() {
+    }
+  };
+}
 
-          remote.sendMessageRequest(JS_BRIDGE_RPC_CODE, data, reply, option)
-            .catch((e) => {
-              hilog.error(HILOG_DOMAIN_CODE, 'advertising', `sendMessageRequest error, code:${e.code}, message:${e.message}`);
-            })
-            .finally(() => {
-              data.reclaim();
-              reply.reclaim();
-            });
-        } catch (e) {
-          hilog.error(HILOG_DOMAIN_CODE, 'advertising', `onConnect error, code:${e.code}, message:${e.message}`);
-        }
-      },
-      onDisconnect() {
-      },
-      onFailed() {
-      }
-    };
+function sendJsbRpcMessage(method, arg, callback, remote) {
+  try {
+    // 拼接发送给服务端的数据
+    let data = rpc.MessageSequence.create();
+    data.writeRemoteObject(new AdsJsClientRpcObj('com.ohos.AdsJsClientRpcObj', callback));
+    data.writeString(method);
+    data.writeStringArray(splitString((arg), RPC_STRING_LENGTH));
+    const reply = rpc.MessageSequence.create();
+    const option = new rpc.MessageOption();
+
+    remote.sendMessageRequest(JS_BRIDGE_RPC_CODE, data, reply, option)
+      .catch((e) => {
+        hilog.error(HILOG_DOMAIN_CODE, 'advertising', `sendMessageRequest error, code:${e.code}, message:${e.message}`);
+      })
+      .finally(() => {
+        data.reclaim();
+        reply.reclaim();
+      });
+  } catch (e) {
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `sendJsbRpcMessage error, code:${e.code}, message:${e.message}`);
   }
 }
 
