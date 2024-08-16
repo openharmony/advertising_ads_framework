@@ -41,7 +41,7 @@ ErrCode AdLoadSendRequestProxy::SendAdLoadRequest(const sptr<AdRequestData> &req
         return ERR_AD_COMMON_NAPI_CALLBACK_NULL_ERROR;
     }
     MessageParcel data;
-     if (!data.WriteInterfaceToken(AD_LOAD_INTERFACE_TOKEN)) {
+    if (!data.WriteInterfaceToken(AD_LOAD_INTERFACE_TOKEN)) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "failed to WriteInterfaceToken");
         return ERR_AD_COMMON_AD_WRITE_PARCEL_ERROR;
     }
