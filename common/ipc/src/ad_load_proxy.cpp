@@ -22,6 +22,9 @@
 
 namespace OHOS {
 namespace Cloud {
+const std::u16string AD_LOAD_INTERFACE_TOKEN = u"com.ohos.AdsCoreService";
+const std::u16string API_SERVICE_INTERFACE_TOKEN = u"com.ohos.AdsApiService";
+
 inline std::u16string Str8ToStr16(const std::string &str)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_SERVICE, "Str8ToStr16");
@@ -38,6 +41,10 @@ ErrCode AdLoadSendRequestProxy::SendAdLoadRequest(const sptr<AdRequestData> &req
         return ERR_AD_COMMON_NAPI_CALLBACK_NULL_ERROR;
     }
     MessageParcel data;
+    if (!data.WriteInterfaceToken(AD_LOAD_INTERFACE_TOKEN)) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "failed to WriteInterfaceToken");
+        return ERR_AD_COMMON_AD_WRITE_PARCEL_ERROR;
+    }
     if (!data.WriteRemoteObject(callback->AsObject())) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "failed to WriteRemoteObject");
         return ERR_AD_COMMON_AD_WRITE_PARCEL_ERROR;
@@ -83,6 +90,10 @@ void AdRequestBodySendProxy::SendAdBodyRequest(const sptr<AdRequestData> &data, 
         return;
     }
     MessageParcel dataParcel;
+    if (!dataParcel.WriteInterfaceToken(API_SERVICE_INTERFACE_TOKEN)) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "failed to WriteInterfaceToken");
+        return;
+    }
     if (!dataParcel.WriteRemoteObject(callback->AsObject())) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "failed to WriteRemoteObject");
         return;

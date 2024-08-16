@@ -217,6 +217,8 @@ function sendJsbRpcMessage(method, arg, callback, remote) {
   try {
     // 拼接发送给服务端的数据
     let data = rpc.MessageSequence.create();
+    hilog.info(HILOG_DOMAIN_CODE, 'advertising', `remote descriptor:${remote.getDescriptor()}`);
+    data.writeInterfaceToken(remote.getDescriptor());
     data.writeRemoteObject(new AdsJsClientRpcObj('com.ohos.AdsJsClientRpcObj', callback));
     data.writeString(method);
     data.writeStringArray(splitString((arg), RPC_STRING_LENGTH));
@@ -345,6 +347,8 @@ function createConnectionOptions(listener, adResponse) {
 function sendRPCMessage(listener, adResponse, remote) {
   try {
     let data = rpc.MessageSequence.create();
+    hilog.info(HILOG_DOMAIN_CODE, 'advertising', `remote descriptor:${remote.getDescriptor()}`);
+    data.writeInterfaceToken(remote.getDescriptor());
     data.writeRemoteObject(new ParseAdResponseRpcObj('com.ohos.ParseAdResponseRpcObj', listener));
     data.writeStringArray(splitString(adResponse, RPC_STRING_LENGTH));
 
@@ -387,7 +391,7 @@ function getConfigData() {
 }
 
 function splitString(str, length) {
-  let result = [''];
+  let result = [];
   for (let i = 0; i < str.length; i += length) {
     result.push(str.slice(i, i + length));
   }
