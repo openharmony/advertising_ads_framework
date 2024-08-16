@@ -218,28 +218,32 @@ class AutoAdComponent extends ViewPU {
       this.isTaskRunning = !1;
     }
   }
-
+  
+  createUIExtensionComponent(t, o) {
+    UIExtensionComponent.create(this.want);
+    UIExtensionComponent.width('100%');
+    UIExtensionComponent.height('100%');
+    UIExtensionComponent.onRemoteReady((t => {
+      this.remoteProxy = t;
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'remote proxy ready.');
+    }));
+    UIExtensionComponent.onReceive((t => {
+      try {
+        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `${JSON.stringify(t)}`);
+      } catch (o) {
+        hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent',
+        `onReceive print data error, code: ${o.code}, message: ${o.message}`);
+      }
+      this.interactionListener.onStatusChanged(t.status, t.ad, t.data);
+    }));
+    o || UIExtensionComponent.pop();
+  }
+  
   updateView() {
     this.ifElseBranchUpdateFunction(0, (() => {
       this.observeComponentCreation(((t, o) => {
         ViewStackProcessor.StartGetAccessRecordingFor(t);
-        UIExtensionComponent.create(this.want);
-        UIExtensionComponent.width('100%');
-        UIExtensionComponent.height('100%');
-        UIExtensionComponent.onRemoteReady((t => {
-          this.remoteProxy = t;
-          hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'remote proxy ready.');
-        }));
-        UIExtensionComponent.onReceive((t => {
-          try {
-            hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `${JSON.stringify(t)}`);
-          } catch (o) {
-            hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent',
-            `onReceive print data error, code: ${o.code}, message: ${o.message}`);
-          }
-          this.interactionListener.onStatusChanged(t.status, t.ad, t.data);
-        }));
-        o || UIExtensionComponent.pop();
+        createUIExtensionComponent(t, o);
         ViewStackProcessor.StopGetAccessRecording();
       }));
     }));
