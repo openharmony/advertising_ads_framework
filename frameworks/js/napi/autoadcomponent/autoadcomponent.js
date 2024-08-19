@@ -243,7 +243,7 @@ class AutoAdComponent extends ViewPU {
     this.ifElseBranchUpdateFunction(0, (() => {
       this.observeComponentCreation(((t, o) => {
         ViewStackProcessor.StartGetAccessRecordingFor(t);
-        createUIExtensionComponent(t, o);
+        this.createUIExtensionComponent(t, o);
         ViewStackProcessor.StopGetAccessRecording();
       }));
     }));
