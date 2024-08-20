@@ -33,7 +33,7 @@ static const int32_t SEND_LOAD_MULTI_SOLTS_AD_REQUEST_CODE = 2;
 static const int8_t CONNECT_TIME_OUT = 3;
 
 // user id
-static const int32_t USER_ID = 100;
+static const int32_t USER_ID = -1;
 
 // ipc return success code
 static const int32_t IPC_SUCCESS = 200;
