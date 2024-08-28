@@ -107,10 +107,10 @@ class AutoAdComponent extends ViewPU {
     let t = null;
     let i = null;
     i = configPolicy.getOneCfgFileSync('etc/advertising/ads_framework/ad_service_config_ext.json');
-    if(i === null || i === "") {
+    if (i === null || i === '') {
       hilog.warn(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'get ext config fail');
       i = configPolicy.getOneCfgFileSync('etc/advertising/ads_framework/ad_service_config.json');
-      if(i === null || i === "") {
+      if (i === null || i === '') {
         hilog.warn(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'get config fail');
         this.setWant(t);
         return;
@@ -219,6 +219,36 @@ class AutoAdComponent extends ViewPU {
     }
   }
   
+  createUIExtensionComponent(t, o) {
+    UIExtensionComponent.create(this.want);
+    UIExtensionComponent.width('100%');
+    UIExtensionComponent.height('100%');
+    UIExtensionComponent.onRemoteReady((t => {
+      this.remoteProxy = t;
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'remote proxy ready.');
+    }));
+    UIExtensionComponent.onReceive((t => {
+      try {
+        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `${JSON.stringify(t)}`);
+      } catch (o) {
+        hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent',
+        `onReceive print data error, code: ${o.code}, message: ${o.message}`);
+      }
+      this.interactionListener.onStatusChanged(t.status, t.ad, t.data);
+    }));
+    o || UIExtensionComponent.pop();
+  }
+  
+  updateView() {
+    this.ifElseBranchUpdateFunction(0, (() => {
+      this.observeComponentCreation(((t, o) => {
+        ViewStackProcessor.StartGetAccessRecordingFor(t);
+        this.createUIExtensionComponent(t, o);
+        ViewStackProcessor.StopGetAccessRecording();
+      }));
+    }));
+  }
+  
   initialRender() {
     this.observeComponentCreation(((t, o) => {
       ViewStackProcessor.StartGetAccessRecordingFor(t);
@@ -240,24 +270,7 @@ class AutoAdComponent extends ViewPU {
     this.observeComponentCreation(((t, o) => {
       ViewStackProcessor.StartGetAccessRecordingFor(t);
       If.create();
-      this.showComponent ? this.ifElseBranchUpdateFunction(0, (() => {
-        this.observeComponentCreation(((t, o) => {
-          ViewStackProcessor.StartGetAccessRecordingFor(t);
-          UIExtensionComponent.create(this.want);
-          UIExtensionComponent.width('100%');
-          UIExtensionComponent.height('100%');
-          UIExtensionComponent.onRemoteReady((t => {
-            this.remoteProxy = t;
-            hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'remote proxy ready.');
-          }));
-          UIExtensionComponent.onReceive((t => {
-            hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `${JSON.stringify(t)}`);
-            this.interactionListener.onStatusChanged(t.status, t.ad, t.data);
-          }));
-          o || UIExtensionComponent.pop();
-          ViewStackProcessor.StopGetAccessRecording();
-        }));
-      })) : If.branchId(1);
+      this.showComponent ? this.updateView() : If.branchId(1);
       o || If.pop();
       ViewStackProcessor.StopGetAccessRecording();
     }));

@@ -158,6 +158,8 @@ class AdComponent extends ViewPU {
 
   createRpcData(u, w) {
     let y = rpc.MessageSequence.create();
+    hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `remote descriptor: ${this.remoteObj.getDescriptor()}`);
+    y.writeInterfaceToken(this.remoteObj.getDescriptor());
     y.writeInt(u);
     y.writeString(this.eventUniqueId);
     y.writeString(this.uniqueId);
@@ -231,7 +233,7 @@ class AdComponent extends ViewPU {
 
   initImpressionCondition() {
     let t;
-    let	d1;
+    let d1;
     this.minEffectiveShowRatio =
       (d1 = (t = this.ads[0]) === null || t === void 0 ? void 0 : t.minEffectiveShowRatio) !== null &&
         d1 !== void 0 ? d1 : DEFAULT_MIN_SHOW_RATIO;
@@ -240,7 +242,7 @@ class AdComponent extends ViewPU {
   initAdRender() {
     let t;
     let d1;
-    let	e1;
+    let e1;
     if (((t = this.ads[0]) === null || t === void 0 ? void 0 : t.adType) === 3 &&
       ((d1 = this.ads[0]) === null || d1 === void 0 ? void 0 : d1.creativeType) !== 99 &&
       ((e1 = this.ads[0]) === null || e1 === void 0 ? void 0 : e1.canSelfRendering)) {
