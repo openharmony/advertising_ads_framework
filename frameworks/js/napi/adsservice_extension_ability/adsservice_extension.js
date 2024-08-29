@@ -60,6 +60,12 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
       // 读取Uid
       const uid = this.getCallingUid();
       const packageName = await BundleManager.getBundleNameByUid(uid);
+      const interfaceToken = data.readInterfaceToken();
+      if (interfaceToken !== this.getDescriptor()) {
+        hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `interfaceToken check error, interfaceToken:${interfaceToken}`);
+        return false;
+      }
+
       // 读取rpc远程对象
       const replyRpcObj = data.readRemoteObject();
       // 1.读取广告请求数据
@@ -77,7 +83,7 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
       if (validateErrorMsg) {
         hilog.info(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `the request params is invalid`);
         this.bizReqCallback(code, replyRpcObj)(RpcReqCallbackCode.CODE_INVALID_PARAMETERS, validateErrorMsg);
-		return true;
+        return true;
       }
       const adRequestParams = this.parseAdRequestParams(isMultiSlots, reqData, packageName, requestStartTime);
       const adOptions = this.parseAdOptions(reqData);
