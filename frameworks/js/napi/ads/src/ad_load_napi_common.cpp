@@ -192,6 +192,8 @@ void AdLoadListenerCallback::OnAdLoadFailure(int32_t resultCode, const std::stri
     param->errCode = ErrCodeConvert(resultCode);
     param->errMsg = resultMsg;
     param->callback = callback_;
+    ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "LoadAdFailure. errorCode:  %{public}d errorMsg:  %{public}s",
+        param->errCode, param->errMsg.c_str());
     work->data = reinterpret_cast<void *>(param);
     uv_queue_work(
         loop, work, [](uv_work_t *work) {}, UvQueneWorkOnAdLoadFailed);
