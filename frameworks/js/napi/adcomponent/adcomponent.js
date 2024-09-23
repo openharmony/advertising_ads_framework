@@ -49,63 +49,37 @@ class AdComponent extends ViewPU {
     this.uniqueId = '';
     this.__showComponent = new ObservedPropertySimplePU(false, this, 'showComponent');
     this.__Behavior = new ObservedPropertySimplePU(HitTestMode.Default, this, 'Behavior');
-    this.__uecHeight = new ObservedPropertySimplePU('100%', this, "uecHeight");
+    this.__uecHeight = new ObservedPropertySimplePU('100%', this, 'uecHeight');
     this.adRenderer = this.Component;
     this.setInitiallyProvidedValue(p1);
   }
 
   setInitiallyProvidedValue(p1) {
-    if (p1.ads !== undefined) {
-      this.ads = p1.ads;
-    }
-    if (p1.displayOptions !== undefined) {
-      this.displayOptions = p1.displayOptions;
-    }
-    if (p1.interactionListener !== undefined) {
-      this.interactionListener = p1.interactionListener;
-    }
-    if (p1.want !== undefined) {
-      this.want = p1.want;
-    }
-    if (p1.map !== undefined) {
-      this.map = p1.map;
-    }
-    if (p1.ratios !== undefined) {
-      this.ratios = p1.ratios;
-    }
-    if (p1.remoteObj !== undefined) {
-      this.remoteObj = p1.remoteObj;
-    }
-    if (p1.connection !== undefined) {
-      this.connection = p1.connection;
-    }
-    if (p1.isAdRenderer !== undefined) {
-      this.isAdRenderer = p1.isAdRenderer;
-    }
-    if (p1.context !== undefined) {
-      this.context = p1.context;
-    }
-    if (p1.minEffectiveShowRatio !== undefined) {
-      this.minEffectiveShowRatio = p1.minEffectiveShowRatio;
-    }
-    if (p1.eventUniqueId !== undefined) {
-      this.eventUniqueId = p1.eventUniqueId;
-    }
-    if (p1.uniqueId !== undefined) {
-      this.uniqueId = p1.uniqueId;
-    }
-    if (p1.showComponent !== undefined) {
-      this.showComponent = p1.showComponent;
-    }
-    if (p1.Behavior !== undefined) {
-      this.Behavior = p1.Behavior;
-    }
-    if (p1.uecHeight !== undefined) {
-      this.uecHeight = p1.uecHeight;
-    }
-    if (p1.adRenderer !== undefined) {
-      this.adRenderer = p1.adRenderer;
-    }
+    const properties = [
+      'ads',
+      'displayOptions',
+      'interactionListener',
+      'want',
+      'map',
+      'ratios',
+      'remoteObj',
+      'connection',
+      'isAdRenderer',
+      'context',
+      'minEffectiveShowRatio',
+      'eventUniqueId',
+      'uniqueId',
+      'showComponent',
+      'Behavior',
+      'uecHeight',
+      'adRenderer',
+    ];
+
+    properties.forEach(prop => {
+      if (p1[prop] !== undefined) {
+        this[prop] = p1[prop];
+      }
+    });
   }
 
   updateStateVars(p1) {
