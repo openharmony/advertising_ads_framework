@@ -49,59 +49,37 @@ class AdComponent extends ViewPU {
     this.uniqueId = '';
     this.__showComponent = new ObservedPropertySimplePU(false, this, 'showComponent');
     this.__Behavior = new ObservedPropertySimplePU(HitTestMode.Default, this, 'Behavior');
+    this.__uecHeight = new ObservedPropertySimplePU('100%', this, 'uecHeight');
     this.adRenderer = this.Component;
     this.setInitiallyProvidedValue(p1);
   }
 
   setInitiallyProvidedValue(p1) {
-    if (p1.ads !== undefined) {
-      this.ads = p1.ads;
-    }
-    if (p1.displayOptions !== undefined) {
-      this.displayOptions = p1.displayOptions;
-    }
-    if (p1.interactionListener !== undefined) {
-      this.interactionListener = p1.interactionListener;
-    }
-    if (p1.want !== undefined) {
-      this.want = p1.want;
-    }
-    if (p1.map !== undefined) {
-      this.map = p1.map;
-    }
-    if (p1.ratios !== undefined) {
-      this.ratios = p1.ratios;
-    }
-    if (p1.remoteObj !== undefined) {
-      this.remoteObj = p1.remoteObj;
-    }
-    if (p1.connection !== undefined) {
-      this.connection = p1.connection;
-    }
-    if (p1.isAdRenderer !== undefined) {
-      this.isAdRenderer = p1.isAdRenderer;
-    }
-    if (p1.context !== undefined) {
-      this.context = p1.context;
-    }
-    if (p1.minEffectiveShowRatio !== undefined) {
-      this.minEffectiveShowRatio = p1.minEffectiveShowRatio;
-    }
-    if (p1.eventUniqueId !== undefined) {
-      this.eventUniqueId = p1.eventUniqueId;
-    }
-    if (p1.uniqueId !== undefined) {
-      this.uniqueId = p1.uniqueId;
-    }
-    if (p1.showComponent !== undefined) {
-      this.showComponent = p1.showComponent;
-    }
-    if (p1.Behavior !== undefined) {
-      this.Behavior = p1.Behavior;
-    }
-    if (p1.adRenderer !== undefined) {
-      this.adRenderer = p1.adRenderer;
-    }
+    const properties = [
+      'ads',
+      'displayOptions',
+      'interactionListener',
+      'want',
+      'map',
+      'ratios',
+      'remoteObj',
+      'connection',
+      'isAdRenderer',
+      'context',
+      'minEffectiveShowRatio',
+      'eventUniqueId',
+      'uniqueId',
+      'showComponent',
+      'Behavior',
+      'uecHeight',
+      'adRenderer',
+    ];
+
+    properties.forEach(prop => {
+      if (p1[prop] !== undefined) {
+        this[prop] = p1[prop];
+      }
+    });
   }
 
   updateStateVars(p1) {
@@ -110,11 +88,13 @@ class AdComponent extends ViewPU {
   purgeVariableDependenciesOnElmtId(o1) {
     this.__showComponent.purgeDependencyOnElmtId(o1);
     this.__Behavior.purgeDependencyOnElmtId(o1);
+    this.__uecHeight.purgeDependencyOnElmtId(o1);
   }
 
   aboutToBeDeleted() {
     this.__showComponent.aboutToBeDeleted();
     this.__Behavior.aboutToBeDeleted();
+    this.__uecHeight.aboutToBeDeleted();
     SubscriberManager.Get().delete(this.id__());
     this.aboutToBeDeletedInternal();
   }
@@ -135,6 +115,14 @@ class AdComponent extends ViewPU {
     this.__Behavior.set(n1);
   }
 
+  get uecHeight() {
+    return this.__uecHeight.get();
+  }
+
+  set uecHeight(n1) {
+    this.__uecHeight.set(n1);
+  }
+
   getRatios() {
     let t;
     if (((t = this.ads[0]) === null || t === void 0 ? void 0 : t.adType) === 3) {
@@ -142,15 +130,15 @@ class AdComponent extends ViewPU {
       for (let m1 = 0; m1 <= 100; m1 += 5) {
         k1.push(m1 / 100);
       }
-      hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent minEffectiveShowRatio:${this.minEffectiveShowRatio / 100}`);
+      hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent',
+        `AdComponent minEffectiveShowRatio:${this.minEffectiveShowRatio / 100}`);
       k1.push(this.minEffectiveShowRatio / 100);
       const l1 = k1.filter((m1, d, k1) => {
         return k1.indexOf(m1, 0) === d;
       });
       hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent ratios: ${l1}`);
       return l1;
-    }
-    else {
+    } else {
       hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent ratios: ${[0, 1]}`);
       return [0, 1];
     }
@@ -158,8 +146,8 @@ class AdComponent extends ViewPU {
 
   createRpcData(u, w) {
     let y = rpc.MessageSequence.create();
-    hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `remote descriptor: ${this.remoteObj.getDescriptor()}`);
-    y.writeInterfaceToken(this.remoteObj.getDescriptor());
+    hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `remote descriptor: ${this.remoteObj?.getDescriptor()}`);
+    y.writeInterfaceToken(this.remoteObj?.getDescriptor());
     y.writeInt(u);
     y.writeString(this.eventUniqueId);
     y.writeString(this.uniqueId);
@@ -204,7 +192,8 @@ class AdComponent extends ViewPU {
         this.disconnectServiceExtAbility();
       }
     }).catch((j) => {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent sendRequest error. code: ${j.code}, message : ${j.message}`);
+      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent',
+        `AdComponent sendRequest error. code: ${j.code}, message : ${j.message}`);
     }));
   }
 
@@ -212,6 +201,7 @@ class AdComponent extends ViewPU {
     hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent aboutToAppear.`);
     this.ratios = this.getRatios();
     this.getConfigJsonData();
+    this.getSuggestedCompHeight();
   }
 
   async aboutToDisappear() {
@@ -252,8 +242,7 @@ class AdComponent extends ViewPU {
       this.initIds();
       this.initImpressionCondition();
       this.connectServiceExtAbility();
-    }
-    else {
+    } else {
       this.showComponent = true;
     }
   }
@@ -294,9 +283,12 @@ class AdComponent extends ViewPU {
         let t;
         let z = y;
         (t = this.interactionListener) === null || t === void 0 ? void 0 : t.onStatusChanged(z.status, z.ad, z.data);
+        if (z.adPageHeight !== undefined) {
+          this.uecHeight = z.adPageHeight;
+        }
       });
       UIExtensionComponent.width('100%');
-      UIExtensionComponent.height('100%');
+      UIExtensionComponent.height(this.uecHeight);
     }, UIExtensionComponent);
   }
 
@@ -336,14 +328,13 @@ class AdComponent extends ViewPU {
   initialRender() {
     this.observeComponentCreation2((r, s) => {
       Row.create();
-      Row.height('100%');
+      Row.height(this.uecHeight);
     }, Row);
     this.observeComponentCreation2((r, s) => {
       If.create();
       if (this.showComponent) {
         this.updateView();
-      }
-      else {
+      } else {
         this.ifElseBranchUpdateFunction(1, () => {
         });
       }
@@ -388,10 +379,15 @@ class AdComponent extends ViewPU {
         hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `get config json failed`);
       }
       this.setWant();
-    }
-    catch (j) {
+    } catch (j) {
       hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `open file failed with error:${j.code}, message:${j.message}`);
       this.setWant();
+    }
+  }
+
+  getSuggestedCompHeight() {
+    if (this.ads[0].suggestedCompHeight !== undefined) {
+      this.uecHeight = this.ads[0].suggestedCompHeight;
     }
   }
 
