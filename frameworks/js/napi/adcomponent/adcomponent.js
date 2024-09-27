@@ -47,6 +47,7 @@ class AdComponent extends ViewPU {
     this.minEffectiveShowRatio = 1;
     this.eventUniqueId = '';
     this.uniqueId = '';
+    this.uiExtProxy = null;
     this.__showComponent = new ObservedPropertySimplePU(false, this, 'showComponent');
     this.__Behavior = new ObservedPropertySimplePU(HitTestMode.Default, this, 'Behavior');
     this.__uecHeight = new ObservedPropertySimplePU('100%', this, 'uecHeight');
@@ -69,6 +70,7 @@ class AdComponent extends ViewPU {
       'minEffectiveShowRatio',
       'eventUniqueId',
       'uniqueId',
+      'uiExtProxy',
       'showComponent',
       'Behavior',
       'uecHeight',
@@ -287,6 +289,9 @@ class AdComponent extends ViewPU {
           this.uecHeight = z.adPageHeight;
         }
       });
+      UIExtensionComponent.onRemoteReady((v) => {
+        this.uiExtProxy = v;
+      });
       UIExtensionComponent.width('100%');
       UIExtensionComponent.height(this.uecHeight);
     }, UIExtensionComponent);
@@ -313,6 +318,11 @@ class AdComponent extends ViewPU {
         const u = IMP;
         this.sendDataRequest(u, w);
       }
+      var p;
+      (p = this.uiExtProxy) === null || p === void 0 ? void 0 : p.send({
+        'isVisible': v,
+        'currentRatio': w,
+      });
     });
     Column.onClick(() => this.onAreaClick());
   }
