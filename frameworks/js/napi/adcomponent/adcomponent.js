@@ -318,7 +318,7 @@ class AdComponent extends ViewPU {
         const u = IMP;
         this.sendDataRequest(u, w);
       }
-      var p;
+      let p;
       (p = this.uiExtProxy) === null || p === void 0 ? void 0 : p.send({
         'isVisible': v,
         'currentRatio': w,
