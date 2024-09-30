@@ -48,6 +48,8 @@ class AdComponent extends ViewPU {
     this.eventUniqueId = '';
     this.uniqueId = '';
     this.uiExtProxy = null;
+    this.isVisibleBeforeRemoteReady = false;
+    this.currentRatioBeforeRemoteReady = 0;
     this.__showComponent = new ObservedPropertySimplePU(false, this, 'showComponent');
     this.__Behavior = new ObservedPropertySimplePU(HitTestMode.Default, this, 'Behavior');
     this.__uecHeight = new ObservedPropertySimplePU('100%', this, 'uecHeight');
@@ -71,6 +73,8 @@ class AdComponent extends ViewPU {
       'eventUniqueId',
       'uniqueId',
       'uiExtProxy',
+      'isVisibleBeforeRemoteReady',
+      'currentRatioBeforeRemoteReady',
       'showComponent',
       'Behavior',
       'uecHeight',
@@ -291,6 +295,23 @@ class AdComponent extends ViewPU {
       });
       UIExtensionComponent.onRemoteReady((v) => {
         this.uiExtProxy = v;
+        v.on('asyncReceiverRegister', (p) => {
+          p.send({
+            'isVisible': this.isVisibleBeforeRemoteReady,
+            'currentRatio': this.currentRatioBeforeRemoteReady,
+          });
+        });
+      });
+      UIExtensionComponent.onVisibleAreaChange(this.ratios, (v, r) => {
+        if (this.uiExtProxy) {
+          this.uiExtProxy.send({
+            'isVisible': v,
+            'currentRatio': r,
+          });
+        } else {
+          this.isVisibleBeforeRemoteReady = v;
+          this.currentRatioBeforeRemoteReady = r;
+        }
       });
       UIExtensionComponent.width('100%');
       UIExtensionComponent.height(this.uecHeight);
@@ -318,11 +339,6 @@ class AdComponent extends ViewPU {
         const u = IMP;
         this.sendDataRequest(u, w);
       }
-      let p;
-      (p = this.uiExtProxy) === null || p === void 0 ? void 0 : p.send({
-        'isVisible': v,
-        'currentRatio': w,
-      });
     });
     Column.onClick(() => this.onAreaClick());
   }
