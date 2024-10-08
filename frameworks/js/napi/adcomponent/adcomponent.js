@@ -412,8 +412,12 @@ class AdComponent extends ViewPU {
   }
 
   getSuggestedCompHeight() {
-    if (this.ads[0].suggestedCompHeight !== undefined) {
-      this.uecHeight = this.ads[0].suggestedCompHeight;
+    try {
+      if (this.ads[0].suggestedCompHeight !== undefined) {
+        this.uecHeight = this.ads[0].suggestedCompHeight;
+      }
+    } catch (e) {
+      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `Get suggestedHeight error, code: ${e.code}, msg:${e.message}`);
     }
   }
 
