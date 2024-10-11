@@ -128,8 +128,9 @@ class AdComponent extends ViewPU {
   }
 
   getRatios() {
-    let s, t;
+    let t;
     if (((t = this.ads[0]) === null || t === void 0 ? void 0 : t.adType) === 3) {
+      let s;
       const u = (s = this.ads[0].minEffectiveShowRatio) !== null && s !== void 0 ? s : DEFAULT_MIN_SHOW_RATIO;
       hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent minEffectiveShowRatio:${u / 100}`);
       let k1 = [];
