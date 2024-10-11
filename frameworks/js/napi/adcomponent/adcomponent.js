@@ -44,7 +44,6 @@ class AdComponent extends ViewPU {
     this.connection = 0;
     this.isAdRenderer = false;
     this.context = getContext(this);
-    this.minEffectiveShowRatio = 1;
     this.eventUniqueId = '';
     this.uniqueId = '';
     this.uiExtProxy = null;
@@ -69,7 +68,6 @@ class AdComponent extends ViewPU {
       'connection',
       'isAdRenderer',
       'context',
-      'minEffectiveShowRatio',
       'eventUniqueId',
       'uniqueId',
       'uiExtProxy',
@@ -130,18 +128,16 @@ class AdComponent extends ViewPU {
   }
 
   getRatios() {
-    let t;
+    let s, t;
     if (((t = this.ads[0]) === null || t === void 0 ? void 0 : t.adType) === 3) {
+      const u = (s = this.ads[0].minEffectiveShowRatio) !== null && s !== void 0 ? s : DEFAULT_MIN_SHOW_RATIO;
+      hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent minEffectiveShowRatio:${u / 100}`);
       let k1 = [];
+      k1.push(u / 100);
       for (let m1 = 0; m1 <= 100; m1 += 5) {
         k1.push(m1 / 100);
       }
-      hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent',
-        `AdComponent minEffectiveShowRatio:${this.minEffectiveShowRatio / 100}`);
-      k1.push(this.minEffectiveShowRatio / 100);
-      const l1 = k1.filter((m1, d, k1) => {
-        return k1.indexOf(m1, 0) === d;
-      });
+      const l1 = Array.from(new Set(k1));
       hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent ratios: ${l1}`);
       return l1;
     } else {
@@ -227,14 +223,6 @@ class AdComponent extends ViewPU {
     });
   }
 
-  initImpressionCondition() {
-    let t;
-    let d1;
-    this.minEffectiveShowRatio =
-      (d1 = (t = this.ads[0]) === null || t === void 0 ? void 0 : t.minEffectiveShowRatio) !== null &&
-        d1 !== void 0 ? d1 : DEFAULT_MIN_SHOW_RATIO;
-  }
-
   initAdRender() {
     let t;
     let d1;
@@ -246,7 +234,6 @@ class AdComponent extends ViewPU {
       this.isAdRenderer = true;
       this.Behavior = HitTestMode.Block;
       this.initIds();
-      this.initImpressionCondition();
       this.connectServiceExtAbility();
     } else {
       this.showComponent = true;
@@ -417,7 +404,7 @@ class AdComponent extends ViewPU {
         this.uecHeight = this.ads[0].suggestedCompHeight;
       }
     } catch (e) {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `Get suggestedHeight error, code: ${e.code}, msg:${e.message}`);
+      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `Get suggestedHeight error, code: ${e.code}, msg: ${e.message}`);
     }
   }
 
