@@ -47,7 +47,7 @@ class AdLoader {
 
   loadAdWithMultiSlots(adParams, adOptions, listener) {
     hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'start to load ad with multi-slots');
-    if(!Number.isInteger(adOptions.nonPersonalizedAd)) {
+    if (!Number.isInteger(adOptions.nonPersonalizedAd)) {
       adOptions.nonPersonalizedAd = ILLEGAL_ARGUMENT_INPUT;
       hilog.warn(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'value of nonPer from multi-slots is empty or invalids');
     }
@@ -60,7 +60,7 @@ class AdLoader {
   loadAd(adParams, adOptions, listener) {
     hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'start to load ad');
     // 校验传入值
-    if(!Number.isInteger(adOptions.nonPersonalizedAd)) {
+    if (!Number.isInteger(adOptions.nonPersonalizedAd)) {
       adOptions.nonPersonalizedAd = ILLEGAL_ARGUMENT_INPUT;
       hilog.warn(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'value of nonPer is empty or invalids');
     }
