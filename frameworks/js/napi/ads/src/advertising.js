@@ -28,6 +28,7 @@ const JS_BRIDGE_RPC_CODE = 1;
 const PARSE_RESP_RPC_CODE = 2;
 const CODE_SUCCESS = 200;
 const CODE_DEVICE_NOT_SUPPORT = 801;
+const ILLEGAL_ARGUMENT_INPUT = -111111;
 const ADS_SERVICE_CONFIG_EXT_FILE = 'etc/advertising/ads_framework/ad_service_config_ext.json';
 const ADS_SERVICE_CONFIG_FILE = 'etc/advertising/ads_framework/ad_service_config.json';
 
@@ -46,6 +47,10 @@ class AdLoader {
 
   loadAdWithMultiSlots(adParams, adOptions, listener) {
     hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'start to load ad with multi-slots');
+    if(!Number.isInteger(adOptions.nonPersonalizedAd)) {
+      adOptions.nonPersonalizedAd = ILLEGAL_ARGUMENT_INPUT;
+      hilog.warn(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'value of nonPer from multi-slots is empty or invalids');
+    }
     this.loader.loadAdWithMultiSlots(adParams, adOptions, {
       onAdLoadFailure: listener?.onAdLoadFailure,
       onAdLoadSuccess: onAdLoadSuccessProxy(listener),
@@ -54,6 +59,11 @@ class AdLoader {
 
   loadAd(adParams, adOptions, listener) {
     hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'start to load ad');
+    // 校验传入值
+    if(!Number.isInteger(adOptions.nonPersonalizedAd)) {
+      adOptions.nonPersonalizedAd = ILLEGAL_ARGUMENT_INPUT;
+      hilog.warn(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'value of nonPer is empty or invalids');
+    }
     this.loader.loadAd(adParams, adOptions, {
       onAdLoadFailure: listener?.onAdLoadFailure,
       onAdLoadSuccess: onSingleSlotAdLoadSuccessProxy(listener),
