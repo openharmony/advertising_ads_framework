@@ -43,7 +43,8 @@
       },
       "build": {
         "sub_component": [
-          "//domains/advertising/advertising:advertising_native_packages"
+          "//domains/advertising/advertising:advertising_native_packages",
+          "//domains/advertising/advertising:advertising_ffi_packages"
         ]
       }
     }
