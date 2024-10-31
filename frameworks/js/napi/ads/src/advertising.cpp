@@ -655,9 +655,6 @@ napi_value Advertising::LoadAd(napi_env env, napi_callback_info info)
         },
         [](napi_env env, napi_status status, void *data) {
             auto *asyncContext = reinterpret_cast<AdvertisingRequestContext *>(data);
-            if ((asyncContext->errorCode != 0) && (asyncContext->adLoadCallback != nullptr)) {
-                asyncContext->adLoadCallback->OnAdLoadFailure(asyncContext->errorCode, "failed");
-            }
             napi_delete_async_work(env, asyncContext->asyncWork);
             delete asyncContext;
             asyncContext = nullptr;
