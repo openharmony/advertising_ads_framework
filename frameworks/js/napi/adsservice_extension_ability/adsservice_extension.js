@@ -190,7 +190,7 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
       return RpcReqCallbackErrorMsg_401.MULTI_AD_REQUEST_PARAMS_EMPTY_ERROR;
     }
     // adId is required
-    if (adRequestParams.some((adReqParam) => { adReqParam.adId && adReqParam.adId.trim().length === 0 })) {
+    if (adRequestParams.some((adReqParam) => { return (!adReqParam.adId || adReqParam.adId.trim().length === 0); })) {
       hilog.error(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', RpcReqCallbackErrorMsg_401.MULTI_AD_IDS_NECESSARY_ERROR);
       return RpcReqCallbackErrorMsg_401.MULTI_AD_IDS_NECESSARY_ERROR;
     }
