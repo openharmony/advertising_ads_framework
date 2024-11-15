@@ -15,14 +15,18 @@ import("//build/ohos.gni")
 import("//domains/advertising/advertising/advertising.gni")
 
 group("advertising_native_packages") {
-    deps = [
-      "frameworks/js/napi/ads:advertising",
-      "frameworks/js/napi/adcomponent:adcomponent",
-      "frameworks/js/napi/autoadcomponent:autoadcomponent",
-      "frameworks/js/napi/ads:ad_service_config_json",
-      "frameworks/js/napi/adsservice_extension_ability:adsserviceextensionability_napi",
-      "frameworks/js/napi/adsservice_extension_context:adsserviceextensioncontext_napi",
-      "frameworks/js/napi/extension:libadsservice_extension",
-      "frameworks/js/napi/extension:adsservice_extension_module",
-    ]
+  deps = [
+    "frameworks/js/napi/adcomponent:adcomponent",
+    "frameworks/js/napi/ads:ad_service_config_json",
+    "frameworks/js/napi/ads:advertising",
+    "frameworks/js/napi/adsservice_extension_ability:adsserviceextensionability_napi",
+    "frameworks/js/napi/adsservice_extension_context:adsserviceextensioncontext_napi",
+    "frameworks/js/napi/autoadcomponent:autoadcomponent",
+    "frameworks/js/napi/extension:adsservice_extension_module",
+    "frameworks/js/napi/extension:libadsservice_extension",
+  ]
+}
+
+group("advertising_ffi_packages") {
+  deps = [ "frameworks/cj/ffi/ads:cj_advertising_ffi" ]
 }

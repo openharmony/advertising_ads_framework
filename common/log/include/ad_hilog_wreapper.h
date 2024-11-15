@@ -27,6 +27,7 @@ enum AdsSubModule {
     ADS_MODULE_SERVICE,
     ADS_MODULE_COMMON,
     ADS_MODULE_JS_NAPI,
+    ADS_MODULE_CJ_FFI,
     ADS_MODULE_BUTT,
 };
 
@@ -38,6 +39,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel ADS_MODULE_LABEL[ADS_MODULE_BUTT] =
     {LOG_CORE, ADS_DOMAIN_ID, "AdsService"},
     {LOG_CORE, ADS_DOMAIN_ID, "AdsCommon"},
     {LOG_CORE, ADS_DOMAIN_ID, "AdsJSNAPI"},
+    {LOG_CORE, ADS_DOMAIN_ID, "AdsCJFFI"},
 };
 
 #define R_FILENAME (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
