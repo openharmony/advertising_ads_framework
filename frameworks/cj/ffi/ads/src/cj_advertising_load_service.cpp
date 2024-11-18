@@ -64,7 +64,7 @@ void AdLoadListenerCallback::OnAdLoadMultiSlotsSuccess(const std::string &result
 void AdLoadListenerCallback::OnAdLoadFailure(int32_t resultCode, const std::string &resultMsg)
 {
     char* str = MallocCString(resultMsg);
-    if (loadAdType == 1) {
+    if (loadAdType == 0) {
         callback_.OnAdLoadFailure(resultCode, str);
     } else {
         multiCallback_.OnAdLoadFailure(resultCode, str);

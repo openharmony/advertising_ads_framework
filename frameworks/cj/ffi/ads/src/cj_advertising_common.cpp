@@ -185,7 +185,6 @@ bool JsonStr2CAdvertisement(cJSON* cAdvertisementJson, CAdvertisement* res)
         res->adType = adType->valueint;
         size_t len = sizeof(res->uniqueId) - 1;
         if (strncpy_s(res->uniqueId, len, uniqueId->valuestring, len) != 0) {
-            res = NULL;
             return false;
         }
         res->uniqueId[sizeof(res->uniqueId) - 1] = '\0';
@@ -198,25 +197,21 @@ bool JsonStr2CAdvertisement(cJSON* cAdvertisementJson, CAdvertisement* res)
             cJSON* cHashStrPairJson = cJSON_GetArrayItem(rewardVerifyConfig, j);
             if (!cJSON_IsObject(cHashStrPairJson)) {
                 cJSON_Delete(cAdvertisementJson);
-                res = NULL;
                 return false;
             }
             cJSON* key = cJSON_GetObjectItem(cHashStrPairJson, "key");
             cJSON* value = cJSON_GetObjectItem(cHashStrPairJson, "value");
             if (!cJSON_IsString(key) || !cJSON_IsString(value)) {
                 cJSON_Delete(cAdvertisementJson);
-                res = NULL;
                 return false;
             }
             size_t strLen1 = sizeof(res->rewardVerifyConfig.headers[j].key) - 1;
             if (strncpy_s(res->rewardVerifyConfig.headers[j].key, strLen1, key->valuestring, strLen1) != 0) {
-                res = NULL;
                 return false;
             }
             res->rewardVerifyConfig.headers[j].key[strLen1] = '\0';
             size_t strLen2 = sizeof(res->rewardVerifyConfig.headers[j].value) - 1;
             if (strncpy_s(res->rewardVerifyConfig.headers[j].value, strLen2, value->valuestring, strLen2) != 0) {
-                res = NULL;
                 return false;
             }
             res->rewardVerifyConfig.headers[j].value[strLen2] = '\0';
@@ -231,14 +226,11 @@ bool JsonStr2CAdvertisementArr(cJSON* advertisementArrJson, CAdvertisementArr* r
     if (advertisementArrJson == NULL) {
         return false;
     }
-    cJSON* arrayJson = cJSON_GetObjectItem(advertisementArrJson, "head");
-    if (!cJSON_IsArray(arrayJson)) {
-        return false;
-    }
-    res->size = cJSON_GetArraySize(arrayJson);
+    res->size = cJSON_GetArraySize(advertisementArrJson);
     for (int64_t i = 0; i < res->size; ++i) {
-        cJSON* cAdvertisementJson = cJSON_GetArrayItem(arrayJson, i);
+        cJSON* cAdvertisementJson = cJSON_GetArrayItem(advertisementArrJson, i);
         if (cAdvertisementJson == nullptr || !JsonStr2CAdvertisement(cAdvertisementJson, &res->head[i])) {
+            res = nullptr;
             return false;
         }
     }
@@ -250,17 +242,13 @@ bool JsonStr2CAdvertisementHashStrArr(cJSON* cAdvertisementHashStrArrJson, CAdve
     if (cAdvertisementHashStrArrJson == NULL) {
         return false;
     }
-    cJSON* headersJson = cJSON_GetObjectItem(cAdvertisementHashStrArrJson, "headers");
-    if (!cJSON_IsArray(headersJson)) {
-        return false;
-    }
     res->size = cJSON_GetArraySize(cAdvertisementHashStrArrJson);
     for (int64_t i = 0; i < res->size; ++i) {
-        cJSON* pairJson = cJSON_GetArrayItem(headersJson, i);
+        cJSON* pairJson = cJSON_GetArrayItem(cAdvertisementHashStrArrJson, i);
         if (pairJson == NULL) {
             return false;
         }
-        cJSON* keyJson = cJSON_GetObjectItem(pairJson, "key");
+        cJSON* keyJson = cJSON_GetArrayItem(pairJson, 0);
         if (!cJSON_IsString(keyJson)) {
             return false;
         }
@@ -269,7 +257,7 @@ bool JsonStr2CAdvertisementHashStrArr(cJSON* cAdvertisementHashStrArrJson, CAdve
             return false;
         }
         res->headers[i].key[strLen] = '\0';
-        cJSON* valueJson = cJSON_GetObjectItem(pairJson, "value");
+        cJSON* valueJson = cJSON_GetArrayItem(pairJson, 1);
         if (!cJSON_IsObject(valueJson)) {
             return false;
         }
