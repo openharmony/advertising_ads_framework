@@ -20,7 +20,6 @@ config("common_config") {
     "ipc/include",
     "log/include",
     "model/include",
-    "//commonlibrary/c_utils/base/include",
   ]
 }
 
@@ -53,6 +52,7 @@ ohos_source_set("advertising_common") {
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "c_utils:utilsbase",
   ]
 
   part_name = "advertising"

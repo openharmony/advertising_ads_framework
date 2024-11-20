@@ -35,10 +35,11 @@
           "hilog",
           "napi",
           "safwk",
-          "samgr"
+          "samgr",
+          "libuv"
+
         ],
         "third_party": [
-          "libuv"
         ]
       },
       "build": {
