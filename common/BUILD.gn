@@ -25,7 +25,9 @@ config("common_config") {
 
 ohos_source_set("advertising_common") {
   branch_protector_ret = "pac_ret"
+
   configs = [ ":common_config" ]
+
   sanitize = {
     cfi = true
     cfi_cross_dso = true
