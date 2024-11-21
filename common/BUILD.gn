@@ -48,11 +48,12 @@ ohos_source_set("advertising_common") {
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "cJSON:cjson",
+    "c_utils:utilsbase",
     "hilog:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "c_utils:utilsbase",
+
   ]
 
   part_name = "advertising"
