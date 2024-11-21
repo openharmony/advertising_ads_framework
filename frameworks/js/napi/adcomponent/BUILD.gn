@@ -13,7 +13,6 @@
 
 import("//build/config/components/ets_frontend/es2abc_config.gni")
 import("//build/ohos.gni")
-
 es2abc_gen_abc("gen_adcomponent_abc") {
   src_js = rebase_path("adcomponent.js")
   dst_file = rebase_path(target_out_dir + "/adcomponent.abc")
