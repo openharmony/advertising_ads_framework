@@ -30,5 +30,3 @@ group("advertising_native_packages") {
 group("advertising_ffi_packages") {
   deps = [ "frameworks/cj/ffi/ads:cj_advertising_ffi" ]
 }
-
-
