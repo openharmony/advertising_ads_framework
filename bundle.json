@@ -20,8 +20,8 @@
     "adapted_system_type": [
       "standard"
     ],
-    "rom": "300KB",
-    "ram": "1024KB",
+    "rom":"300KB",
+    "ram":"1024KB",
     "deps": {
       "components": [
         "ability_base",
@@ -39,12 +39,12 @@
         "libuv"
       ],
       "third_party": [
+
       ]
     },
     "build": {
       "sub_component": [
-        "//domains/advertising/advertising:advertising_native_packages",
-        "//domains/advertising/advertising:advertising_ffi_packages"
+        "//domains/advertising/advertising:advertising_native_packages"
       ]
     }
   }

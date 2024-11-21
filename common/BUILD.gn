@@ -53,8 +53,6 @@ ohos_source_set("advertising_common") {
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-
   ]
-
   part_name = "advertising"
 }

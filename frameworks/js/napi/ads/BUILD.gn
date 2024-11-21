@@ -101,10 +101,10 @@ ohos_shared_library("advertising") {
     "config_policy:configpolicy_util",
     "hilog:libhilog",
     "ipc:ipc_core",
-    "napi:ace_napi",
-    "samgr:samgr_proxy",
-    "safwk:system_ability_fwk",
     "libuv:uv_static",
+    "napi:ace_napi",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
   ]
 
   relative_install_dir = "module"

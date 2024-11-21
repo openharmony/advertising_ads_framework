@@ -80,9 +80,7 @@ ohos_shared_library("libadsservice_extension") {
 config("adsservice_extension_module_private_config") {
   visibility = [ ":*" ]
 
-  include_dirs = [
-    "include",
-  ]
+  include_dirs = [ "include" ]
 }
 
 ## Build libadsservice_extension_module.so

@@ -14,22 +14,22 @@
 import("//build/config/components/ets_frontend/es2abc_config.gni")
 import("//build/ohos.gni")
 
-es2abc_gen_abc("gen_adcomponent_abc") {
-  src_js = rebase_path("adcomponent.js")
-  dst_file = rebase_path(target_out_dir + "/adcomponent.abc")
-  in_puts = [ "adcomponent.js" ]
-  out_puts = [ target_out_dir + "/adcomponent.abc" ]
+es2abc_gen_abc("gen_autoadcomponent_abc") {
+  src_js = rebase_path("autoadcomponent.js")
+  dst_file = rebase_path(target_out_dir + "/autoadcomponent.abc")
+  in_puts = [ "autoadcomponent.js" ]
+  out_puts = [ target_out_dir + "/autoadcomponent.abc" ]
   extra_args = [ "--module" ]
 }
 
-gen_js_obj("adcomponent_abc") {
-  input = get_label_info(":gen_adcomponent_abc", "target_out_dir") +
-          "/adcomponent.abc"
-  output = target_out_dir + "/adcomponent_abc.o"
-  dep = ":gen_adcomponent_abc"
+gen_js_obj("autoadcomponent_abc") {
+  input = get_label_info(":gen_autoadcomponent_abc", "target_out_dir") +
+          "/autoadcomponent.abc"
+  output = target_out_dir + "/autoadcomponent_abc.o"
+  dep = ":gen_autoadcomponent_abc"
 }
 
-ohos_shared_library("adcomponent") {
+ohos_shared_library("autoadcomponent") {
   branch_protector_ret = "pac_ret"
 
   sanitize = {
@@ -41,9 +41,9 @@ ohos_shared_library("adcomponent") {
     ubsan = true
   }
 
-  sources = [ "adcomponent.cpp" ]
+  sources = [ "autoadcomponent.cpp" ]
 
-  deps = [ ":adcomponent_abc" ]
+  deps = [ ":autoadcomponent_abc" ]
 
   external_deps = [ "napi:ace_napi" ]
 
