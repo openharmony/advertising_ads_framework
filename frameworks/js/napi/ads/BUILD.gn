@@ -118,4 +118,3 @@ ohos_prebuilt_etc("ad_service_config_json") {
   part_name = "advertising"
   subsystem_name = "advertising"
 }
-
