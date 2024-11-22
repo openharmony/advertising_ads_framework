@@ -51,4 +51,3 @@ ohos_shared_library("autoadcomponent") {
   subsystem_name = "advertising"
   part_name = "advertising"
 }
-
