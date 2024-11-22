@@ -124,4 +124,3 @@ ohos_shared_library("adsservice_extension_module") {
   subsystem_name = "advertising"
   part_name = "advertising"
 }
-
