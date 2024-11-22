@@ -1,52 +1,52 @@
 {
-    "name": "@ohos/advertising",
-    "description": "Allowing apps to use OS AD request and show ads",
-    "version": "3.2",
-    "license": "Apache License 2.0",
-    "publishAs": "code-segment",
-    "segment": {
-      "destPath": "domains/advertising/advertising"
+  "name": "@ohos/advertising",
+  "description": "Allowing apps to use OS AD request and show ads",
+  "version": "3.2",
+  "license": "Apache License 2.0",
+  "publishAs": "code-segment",
+  "segment": {
+    "destPath": "domains/advertising/advertising"
+  },
+  "dirs": {},
+  "scripts": {},
+  "component": {
+    "name": "advertising",
+    "subsystem": "advertising",
+    "syscap": [
+      "SystemCapability.Advertising.Ads"
+    ],
+    "features": [
+    ],
+    "adapted_system_type": [
+      "standard"
+    ],
+    "rom":"300KB",
+    "ram":"1024KB",
+    "deps": {
+      "components": [
+        "ability_base",
+        "ability_runtime",
+        "ace_engine",
+        "bundle_framework",
+        "cJSON",
+        "c_utils",
+        "config_policy",
+        "ipc",
+        "hilog",
+        "napi",
+        "safwk",
+        "samgr",
+        "libuv"
+      ],
+      "third_party": [
+
+      ]
     },
-    "dirs": {},
-    "scripts": {},
-    "component": {
-      "name": "advertising",
-      "subsystem": "advertising",
-      "syscap": [
-        "SystemCapability.Advertising.Ads"
-      ],
-      "features": [
-      ],
-      "adapted_system_type": [
-        "standard"
-      ],
-      "rom":"300KB",
-      "ram":"1024KB",
-      "deps": {
-        "components": [
-          "ability_base",
-          "ability_runtime",
-          "ace_engine",
-          "bundle_framework",
-          "cJSON",
-          "c_utils",
-          "config_policy",
-          "ipc",
-          "hilog",
-          "napi",
-          "safwk",
-          "samgr"
-        ],
-        "third_party": [
-          "libuv"
-        ]
-      },
-      "build": {
-        "sub_component": [
-          "//domains/advertising/advertising:advertising_native_packages",
-          "//domains/advertising/advertising:advertising_ffi_packages"
-        ]
-      }
+    "build": {
+      "sub_component": [
+        "//domains/advertising/advertising:advertising_native_packages"
+      ]
     }
   }
+}
   
