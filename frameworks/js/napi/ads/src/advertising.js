@@ -46,6 +46,7 @@ class AdLoader {
   }
 
   loadAdWithMultiSlots(adParams, adOptions, listener) {
+    processParamsNull(adParams, adOptions, listener, 'loadAdWithMultiSlots');
     hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'start to load ad with multi-slots');
     if (!Number.isInteger(adOptions.nonPersonalizedAd)) {
       adOptions.nonPersonalizedAd = ILLEGAL_ARGUMENT_INPUT;
@@ -58,6 +59,7 @@ class AdLoader {
   }
 
   loadAd(adParams, adOptions, listener) {
+    processParamsNull(adParams, adOptions, listener, 'loadAd');
     hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'start to load ad');
     // 校验传入值
     if (!Number.isInteger(adOptions.nonPersonalizedAd)) {
@@ -68,6 +70,30 @@ class AdLoader {
       onAdLoadFailure: listener?.onAdLoadFailure,
       onAdLoadSuccess: onSingleSlotAdLoadSuccessProxy(listener),
     });
+  }
+}
+
+function processParamsNull(adParams, adOptions, listener, methodName) {
+  if (!adParams) {
+    hilog.error(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `${methodName} param error. code 401 , message adParam is null`);
+    throw {
+      code: AdsError.PARAM_ERR,
+      message: 'Invalid input parameter. AdParams is null.'
+    };
+  }
+  if (!adOptions) {
+    hilog.error(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `${methodName} param error. code 401 , message adOptions is null`);
+    throw {
+      code: AdsError.PARAM_ERR,
+      message: 'Invalid input parameter. AdOptions is null.'
+    };
+  }
+  if (!listener) {
+    hilog.error(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `${methodName} LoadAd param error. code 401 , message listener is null`);
+    throw {
+      code: AdsError.PARAM_ERR,
+      message: 'Invalid input parameter. Listener is null.'
+    };
   }
 }
 
