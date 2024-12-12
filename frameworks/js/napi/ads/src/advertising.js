@@ -328,6 +328,15 @@ class ParseAdResponseRpcObj extends rpc.RemoteObject {
   }
 }
 
+async function getAdRequestBody(adParams, adOptions) {
+  // 校验字段
+  if (!Number.isInteger(adOptions.nonPersonalizedAd)) {
+    adOptions.nonPersonalizedAd = ILLEGAL_ARGUMENT_INPUT;
+    hilog.warn(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'value of nonPer is empty or invalids of RequestBody');
+  }
+  return advertising.getAdRequestBody(adParams, adOptions);
+}
+
 function parseAdResponse(adResponse, listener, context) {
   hilog.info(HILOG_DOMAIN_CODE, 'advertising', `parseAdResponse enter`);
   validateParams(adResponse, listener, context);
@@ -438,7 +447,7 @@ export default {
   // 注意：C/C++实现的NAPI模块中的接口如果需要对外暴露，都需要按这种形式来编写
   AdLoader: AdLoader,
   showAd: advertising.showAd,
-  getAdRequestBody: advertising.getAdRequestBody,
+  getAdRequestBody: getAdRequestBody,
   parseAdResponse: parseAdResponse,
   Advertisement: advertising.Advertisement,
   AdRequestParams: advertising.AdRequestParams,
