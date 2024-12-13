@@ -440,7 +440,14 @@ void StartUIExtensionAbility(Want &want, std::shared_ptr<OHOS::AbilityRuntime::A
     auto uiExtCallback = std::make_shared<UIExtensionCallback>(abilityContext);
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "set uiExtCallback");
     OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
-        [uiExtCallback](int32_t releaseCode) { uiExtCallback->OnRelease(releaseCode); },
+        std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
+        std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1, std::placeholders::_2),
+        std::bind(&UIExtensionCallback::OnReceive, uiExtCallback, std::placeholders::_1),
+        std::bind(&UIExtensionCallback::OnError,
+            uiExtCallback,
+            std::placeholders::_1,
+            std::placeholders::_2,
+            std::placeholders::_3),
     };
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "set extensionCallbacks");
     Ace::ModalUIExtensionConfig config;
@@ -939,6 +946,38 @@ void UIExtensionCallback::OnRelease(int32_t releaseCode)
         "UIExtensionComponent OnRelease(), releaseCode = %{public}d", releaseCode);
     this->CloseModalUI();
 }
+
+void UIExtensionCallback::OnError(int32_t code, const std::string &name, const std::string &message)
+{
+    AdsError curError = INNER_ERR;
+    code = curError;
+    const std::string errorInfo = "System internal error";
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI,
+        "UIExtensionComponent OnError(), Code = %{public}d, name=%{public}s, message= %{public}s,error=%{public}s",
+        code,
+        name.c_str(),
+        message.c_str(),
+        errorInfo.c_str());
+    this->CloseModalUI();
+}
+
+void UIExtensionCallback::OnResult(int32_t resultCode, [[maybe_unused]] const OHOS::AAFwk::Want &result)
+{
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "UIExtensionComponent OnResult(), Code = %{public}d", resultCode);
+    this->CloseModalUI();
+}
+
+void UIExtensionCallback::OnReceive([[maybe_unused]] const OHOS::AAFwk::WantParams &request)
+{
+    AdsError curError = DISPLAY_ERR;
+    const std::string message = "Failed to display the ad";
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI,
+               "UIExtensionComponent OnReceive(), Code = %{public}d, message = %{public}s",
+               curError,
+               message.c_str());
+    this->CloseModalUI();
+}
+
 } // namespace AdsNapi
 } // namespace CloudNapi
 } // namespace OHOS

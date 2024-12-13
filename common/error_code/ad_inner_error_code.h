@@ -81,6 +81,7 @@ enum AdsError : int32_t {
     DEVICE_ERR = 801,
     INNER_ERR = 21800001,
     REQUEST_FAIL = 21800003,
+    DISPLAY_ERR = 21800004
 };
 } // namespace Cloud
 } // namespace OHOS
