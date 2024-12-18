@@ -56,8 +56,10 @@ void AdLoadListenerCallback::OnAdLoadMultiSlotsSuccess(const std::string &result
     CAdvertisementHashStrArr adsMap;
     if (!JsonStr2CAdvertisementHashStrArr(adsMapJson, &adsMap)) {
         OnAdLoadFailure(Cloud::AdsError::REQUEST_FAIL, "request fail");
+        cJSON_Delete(adsMapJson);
         return;
     }
+    cJSON_Delete(adsMapJson);
     multiCallback_.OnAdLoadSuccess(adsMap);
 }
 
