@@ -174,21 +174,27 @@ int32_t CJAdvertisingImpl::loadAd(CAdRequestParams adParam, CAdOptions adOptions
 {
     cJSON* requestRoot = cJSON_CreateObject();
     if (requestRoot == nullptr) {
+        cJSON_Delete(requestRoot);
         return -1;
     }
     if (!ConvertCAdRequestParams2CJSON(adParam, requestRoot)) {
+        cJSON_Delete(requestRoot);
         return -1;
     }
     std::string requestRootString = Cloud::AdJsonUtil::ToString(requestRoot);
+    cJSON_Delete(requestRoot);
 
     cJSON* optionRoot = cJSON_CreateObject();
     if (optionRoot == nullptr) {
+        cJSON_Delete(optionRoot);
         return -1;
     }
     if (!ConvertCAdOptions2CJSON(adOptions, optionRoot)) {
+        cJSON_Delete(optionRoot);
         return -1;
     }
     std::string optionRootString = Cloud::AdJsonUtil::ToString(optionRoot);
+    cJSON_Delete(optionRoot);
 
     AdLoaderCallbackRef adLoaderCallbackRef;
     adLoaderCallbackRef.OnAdLoadSuccess = CJLambda::Create(callbackId.onLoadSuccess);
@@ -208,21 +214,27 @@ int32_t CJAdvertisingImpl::loadAdWithMultiSlots(CAdRequestParamsArr adParam,
 {
     cJSON* requestArrRoot = cJSON_CreateObject();
     if (requestArrRoot == nullptr) {
+        cJSON_Delete(requestArrRoot);
         return -1;
     }
     if (!ConvertCAdRequestParamsArr2CJSON(adParam, requestArrRoot)) {
+        cJSON_Delete(requestArrRoot);
         return -1;
     }
     std::string requestArrRootString = Cloud::AdJsonUtil::ToString(requestArrRoot);
+    cJSON_Delete(requestArrRoot);
 
     cJSON* optionRoot = cJSON_CreateObject();
     if (optionRoot == nullptr) {
+        cJSON_Delete(optionRoot);
         return -1;
     }
     if (!ConvertCAdOptions2CJSON(adOptions, optionRoot)) {
+        cJSON_Delete(optionRoot);
         return -1;
     }
     std::string mulitOptionString = Cloud::AdJsonUtil::ToString(optionRoot);
+    cJSON_Delete(optionRoot);
 
     MultiAdLoaderCallbackRef multiAdLoaderCallbackRef;
     multiAdLoaderCallbackRef.OnAdLoadSuccess = CJLambda::Create(callbackId.onLoadSuccess);
@@ -242,24 +254,30 @@ std::string CJAdvertisingImpl::getAdRequestBody(CAdRequestParamsArr adParams, CA
     cJSON* requestArrRoot = cJSON_CreateObject();
     if (requestArrRoot == nullptr) {
         *errorCode = ERR_CJ_PARAMETER_ERROR;
+        cJSON_Delete(requestArrRoot);
         return resultInfo;
     }
     if (ConvertCAdRequestParamsArr2CJSON(adParams, requestArrRoot) == false) {
         *errorCode = ERR_CJ_PARAMETER_ERROR;
+        cJSON_Delete(requestArrRoot);
         return resultInfo;
     }
     std::string requestArrRootString = Cloud::AdJsonUtil::ToString(requestArrRoot);
+    cJSON_Delete(requestArrRoot);
 
     cJSON* optionRoot = cJSON_CreateObject();
     if (optionRoot == nullptr) {
         *errorCode = ERR_CJ_PARAMETER_ERROR;
+        cJSON_Delete(optionRoot);
         return resultInfo;
     }
     if (ConvertCAdOptions2CJSON(adOptions, optionRoot) == false) {
         *errorCode = ERR_CJ_PARAMETER_ERROR;
+        cJSON_Delete(optionRoot);
         return resultInfo;
     }
     std::string optionRootString = Cloud::AdJsonUtil::ToString(optionRoot);
+    cJSON_Delete(optionRoot);
 
     std::function<void(std::string)> lambda = [&resultInfo](std::string body) { resultInfo = body; };
     sptr<Cloud::IAdRequestBody> callback = new (std::nothrow) AdRequestBodyAsync(lambda);
