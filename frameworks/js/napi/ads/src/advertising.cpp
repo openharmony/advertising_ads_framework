@@ -762,9 +762,6 @@ napi_value Advertising::LoadAdWithMultiSlots(napi_env env, napi_callback_info in
         },
         [](napi_env env, napi_status status, void *data) {
             auto *asyncContext = reinterpret_cast<MultiSlotsRequestContext *>(data);
-            if ((asyncContext->errorCode != 0) && (asyncContext->mulitAdLoadCallback != nullptr)) {
-                asyncContext->mulitAdLoadCallback->OnAdLoadFailure(asyncContext->errorCode, "failed");
-            }
             napi_delete_async_work(env, asyncContext->asyncWork);
             delete asyncContext;
             asyncContext = nullptr;
