@@ -943,18 +943,23 @@ void UIExtensionCallback::CloseModalUI()
 void UIExtensionCallback::OnRelease(int32_t releaseCode)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI,
-        "UIExtensionComponent OnRelease(), releaseCode = %{public}d", releaseCode);
+        "UIExtensionComponent OnRelease(), releaseCode: %{public}d", releaseCode);
     this->CloseModalUI();
 }
 
 void UIExtensionCallback::OnError(int32_t code, const std::string &name, const std::string &message)
 {
     AdsError curError = INNER_ERR;
-    code = curError;
-    const std::string errorInfo = "System internal error";
+    int32_t SHOWAD_UEA_INNERERR = 1011;
+    if (code == SHOWAD_UEA_INNERERR) {
+        SHOWAD_UEA_INNERERR = curError;
+    } else {
+        SHOWAD_UEA_INNERERR = code;
+    }
+    const std::string errorInfo = "system internal error";
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI,
-        "UIExtensionComponent OnError(), Code = %{public}d, name=%{public}s, message= %{public}s,error=%{public}s",
-        code,
+        "UIExtensionComponent OnError(), Code: %{public}d, name: %{public}s, message: %{public}s,error: %{public}s",
+        SHOWAD_UEA_INNERERR,
         name.c_str(),
         message.c_str(),
         errorInfo.c_str());
@@ -963,19 +968,26 @@ void UIExtensionCallback::OnError(int32_t code, const std::string &name, const s
 
 void UIExtensionCallback::OnResult(int32_t resultCode, [[maybe_unused]] const OHOS::AAFwk::Want &result)
 {
-    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "UIExtensionComponent OnResult(), Code = %{public}d", resultCode);
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "UIExtensionComponent OnResult(), Code: %{public}d", resultCode);
     this->CloseModalUI();
 }
 
 void UIExtensionCallback::OnReceive([[maybe_unused]] const OHOS::AAFwk::WantParams &request)
 {
+    const std::string CONTENT_RECODE_ISNULL = "contentRecordNull";
+    const std::string PROCESS_SHOWAD_FAILED = "processShowAdFailed";
+    const int32_t DEFAULT_VALUE = 10101010;
+    const int32_t resUeaOfShowAdOne = request.GetIntParam(CONTENT_RECODE_ISNULL, DEFAULT_VALUE);
+    const int32_t resUeaOfShowAdTwo = request.GetIntParam(PROCESS_SHOWAD_FAILED, DEFAULT_VALUE);
     AdsError curError = DISPLAY_ERR;
-    const std::string message = "Failed to display the ad";
-    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI,
-               "UIExtensionComponent OnReceive(), Code = %{public}d, message = %{public}s",
-               curError,
-               message.c_str());
-    this->CloseModalUI();
+    if (resUeaOfShowAdOne == curError || resUeaOfShowAdTwo == curError) {
+        const std::string message = "Failed to display the ad";
+        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI,
+                   "UIExtensionComponent OnReceive(), Code: %{public}d, message: %{public}s",
+                   curError,
+                   message.c_str());
+        this->CloseModalUI();
+    }
 }
 
 } // namespace AdsNapi

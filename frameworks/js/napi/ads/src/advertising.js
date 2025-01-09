@@ -329,6 +329,20 @@ class ParseAdResponseRpcObj extends rpc.RemoteObject {
 }
 
 async function getAdRequestBody(adParams, adOptions) {
+  if (!adParams || !adOptions) {
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `Parameter verification failed, code: ${AdsError.PARAM_ERR}`);
+    throw {
+      code: AdsError.PARAM_ERR,
+      message: 'Mandatory parameters are left unspecified.'
+    };
+  }
+  if (!Array.isArray(adParams) || !(typeof adOptions !== 'object')) {
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `Parameter verification failed, code: ${AdsError.PARAM_ERR}`);
+    throw {
+        code: AdsError.PARAM_ERR,
+        message: 'Incorrect parameter types.'
+    };
+  }
   // 校验字段
   if (!Number.isInteger(adOptions.nonPersonalizedAd)) {
     adOptions.nonPersonalizedAd = ILLEGAL_ARGUMENT_INPUT;
