@@ -160,8 +160,8 @@ void AdLoadListenerCallback::OnAdLoadSuccess(const std::string &result)
     param->ads = result;
     param->callback = callback_;
     work->data = reinterpret_cast<void *>(param);
-    uv_queue_work(
-        loop, work, [](uv_work_t *work) {}, UvQueneWorkOnAdLoadSuccess);
+    uv_queue_work_with_qos(
+        loop, work, [](uv_work_t *work) {}, UvQueneWorkOnAdLoadSuccess, napi_qos_user_initiated);
 }
 
 void AdLoadListenerCallback::OnAdLoadMultiSlotsSuccess(const std::string &result)
@@ -176,8 +176,8 @@ void AdLoadListenerCallback::OnAdLoadMultiSlotsSuccess(const std::string &result
     param->multiAds = result;
     param->callback = callback_;
     work->data = reinterpret_cast<void *>(param);
-    uv_queue_work(
-        loop, work, [](uv_work_t *work) {}, UvQueneWorkOnAdLoadMultiSlotsSuccess);
+    uv_queue_work_with_qos(
+        loop, work, [](uv_work_t *work) {}, UvQueneWorkOnAdLoadMultiSlotsSuccess, napi_qos_user_initiated);
 }
 
 void AdLoadListenerCallback::OnAdLoadFailure(int32_t resultCode, const std::string &resultMsg)
@@ -195,8 +195,8 @@ void AdLoadListenerCallback::OnAdLoadFailure(int32_t resultCode, const std::stri
     ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "LoadAdFailure. errorCode:  %{public}d  errorMsg:  %{public}s",
         param->errCode, param->errMsg.c_str());
     work->data = reinterpret_cast<void *>(param);
-    uv_queue_work(
-        loop, work, [](uv_work_t *work) {}, UvQueneWorkOnAdLoadFailed);
+    uv_queue_work_with_qos(
+        loop, work, [](uv_work_t *work) {}, UvQueneWorkOnAdLoadFailed, napi_qos_user_initiated);
 }
 
 AdRequestBodyAsync::AdRequestBodyAsync(napi_env env, napi_deferred deferred) : env_(env), deferred_(deferred) {}
@@ -253,7 +253,7 @@ void AdRequestBodyAsync::OnRequestBodyReturn(int32_t resultCode, const std::stri
     param->deferred = deferred_;
     work->data = reinterpret_cast<void *>(param);
     uv_queue_work_with_qos(
-        loop, work, [](uv_work_t *work) {}, UvQueueWorkOnAdRequestBody, uv_qos_default);
+        loop, work, [](uv_work_t *work) {}, UvQueueWorkOnAdRequestBody, napi_qos_user_initiated);
 }
 } // namespace AdsNapi
 } // namespace CloudNapi
