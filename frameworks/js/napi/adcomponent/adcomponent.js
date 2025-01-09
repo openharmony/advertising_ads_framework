@@ -53,7 +53,9 @@ class AdComponent extends ViewPU {
     this.__Behavior = new ObservedPropertySimplePU(HitTestMode.Default, this, 'Behavior');
     this.__uecHeight = new ObservedPropertySimplePU('100%', this, 'uecHeight');
     this.adRenderer = this.Component;
+    this.__rollPlayState = new SynchedPropertySimpleOneWayPU(p1.rollPlayState, this, 'rollPlayState');
     this.setInitiallyProvidedValue(p1);
+    this.declareWatch('rollPlayState', this.onRollPlayStateChange);
   }
 
   setInitiallyProvidedValue(p1) {
@@ -84,21 +86,28 @@ class AdComponent extends ViewPU {
         this[prop] = p1[prop];
       }
     });
+
+    if (p1.rollPlayState === undefined) {
+      this.__rollPlayState.set(2);
+    }
   }
 
   updateStateVars(p1) {
+    this.__rollPlayState.reset(p1.rollPlayState);
   }
 
   purgeVariableDependenciesOnElmtId(o1) {
     this.__showComponent.purgeDependencyOnElmtId(o1);
     this.__Behavior.purgeDependencyOnElmtId(o1);
     this.__uecHeight.purgeDependencyOnElmtId(o1);
+    this.__rollPlayState.purgeDependencyOnElmtId(o1);
   }
 
   aboutToBeDeleted() {
     this.__showComponent.aboutToBeDeleted();
     this.__Behavior.aboutToBeDeleted();
     this.__uecHeight.aboutToBeDeleted();
+    this.__rollPlayState.aboutToBeDeleted();
     SubscriberManager.Get().delete(this.id__());
     this.aboutToBeDeletedInternal();
   }
@@ -125,6 +134,24 @@ class AdComponent extends ViewPU {
 
   set uecHeight(n1) {
     this.__uecHeight.set(n1);
+  }
+
+  get rollPlayState() {
+    return this.__rollPlayState.get();
+  }
+
+  set rollPlayState(n1) {
+    this.__rollPlayState.set(n1);
+  }
+
+  onRollPlayStateChange() {
+    hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `onRollPlayStateChange: ${this.rollPlayState}.`);
+    if (this.uiExtProxy) {
+      this.uiExtProxy.send({
+        'type': 'rollPlayControlData',
+        'rollPlayState': this.rollPlayState,
+      });
+    }
   }
 
   getRatios() {
@@ -285,14 +312,20 @@ class AdComponent extends ViewPU {
         this.uiExtProxy = v;
         v.on('asyncReceiverRegister', (p) => {
           p.send({
+            'type': 'uecOnVisibleData',
             'isVisible': this.isVisibleBeforeRemoteReady,
             'currentRatio': this.currentRatioBeforeRemoteReady,
+          });
+          p.send({
+            'type': 'rollPlayControlData',
+            'rollPlayState': this.rollPlayState,
           });
         });
       });
       UIExtensionComponent.onVisibleAreaChange(this.ratios, (v, r) => {
         if (this.uiExtProxy) {
           this.uiExtProxy.send({
+            'type': 'uecOnVisibleData',
             'isVisible': v,
             'currentRatio': r,
           });
