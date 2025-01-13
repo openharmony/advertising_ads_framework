@@ -182,12 +182,17 @@ bool JsonStr2CAdvertisement(cJSON* cAdvertisementJson, CAdvertisement* res)
     cJSON* rewardVerifyConfig = cJSON_GetObjectItem(cAdvertisementJson, Cloud::AD_RESPONSE_REWARD_CONFIG.c_str());
     if (cJSON_IsNumber(adType) && cJSON_IsString(uniqueId) && cJSON_IsBool(rewarded) &&
         cJSON_IsBool(shown) && cJSON_IsBool(clicked) && cJSON_IsArray(rewardVerifyConfig)) {
-        res->adType = adType->valueint;
-        size_t len = sizeof(res->uniqueId) - 1;
+        res->adType = sizeof(adType->valueint);
+        char *uniqueIdStr = cJSON_Print(uniqueId);
+        size_t len = 0;
+        if (uniqueIdStr) {
+            len = strlen(uniqueIdStr) - 1;
+            cJSON_free(uniqueIdStr);
+        }
         if (strncpy_s(res->uniqueId, len, uniqueId->valuestring, len) != 0) {
             return false;
         }
-        res->uniqueId[sizeof(res->uniqueId) - 1] = '\0';
+        res->uniqueId[len] = '\0';
         res->rewarded = cJSON_IsTrue(rewarded);
         res->shown = cJSON_IsTrue(shown);
         res->clicked = cJSON_IsTrue(clicked);
@@ -196,28 +201,28 @@ bool JsonStr2CAdvertisement(cJSON* cAdvertisementJson, CAdvertisement* res)
         for (int32_t j = 0; j < rewardVerifyConfigSize; ++j) {
             cJSON* cHashStrPairJson = cJSON_GetArrayItem(rewardVerifyConfig, j);
             if (!cJSON_IsObject(cHashStrPairJson)) {
-                cJSON_Delete(cAdvertisementJson);
+                cAdvertisementJson = NULL;
                 return false;
             }
             cJSON* key = cJSON_GetObjectItem(cHashStrPairJson, "key");
             cJSON* value = cJSON_GetObjectItem(cHashStrPairJson, "value");
             if (!cJSON_IsString(key) || !cJSON_IsString(value)) {
-                cJSON_Delete(cAdvertisementJson);
+                cAdvertisementJson = NULL;
                 return false;
             }
-            size_t strLen1 = sizeof(res->rewardVerifyConfig.headers[j].key) - 1;
+            size_t strLen1 = strlen(res->rewardVerifyConfig.headers[j].key) - 1;
             if (strncpy_s(res->rewardVerifyConfig.headers[j].key, strLen1, key->valuestring, strLen1) != 0) {
                 return false;
             }
             res->rewardVerifyConfig.headers[j].key[strLen1] = '\0';
-            size_t strLen2 = sizeof(res->rewardVerifyConfig.headers[j].value) - 1;
+            size_t strLen2 = strlen(res->rewardVerifyConfig.headers[j].value) - 1;
             if (strncpy_s(res->rewardVerifyConfig.headers[j].value, strLen2, value->valuestring, strLen2) != 0) {
                 return false;
             }
             res->rewardVerifyConfig.headers[j].value[strLen2] = '\0';
         }
     }
-    cJSON_Delete(cAdvertisementJson);
+    cAdvertisementJson = NULL;
     return true;
 }
 
