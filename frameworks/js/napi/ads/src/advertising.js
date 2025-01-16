@@ -310,15 +310,15 @@ class ParseAdResponseRpcObj extends rpc.RemoteObject {
     }
     try {
       const respCode = data.readInt();
-      const adsMapJsonStr = data.readString();
+      const respData = data.readString();
       if (respCode === CODE_SUCCESS) {
-        this.listener?.onAdLoadSuccess(new Map(Object.entries(JSON.parse(adsMapJsonStr))));
+        this.listener?.onAdLoadSuccess(new Map(Object.entries(JSON.parse(respData))));
       } else if (respCode === CODE_DEVICE_NOT_SUPPORT) {
         this.listener?.onAdLoadFailure(respCode, 'Device not supported');
       } else if (respCode === AdsError.PARSE_RESPONSE_ERROR) {
         this.listener?.onAdLoadFailure(respCode, 'Failed to parse the ad response.');
       } else {
-        this.listener?.onAdLoadFailure(respCode, 'System internal error');
+        this.listener?.onAdLoadFailure(respCode, respData);
       }
       return true;
     } catch (e) {
@@ -336,7 +336,7 @@ async function getAdRequestBody(adParams, adOptions) {
       message: 'Mandatory parameters are left unspecified.'
     };
   }
-  if (!Array.isArray(adParams) || !(typeof adOptions !== 'object')) {
+  if (!Array.isArray(adParams) || (typeof adOptions !== 'object')) {
     hilog.error(HILOG_DOMAIN_CODE, 'advertising', `Parameter verification failed, code: ${AdsError.PARAM_ERR}`);
     throw {
         code: AdsError.PARAM_ERR,
