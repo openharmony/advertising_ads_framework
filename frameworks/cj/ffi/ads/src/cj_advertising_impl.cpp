@@ -148,6 +148,7 @@ int32_t CJAdvertisingImpl::showAd(CAdvertisement cAdvertisement,
 {
     cJSON* adDisplayOptionsRoot = cJSON_CreateObject();
     if (!ConvertCAdDisplayOptions2CJSON(cAdDisplayOptions, adDisplayOptionsRoot)) {
+        cJSON_Delete(adDisplayOptionsRoot);
         return -1;
     }
     std::string displayOptionsString = Cloud::AdJsonUtil::ToString(adDisplayOptionsRoot);
