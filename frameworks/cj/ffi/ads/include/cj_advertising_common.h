@@ -151,6 +151,8 @@ bool JsonStr2CAdvertisement(cJSON* cAdvertisementJson, CAdvertisement* res);
 bool JsonStr2CAdvertisementArr(cJSON* cAdvertisementArrJson, CAdvertisementArr* res);
 
 bool JsonStr2CAdvertisementHashStrArr(cJSON* cAdvertisementHashStrArrJson, CAdvertisementHashStrArr* res);
+
+void FillAdInfo(CAdvertisement* res, cJSON* rewarded, cJSON* shown, cJSON* clicked);
 } // namespace Advertising
 } // namespace OHOS
 #endif // OHOS_CJ_ADVERTISING_COMMON_H
