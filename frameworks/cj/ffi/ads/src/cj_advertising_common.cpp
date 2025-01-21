@@ -172,6 +172,13 @@ bool ConvertCAdDisplayOptions2CJSON(CAdDisplayOptions displayOptions, cJSON* dis
     return true;
 }
 
+void FillAdInfo(CAdvertisement* res, cJSON* rewarded, cJSON* shown, cJSON* clicked)
+{
+    res->rewarded = cJSON_IsTrue(rewarded);
+    res->shown = cJSON_IsTrue(shown);
+    res->clicked = cJSON_IsTrue(clicked);
+}
+
 bool JsonStr2CAdvertisement(cJSON* cAdvertisementJson, CAdvertisement* res)
 {
     cJSON* adType = cJSON_GetObjectItem(cAdvertisementJson, Cloud::AD_RESPONSE_AD_TYPE.c_str());
@@ -193,9 +200,7 @@ bool JsonStr2CAdvertisement(cJSON* cAdvertisementJson, CAdvertisement* res)
             return false;
         }
         res->uniqueId[len] = '\0';
-        res->rewarded = cJSON_IsTrue(rewarded);
-        res->shown = cJSON_IsTrue(shown);
-        res->clicked = cJSON_IsTrue(clicked);
+        FillAdInfo(res, rewarded, shown, clicked);
         int32_t rewardVerifyConfigSize = cJSON_GetArraySize(rewardVerifyConfig);
         res->rewardVerifyConfig.size = rewardVerifyConfigSize;
         for (int32_t j = 0; j < rewardVerifyConfigSize; ++j) {
