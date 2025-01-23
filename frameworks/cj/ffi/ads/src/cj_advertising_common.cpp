@@ -262,7 +262,7 @@ bool JsonStr2CAdvertisementHashStrArr(cJSON* cAdvertisementHashStrArrJson, CAdve
         if (!cJSON_IsString(keyJson)) {
             return false;
         }
-        size_t strLen = sizeof(res->headers[i].key) - 1;
+        size_t strLen = strlen(res->headers[i].key) - 1;
         if (strncpy_s(res->headers[i].key, strLen, keyJson->valuestring, strLen) != 0) {
             return false;
         }
