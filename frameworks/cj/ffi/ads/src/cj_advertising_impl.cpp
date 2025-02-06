@@ -328,7 +328,9 @@ void UIExtensionCallback::CloseModalUI()
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_CJ_FFI, "get uicontent error in release.");
         return;
     };
-    uiContent->CloseModalUIExtension(this->sessionId_);
+    if (uiContent != nullptr) {
+        uiContent->CloseModalUIExtension(this->sessionId_);
+    }
 }
 
 void UIExtensionCallback::OnRelease(int32_t releaseCode)
