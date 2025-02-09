@@ -47,8 +47,13 @@ napi_value AttachAdsServiceExtensionContext(napi_env env, void *value, void *)
         return nullptr;
     }
     napi_value object = CreateJsAdsServiceExtensionContext(env, ptr);
-    auto contextObj = JsRuntime::LoadSystemModuleByEngine(env,
-        "advertising.AdsServiceExtensionContext", &object, 1)->GetNapiValue();
+    auto module = JsRuntime::LoadSystemModuleByEngine(env,
+        "advertising.AdsServiceExtensionContext", &object, 1);
+    if (module == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "load module failed.");
+        return nullptr;
+    }
+    auto contextObj = module->GetNapiValue();
     napi_coerce_to_native_binding_object(
         env, contextObj, DetachCallbackFunc, AttachAdsServiceExtensionContext, value, nullptr);
     auto workContext = new (std::nothrow) std::weak_ptr<AdsServiceExtensionContext>(ptr);
