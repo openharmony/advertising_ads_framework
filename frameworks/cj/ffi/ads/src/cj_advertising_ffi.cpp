@@ -17,6 +17,7 @@
 #include "cj_advertising_error.h"
 #include "cj_advertising_impl.h"
 
+extern "C" {
 int64_t FfiOHOSAdvertisingAdLoaderConstructor(OHOS::AbilityRuntime::AbilityContext* abilityContext)
 {
     if (abilityContext == nullptr) {
@@ -70,4 +71,5 @@ char* FfiOHOSAdvertisingGetAdRequestBody(CAdRequestParamsArr adParams, CAdOption
     auto res = OHOS::Advertising::CJAdvertisingImpl::getAdRequestBody(adParams, adOptions, errorCode);
     char* tmp = OHOS::Advertising::MallocCString(res);
     return tmp;
+}
 }
