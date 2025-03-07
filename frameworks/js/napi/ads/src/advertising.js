@@ -31,6 +31,7 @@ const CODE_DEVICE_NOT_SUPPORT = 801;
 const ILLEGAL_ARGUMENT_INPUT = -111111;
 const ADS_SERVICE_CONFIG_EXT_FILE = 'etc/advertising/ads_framework/ad_service_config_ext.json';
 const ADS_SERVICE_CONFIG_FILE = 'etc/advertising/ads_framework/ad_service_config.json';
+const ADS_JS_BRIDGE = '_OHAdsJsBridge';
 
 const AdsError = {
   ERR_SEND_OK: 0,
@@ -274,7 +275,7 @@ function sendJsbRpcMessage(method, arg, callback, remote) {
   }
 }
 
-function registerWebAdInterface(controller, context) {
+function registerWebAdInterface(controller, context, needRefresh) {
   hilog.info(HILOG_DOMAIN_CODE, 'advertising', `registerWebAdInterface enter`);
   if (controller === null || context === null) {
     hilog.error(HILOG_DOMAIN_CODE, 'advertising', `parameter controller or context is null`);
@@ -285,8 +286,11 @@ function registerWebAdInterface(controller, context) {
   }
   try {
     const adsJsBridge = new AdsJsBridge(context);
-    controller.registerJavaScriptProxy(adsJsBridge, '_OHAdsJsBridge', ['invokeAsync']);
-    controller.refresh();
+    controller.registerJavaScriptProxy(adsJsBridge, ADS_JS_BRIDGE, ['invokeAsync']);
+    if (isUndefined(needRefresh) || needRefresh) {
+      hilog.info(HILOG_DOMAIN_CODE, 'advertising', `registerWebAdInterface refresh`);
+      controller.refresh();
+    }
   } catch (e) {
     hilog.error(HILOG_DOMAIN_CODE, 'advertising', `registerWebAdInterface error, code:${e.code}, message:${e.message}`);
     throw {
@@ -294,6 +298,34 @@ function registerWebAdInterface(controller, context) {
       message: 'System internal error.'
     };
   }
+}
+
+function deleteWebAdInterface(controller, needRefresh) {
+  hilog.info(HILOG_DOMAIN_CODE, 'advertising', `deleteWebAdInterface enter`);
+  if (controller === null) {
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `parameter controlleris null`);
+    throw {
+      code: 401,
+      message: 'Invalid input parameter, controller is null.'
+    };
+  }
+  try {
+    controller.deleteJavaScriptRegister(ADS_JS_BRIDGE);
+    if (isUndefined(needRefresh) || needRefresh) {
+      hilog.info(HILOG_DOMAIN_CODE, 'advertising', `deleteWebAdInterface refresh`);
+      controller.refresh();
+    }
+  } catch (e) {
+    hilog.error(HILOG_DOMAIN_CODE, 'advertising', `deleteWebAdInterface error, code:${e.code}, message:${e.message}`);
+    throw {
+      code: 21800001,
+      message: 'System internal error.'
+    };
+  }
+}
+
+function isUndefined(obj) {
+  return obj === undefined || obj === null;
 }
 
 class ParseAdResponseRpcObj extends rpc.RemoteObject {
@@ -471,4 +503,5 @@ export default {
   AdLoadListener: advertising.AdLoadListener,
   MultiSlotsAdLoadListener: advertising.MultiSlotsAdLoadListener,
   registerWebAdInterface: registerWebAdInterface,
+  deleteWebAdInterface: deleteWebAdInterface,
 };
