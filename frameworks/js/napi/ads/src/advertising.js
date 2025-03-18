@@ -109,7 +109,7 @@ function onAdLoadSuccessProxy(callBackListener) {
       });
       callBackListener?.onAdLoadSuccess(resultMap);
     } catch (error) {
-      listener?.onAdLoadFailure(AdsError.REQUEST_FAIL, error.message);
+      callBackListener?.onAdLoadFailure(AdsError.REQUEST_FAIL, error.message);
     }
   };
 }
@@ -121,7 +121,7 @@ function onSingleSlotAdLoadSuccessProxy(callBackListener) {
       const adsArray = JSON.parse(ads);
       callBackListener?.onAdLoadSuccess(adsArray);
     } catch (error) {
-      listener?.onAdLoadFailure(AdsError.REQUEST_FAIL, error.message);
+      callBackListener?.onAdLoadFailure(AdsError.REQUEST_FAIL, error.message);
     }
   };
 }
