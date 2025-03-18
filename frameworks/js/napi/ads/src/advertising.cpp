@@ -915,14 +915,12 @@ bool GetUIcontentFromBaseContext(OHOS::AbilityRuntime::AbilityContext *abilityCo
         return false;
     }
 
-    if (abilityContext != nullptr) {
-        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get uiContext by ability context");
-        uiContent = abilityContext->GetUIContent();
-    } else {
-        ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get uiContext failed.");
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get uiContext by ability context");
+    uiContent = abilityContext->GetUIContent();
+    if (uiContent == nullptr) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "UIContent is nullptr");
         return false;
     }
-
     return true;
 }
 
@@ -930,7 +928,7 @@ void UIExtensionCallback::CloseModalUI()
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "CloseModalUI");
     Ace::UIContent *uiContent;
-    if (!GetUIcontentFromBaseContext((this->abilityContext_).get(), uiContent)) {
+    if (!GetUIcontentFromBaseContext((this->abilityContext_).get(), uiContent) || uiContent == nullptr) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "get uicontent error in release.");
         return;
     };
