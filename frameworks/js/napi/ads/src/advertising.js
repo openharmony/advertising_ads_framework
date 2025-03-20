@@ -295,7 +295,7 @@ function registerWebAdInterface(controller, context, needRefresh) {
     hilog.error(HILOG_DOMAIN_CODE, 'advertising', `registerWebAdInterface error, code:${e.code}, message:${e.message}`);
     throw {
       code: 21800001,
-      message: 'System internal error.'
+      message: 'operation javascriptRegister error'
     };
   }
 }
@@ -319,7 +319,7 @@ function deleteWebAdInterface(controller, needRefresh) {
     hilog.error(HILOG_DOMAIN_CODE, 'advertising', `deleteWebAdInterface error, code:${e.code}, message:${e.message}`);
     throw {
       code: 21800001,
-      message: 'System internal error.'
+      message: 'operation javascriptRegister error'
     };
   }
 }
