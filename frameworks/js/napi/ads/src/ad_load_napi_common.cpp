@@ -53,7 +53,7 @@ inline int32_t ErrCodeConvert(int32_t kitErrCode)
 bool InitAdLoadCallbackWorkEnv(napi_env env, uv_loop_s **loop, uv_work_t **work, AdCallbackParam **param)
 {
     napi_get_uv_event_loop(env, loop);
-    if (*loop == nullptr) {
+    if (loop == nullptr || *loop == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "loop instance is nullptr");
         return false;
     }
