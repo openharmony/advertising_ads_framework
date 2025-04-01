@@ -24,7 +24,6 @@
 #include "errors.h"
 #include "refbase.h"
 #include "request_data.h"
-#include "system_ability.h"
 #include "want.h"
 
 #include "cj_advertising_common.h"
