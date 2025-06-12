@@ -76,10 +76,6 @@ ErrCode AdLoadSendRequestProxy::SendAdLoadIpcRequest(int32_t code, MessageParcel
             code, result);
         return ERR_AD_COMMON_SEND_REQUEST_ERROR;
     }
-    if (!reply.ReadInt32()) {
-        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "failed to read result for ad kit service return");
-        return ERR_AD_COMMON_AD_READ_PARCEL_ERROR;
-    }
     return result;
 }
 
