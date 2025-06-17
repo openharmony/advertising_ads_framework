@@ -24,7 +24,6 @@
 
 #include "iad_load_callback.h"
 #include "ad_load_napi_common.h"
-#include "request_data.h"
 #include "want.h"
 #include "want_params.h"
 #include "parcel.h"
@@ -54,28 +53,6 @@ struct Advertisment {
     AAFwk::WantParams adExtrea;
 };
 
-struct AdRequestParams : public Parcelable {
-    std::string adId;
-    uint32_t adType;
-    uint32_t adCount;
-    uint32_t adWidth;
-    uint32_t adHeight;
-    AAFwk::WantParams adRequestExtra;
-    bool ReadFromParcel(Parcel &parcel);
-    bool Marshalling(Parcel &parcel) const override;
-    static AdRequestParams *Unmarshalling(Parcel &parcel);
-};
-
-struct AdOptions : public Parcelable {
-    uint32_t tagForChildProtection;
-    std::string adContentClassification = "";
-    uint32_t nonPersonalizedAd;
-    AAFwk::WantParams adOptionsExtrea;
-    bool ReadFromParcel(Parcel &parcel);
-    bool Marshalling(Parcel &parcel) const override;
-    static AdOptions *Unmarshalling(Parcel &parcel);
-};
-
 struct ShowAdRequest {
     napi_env env = nullptr;
     napi_async_work asyncWork;
@@ -90,8 +67,6 @@ struct AdvertisingRequestContext {
     int8_t errorCode = NO_ERROR;
     std::string requestString;
     std::string optionString;
-    AdsSAData::AdRequestParams requestParams;
-    AdsSAData::AdOptions adOption;
     AdJSCallback callback;
     sptr<IAdLoadCallback> adLoadCallback = nullptr;
 };
