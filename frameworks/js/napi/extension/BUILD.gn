@@ -115,6 +115,7 @@ ohos_shared_library("adsservice_extension_module") {
     "ability_runtime:runtime",
     "c_utils:utils",
     "config_policy:configpolicy_util",
+    "ipc:ipc_napi",
     "hilog:libhilog",
     "ipc:ipc_core",
     "napi:ace_napi",
