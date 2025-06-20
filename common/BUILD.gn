@@ -38,7 +38,6 @@ ohos_source_set("advertising_common") {
     "ipc/src/ad_load_callback_stub.cpp",
     "ipc/src/ad_load_proxy.cpp",
     "ipc/src/ad_request_body_stub.cpp",
-    "model/src/request_data.cpp",
     "utils/src/ad_common_util.cpp",
     "utils/src/ad_json_util.cpp",
   ]

@@ -19,7 +19,6 @@
 #include <mutex>
 #include <string>
 
-#include "request_data.h"
 #include "bundle_mgr_interface.h"
 #include "ability_connect_callback_stub.h"
 #include "system_ability.h"

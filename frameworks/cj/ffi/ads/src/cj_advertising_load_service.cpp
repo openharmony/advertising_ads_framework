@@ -28,7 +28,6 @@
 #include "ad_hilog_wreapper.h"
 #include "ad_inner_error_code.h"
 #include "iad_load_callback.h"
-#include "request_data.h"
 
 namespace OHOS {
 namespace Advertising {

@@ -23,7 +23,6 @@
 #include "bundle_mgr_interface.h"
 #include "errors.h"
 #include "refbase.h"
-#include "request_data.h"
 #include "want.h"
 
 #include "cj_advertising_common.h"

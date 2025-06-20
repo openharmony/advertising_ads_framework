@@ -29,7 +29,6 @@
 #include "ad_constant.h"
 #include "iad_load_callback.h"
 #include "ad_inner_error_code.h"
-#include "request_data.h"
 #include "iad_load_callback.h"
 #include "ad_load_service.h"
 
