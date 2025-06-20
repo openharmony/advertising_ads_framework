@@ -19,6 +19,8 @@ const hilog = globalThis.requireNapi('hilog');
 const fs = globalThis.requireNapi('file.fs');
 const configPolicy = globalThis.requireNapi('configPolicy');
 const rpc = globalThis.requireNapi('rpc');
+const abilityAccessCtrl = globalThis.requireNapi('abilityAccessCtrl');
+const identifier = globalThis.requireNapi('identifier.oaid');
 
 const HILOG_DOMAIN_CODE = 65280;
 const READ_FILE_BUFFER_SIZE = 4096;
@@ -43,35 +45,74 @@ const AdsError = {
 
 class AdLoader {
   constructor(context) {
+    this.context = context;
     this.loader = new advertising.AdLoader(context);
   }
 
   loadAdWithMultiSlots(adParams, adOptions, listener) {
-    processParamsNull(adParams, adOptions, listener, 'loadAdWithMultiSlots');
-    hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'start to load ad with multi-slots');
-    if (!Number.isInteger(adOptions.nonPersonalizedAd)) {
-      adOptions.nonPersonalizedAd = ILLEGAL_ARGUMENT_INPUT;
-      hilog.warn(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'value of nonPer from multi-slots is empty or invalids');
-    }
-    this.loader.loadAdWithMultiSlots(adParams, adOptions, {
-      onAdLoadFailure: listener?.onAdLoadFailure,
-      onAdLoadSuccess: onAdLoadSuccessProxy(listener),
-    });
+    hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `loadAdWithMultiSlots begin`);
+    this.checkParamAndLoad(true, adParams, adOptions, listener);
   }
 
   loadAd(adParams, adOptions, listener) {
-    processParamsNull(adParams, adOptions, listener, 'loadAd');
-    hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'start to load ad');
+    hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `loadAd begin`);
+    this.checkParamAndLoad(false, adParams, adOptions, listener);
+  }
+
+  checkParamAndLoad(isMultiSlots, adParams, adOptions, listener) {
+    processParamsNull(adParams, adOptions, listener, isMultiSlots ? 'loadAdWithMultiSlots' : 'loadAd');
+    hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `start to load ad`);
     // 校验传入值
     if (!Number.isInteger(adOptions.nonPersonalizedAd)) {
       adOptions.nonPersonalizedAd = ILLEGAL_ARGUMENT_INPUT;
-      hilog.warn(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'value of nonPer is empty or invalids');
+      hilog.warn(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `value of nonPer is empty or invalid`);
     }
-    this.loader.loadAd(adParams, adOptions, {
-      onAdLoadFailure: listener?.onAdLoadFailure,
-      onAdLoadSuccess: onSingleSlotAdLoadSuccessProxy(listener),
-    });
+    getOaid(this.context).then(
+      (oaid) => {
+        adParams.oaid = oaid;
+        hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `getOaid success load ad begin`);
+        this.loaderLoad(isMultiSlots, adParams, adOptions, listener);
+      },
+      (fail) => {
+        adParams.oaid = '';
+        hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `getOaid failed code:${fail.code}, msg:${fail.msg}`);
+        this.loaderLoad(isMultiSlots, adParams, adOptions, listener);
+      });
   }
+
+  loaderLoad(isMultiSlots, adParams, adOptions, listener) {
+    isMultiSlots ?
+      this.loader.loadAdWithMultiSlots(adParams, adOptions, {
+        onAdLoadFailure: listener?.onAdLoadFailure,
+        onAdLoadSuccess: onAdLoadSuccessProxy(listener),
+      }) :
+      this.loader.loadAd(adParams, adOptions, {
+        onAdLoadFailure: listener?.onAdLoadFailure,
+        onAdLoadSuccess: onSingleSlotAdLoadSuccessProxy(listener),
+      });
+  }
+}
+
+async function getOaid(context) {
+  const atManager = abilityAccessCtrl.createAtManager();
+  return new Promise(async (resolve, reject) => {
+    try {
+      const data = await atManager.requestPermissionsFromUser(context, ['ohos.permission.APP_TRACKING_CONSENT']);
+      data.authResults[0] === 0 ?
+        identifier.getOAID((err, oaid) => {
+          hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'request permission success and start getOAID');
+          err.code ? reject({ code: err.code, msg: err.message }) : resolve(oaid);
+        }) :
+        reject({
+          msg: `user rejected`
+        });
+    } catch (err) {
+      reject({
+        code: err.code,
+        msg: err.message
+      });
+    }
+  });
 }
 
 function processParamsNull(adParams, adOptions, listener, methodName) {
