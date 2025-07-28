@@ -20,7 +20,6 @@ const fs = globalThis.requireNapi('file.fs');
 const configPolicy = globalThis.requireNapi('configPolicy');
 const rpc = globalThis.requireNapi('rpc');
 const abilityAccessCtrl = globalThis.requireNapi('abilityAccessCtrl');
-const identifier = globalThis.requireNapi('identifier.oaid');
 
 const HILOG_DOMAIN_CODE = 65280;
 const READ_FILE_BUFFER_SIZE = 4096;
@@ -67,15 +66,13 @@ class AdLoader {
       adOptions.nonPersonalizedAd = ILLEGAL_ARGUMENT_INPUT;
       hilog.warn(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `value of nonPer is empty or invalid`);
     }
-    getOaid(this.context).then(
-      (oaid) => {
-        adParams.oaid = oaid;
-        hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `getOaid success load ad begin`);
+    requestPermissions(this.context).then(
+      () => {
+        hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `requestPermissions success load ad begin`);
         this.loaderLoad(isMultiSlots, adParams, adOptions, listener);
       },
       (fail) => {
-        adParams.oaid = '';
-        hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `getOaid failed code:${fail.code}, msg:${fail.msg}`);
+        hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `requestPermissions failed code:${fail.code}, msg:${fail.msg}`);
         this.loaderLoad(isMultiSlots, adParams, adOptions, listener);
       });
   }
@@ -93,19 +90,12 @@ class AdLoader {
   }
 }
 
-async function getOaid(context) {
+async function requestPermissions(context) {
   const atManager = abilityAccessCtrl.createAtManager();
   return new Promise(async (resolve, reject) => {
     try {
       const data = await atManager.requestPermissionsFromUser(context, ['ohos.permission.APP_TRACKING_CONSENT']);
-      data.authResults[0] === 0 ?
-        identifier.getOAID((err, oaid) => {
-          hilog.info(HILOG_DOMAIN_CODE, 'AdLoaderProxy', 'request permission success and start getOAID');
-          err.code ? reject({ code: err.code, msg: err.message }) : resolve(oaid);
-        }) :
-        reject({
-          msg: `user rejected`
-        });
+      data.authResults[0] === 0 ? resolve() : reject({ msg: `user rejected` });
     } catch (err) {
       reject({
         code: err.code,
