@@ -46,6 +46,8 @@ class AutoAdComponent extends ViewPU {
     this.ads = void 0;
     this.isFirstLoad = !0;
     this.isTaskRunning = !1;
+    this.isVisibleBeforeRemoteReady = false;
+    this.currentRatioBeforeRemoteReady = 0;
     this.setInitiallyProvidedValue(o);
   }
   
@@ -225,7 +227,26 @@ class AutoAdComponent extends ViewPU {
     UIExtensionComponent.onRemoteReady((t => {
       this.remoteProxy = t;
       hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'remote proxy ready.');
+      t.on('asyncReceiverRegister', (p) => {
+        p.send({
+          'type': 'uecOnVisibleData',
+          'isVisible': this.isVisibleBeforeRemoteReady,
+          'currentRatio': this.currentRatioBeforeRemoteReady,
+        });
+      });
     }));
+    UIExtensionComponent.onVisibleAreaChange([0, 1], (v, r) => {
+      if (this.remoteProxy) {
+        this.remoteProxy.send({
+          'type': 'uecOnVisibleData',
+          'isVisible': v,
+          'currentRatio': r,
+        });
+      } else {
+        this.isVisibleBeforeRemoteReady = v;
+        this.currentRatioBeforeRemoteReady = r;
+      }
+    });
     UIExtensionComponent.onReceive((t => {
       try {
         hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `${JSON.stringify(t)}`);
