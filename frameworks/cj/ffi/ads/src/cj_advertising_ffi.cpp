@@ -38,7 +38,8 @@ int32_t FfiOHOSAdvertisingShowAd(CAdvertisement cAdvertisement,
         return OHOS::Advertising::ERR_CJ_PARAMETER_ERROR;
     }
     auto sptrContext = abilityContext->shared_from_this();
-    auto sptrAbilityContext = OHOS::AbilityRuntime::Context::ConvertTo<OHOS::AbilityRuntime::AbilityContext>(sptrContext);
+    auto sptrAbilityContext = OHOS::AbilityRuntime::Context::ConvertTo<
+        OHOS::AbilityRuntime::AbilityContext>(sptrContext);
     return OHOS::Advertising::CJAdvertisingImpl::showAd(cAdvertisement, cAdDisplayOptions, sptrAbilityContext);
 }
 
