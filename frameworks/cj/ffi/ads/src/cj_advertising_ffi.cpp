@@ -37,7 +37,7 @@ int32_t FfiOHOSAdvertisingShowAd(CAdvertisement cAdvertisement,
     if (abilityContext == nullptr) {
         return OHOS::Advertising::ERR_CJ_PARAMETER_ERROR;
     }
-    auto sptrContext = std::shared_ptr<OHOS::AbilityRuntime::AbilityContext>(abilityContext);
+    auto sptrContext = abilityContext->shared_from_this();
     return OHOS::Advertising::CJAdvertisingImpl::showAd(cAdvertisement, cAdDisplayOptions, sptrContext);
 }
 
