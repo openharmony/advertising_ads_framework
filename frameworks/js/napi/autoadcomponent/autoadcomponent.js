@@ -152,14 +152,27 @@ class AutoAdComponent extends ViewPU {
   
   loadAd() {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'start load advertising.');
+    const ad = {
+      adType: this.adParam?.adType,
+      uniqueId: '',
+      rewarded: false,
+      shown: false,
+      clicked: false,
+      rewardVerifyConfig: new Map()
+    };
     let t = {
       onAdLoadFailure: (t, o) => {
-        this.interactionListener.onStatusChanged('onAdFail', {}, t?.toString());
+        this.interactionListener.onStatusChanged('onAdFail', ad, t?.toString());
       },
       onAdLoadSuccess: t => {
         hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'request ad success!');
         hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `adArray is : ${JSON.stringify(t)}`);
-        this.interactionListener.onStatusChanged('onAdLoad', {}, '');
+        if (t[0]) {
+          ad.uniqueId = t[0].uniqueId;
+          ad.adType = t[0].adType;
+          ad.rewardVerifyConfig = t[0].rewardVerifyConfig;
+        }
+        this.interactionListener.onStatusChanged('onAdLoad', ad, '');
         if (this.isFirstLoad) {
           this.ads = t;
           this.showComponent = !0;
