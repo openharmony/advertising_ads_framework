@@ -85,15 +85,38 @@ void UvQueneWorkOnAdLoadSuccess(uv_work_t *work, int status)
         return;
     }
     AdCallbackParam *data = reinterpret_cast<AdCallbackParam *>(work->data);
+    // 检查环境是否有效
+    if (data->env == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Environment is already destroyed");
+        delete data;
+        delete work;
+        return;
+    }
     napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(data->env, &scope);
+    napi_status nstatus = napi_open_handle_scope(data->env, &scope);
+    if (nstatus != napi_ok || scope == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Failed to open handle scope");
+        delete data;
+        delete work;
+        return;
+    }
+
+    // 检查引用是否有效
+    napi_value onAdLoadSuccessFunc = nullptr;
+    napi_status refStatus = napi_get_reference_value(data->env, data->callback.onAdLoadSuccess, &onAdLoadSuccessFunc);
+    if (refStatus != napi_ok || onAdLoadSuccessFunc == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Failed to get reference value, callback may be invalid");
+        napi_close_handle_scope(data->env, scope);
+        delete data;
+        delete work;
+        return;
+    }
+    // 执行回调
     napi_value result = nullptr;
     napi_create_string_utf8(data->env, data->ads.c_str(), NAPI_AUTO_LENGTH, &result);
     napi_value undefined = nullptr;
     napi_get_undefined(data->env, &undefined);
-    napi_value onAdLoadSuccessFunc = nullptr;
     napi_value resultOut = nullptr;
-    napi_get_reference_value(data->env, data->callback.onAdLoadSuccess, &onAdLoadSuccessFunc);
     napi_call_function(data->env, undefined, onAdLoadSuccessFunc, 1, &result, &resultOut);
     napi_close_handle_scope(data->env, scope);
     delete data;
