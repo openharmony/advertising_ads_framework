@@ -303,7 +303,9 @@ class AdComponent extends ViewPU {
       UIExtensionComponent.onReceive((y) => {
         let t;
         let z = y;
-        (t = this.interactionListener) === null || t === void 0 ? void 0 : t.onStatusChanged(z.status, z.ad, z.data);
+        if (z.status !== undefined) {
+          (t = this.interactionListener) === null || t === void 0 ? void 0 : t.onStatusChanged(z.status, z.ad, z.data);
+        }
         if (z.adPageHeight !== undefined) {
           this.uecHeight = z.adPageHeight;
         }
