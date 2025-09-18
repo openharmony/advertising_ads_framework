@@ -232,10 +232,12 @@ class AdComponent extends ViewPU {
     this.ratios = this.getRatios();
     this.getConfigJsonData();
     this.getSuggestedCompHeight();
+    this.registerWindowObserver();
   }
 
   async aboutToDisappear() {
     hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent aboutToDisappear.`);
+    this.unregisterWindowObserver();
     if (this.connection) {
       await this.sendDataRequest(CLOSE, 0);
     }
@@ -322,6 +324,7 @@ class AdComponent extends ViewPU {
             'type': 'rollPlayControlData',
             'rollPlayState': this.rollPlayState,
           });
+          this.initWindowInfo(p);
         });
       });
       UIExtensionComponent.onVisibleAreaChange(this.ratios, (v, r) => {
@@ -348,7 +351,7 @@ class AdComponent extends ViewPU {
       const u = CLICK;
       this.sendDataRequest(u);
       (t = this.interactionListener) === null || t === void 0 ? void 0 :
-      t.onStatusChanged('onAdClick', this.ads[0], 'onAdRenderer click');
+        t.onStatusChanged('onAdClick', this.ads[0], 'onAdRenderer click');
     }
   }
 
@@ -441,6 +444,41 @@ class AdComponent extends ViewPU {
       }
     } catch (e) {
       hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `Get suggestedHeight error, code: ${e.code}, msg: ${e.message}`);
+    }
+  }
+
+  initWindowInfo(proxy) {
+    try {
+      const win = this.context.windowStage.getMainWindowSync();
+      proxy?.send({
+        'type': 'windowStatusChange',
+        'windowStatusType': win.getWindowStatus(),
+      });
+    } catch (e) {
+      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `Failed to obtain window status. Code is ${e?.code}, message is ${e?.message}`);
+    }
+  }
+
+  registerWindowObserver() {
+    try {
+      const win = this.context.windowStage.getMainWindowSync();
+      win.on('windowStatusChange', (windowStatusType) => {
+        this.uiExtProxy?.send({
+          'type': 'windowStatusChange',
+          'windowStatusType': windowStatusType,
+        });
+      });
+    } catch (e) {
+      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `Failed to observe windowStatusChange. Code is ${e?.code}, message is ${e?.message}`);
+    }
+  }
+
+  unregisterWindowObserver() {
+    try {
+      const win = this.context.windowStage.getMainWindowSync();
+      win.off('windowStatusChange');
+    } catch (e) {
+      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `Failed to off observe windowStatusChange. Code is ${e?.code}, message is ${e?.message}`);
     }
   }
 
