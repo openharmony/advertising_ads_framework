@@ -34,6 +34,7 @@ public:
     {
         ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "JsAdsServiceExtensionContext::Finalizer is called");
         std::unique_ptr<JsAdsServiceExtensionContext>(static_cast<JsAdsServiceExtensionContext*>(data));
+        (void)hint;
     }
 private:
     std::weak_ptr<AdsServiceExtensionContext> context_;
