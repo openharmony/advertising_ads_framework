@@ -50,6 +50,15 @@ inline int32_t ErrCodeConvert(int32_t kitErrCode)
     }
 }
 
+// 添加环境清理钩子函数
+void EnvCleanupHook(void* arg)
+{
+    bool* isEnvValid = static_cast<bool*>(arg);
+    if (isEnvValid != nullptr) {
+        *isEnvValid = false;
+    }
+}
+
 bool InitAdLoadCallbackWorkEnv(napi_env env, uv_loop_s **loop, uv_work_t **work, AdCallbackParam **param)
 {
     napi_get_uv_event_loop(env, loop);
@@ -60,6 +69,7 @@ bool InitAdLoadCallbackWorkEnv(napi_env env, uv_loop_s **loop, uv_work_t **work,
     *work = new (std::nothrow) uv_work_t;
     if (*work == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "work is null");
+        *loop = nullptr;
         return false;
     }
     *param = new (std::nothrow) AdCallbackParam();
@@ -71,6 +81,10 @@ bool InitAdLoadCallbackWorkEnv(napi_env env, uv_loop_s **loop, uv_work_t **work,
         return false;
     }
     (*param)->env = env;
+    // 初始化环境有效标志
+    (*param)->isEnvValid = new bool(true);
+    napi_add_env_cleanup_hook(env, EnvCleanupHook, (*param)->isEnvValid);
+    ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "create napi_add_env_cleanup_hook success");
     return true;
 }
 
@@ -86,8 +100,9 @@ void UvQueneWorkOnAdLoadSuccess(uv_work_t *work, int status)
     }
     AdCallbackParam *data = reinterpret_cast<AdCallbackParam *>(work->data);
     // 检查环境是否有效
-    if (data->env == nullptr) {
+    if (data->isEnvValid == nullptr || !*(data->isEnvValid)) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Environment is already destroyed");
+        clearEnvValid(data);
         delete data;
         delete work;
         return;
@@ -96,6 +111,7 @@ void UvQueneWorkOnAdLoadSuccess(uv_work_t *work, int status)
     napi_status nstatus = napi_open_handle_scope(data->env, &scope);
     if (nstatus != napi_ok || scope == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Failed to open handle scope");
+        clearEnvValid(data);
         delete data;
         delete work;
         return;
@@ -107,6 +123,7 @@ void UvQueneWorkOnAdLoadSuccess(uv_work_t *work, int status)
     if (refStatus != napi_ok || onAdLoadSuccessFunc == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Failed to get reference value, callback may be invalid");
         napi_close_handle_scope(data->env, scope);
+        clearEnvValid(data);
         delete data;
         delete work;
         return;
@@ -119,9 +136,23 @@ void UvQueneWorkOnAdLoadSuccess(uv_work_t *work, int status)
     napi_value resultOut = nullptr;
     napi_call_function(data->env, undefined, onAdLoadSuccessFunc, 1, &result, &resultOut);
     napi_close_handle_scope(data->env, scope);
+
+    // 清理环境有效性标志和钩子
+    clearEnvValid(data);
     delete data;
     data = nullptr;
     delete work;
+}
+
+void clearEnvValid(AdCallbackParam *data)
+{
+    if (data->isEnvValid == nullptr) {
+        return;
+    }
+    napi_remove_env_cleanup_hook(data->env, EnvCleanupHook, data->isEnvValid);
+    delete data->isEnvValid;
+    data->isEnvValid = nullptr;
+    ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "clearEnvValid Success");
 }
 
 void UvQueneWorkOnAdLoadMultiSlotsSuccess(uv_work_t *work, int status)
@@ -131,6 +162,15 @@ void UvQueneWorkOnAdLoadMultiSlotsSuccess(uv_work_t *work, int status)
         return;
     }
     AdCallbackParam *data = reinterpret_cast<AdCallbackParam *>(work->data);
+    // 检查环境是否有效
+    if (data->isEnvValid == nullptr || !*(data->isEnvValid)) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Environment is already destroyed");
+        clearEnvValid(data);
+        delete data;
+        delete work;
+        return;
+    }
+
     napi_handle_scope scope = nullptr;
     napi_open_handle_scope(data->env, &scope);
     napi_value result = nullptr;
@@ -142,6 +182,8 @@ void UvQueneWorkOnAdLoadMultiSlotsSuccess(uv_work_t *work, int status)
     napi_get_reference_value(data->env, data->callback.onAdLoadSuccess, &onAdLoadMultiSlotsSuccessFunc);
     napi_call_function(data->env, undefined, onAdLoadMultiSlotsSuccessFunc, 1, &result, &resultOut);
     napi_close_handle_scope(data->env, scope);
+    // 清理环境有效性标志和钩子
+    clearEnvValid(data);
     delete data;
     data = nullptr;
     delete work;
@@ -154,6 +196,16 @@ void UvQueneWorkOnAdLoadFailed(uv_work_t *work, int status)
         return;
     }
     AdCallbackParam *data = reinterpret_cast<AdCallbackParam *>(work->data);
+
+    // 检查环境是否有效
+    if (data->isEnvValid == nullptr || !*(data->isEnvValid)) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "UvQueneWorkOnAdLoadFailed Environment is already destroyed");
+        clearEnvValid(data);
+        delete data;
+        delete work;
+        return;
+    }
+
     napi_handle_scope scope = nullptr;
     napi_open_handle_scope(data->env, &scope);
     napi_value results[2] = {0};
@@ -166,6 +218,8 @@ void UvQueneWorkOnAdLoadFailed(uv_work_t *work, int status)
     napi_get_reference_value(data->env, data->callback.onAdLoadFailure, &onAdLoadFailedFunc);
     napi_call_function(data->env, undefined, onAdLoadFailedFunc, 2, results, &resultOut); // 2 params
     napi_close_handle_scope(data->env, scope);
+    // 清理钩子函数
+    clearEnvValid(data);
     delete data;
     data = nullptr;
     delete work;
@@ -238,9 +292,19 @@ void UvQueueWorkOnAdRequestBody(uv_work_t *work, int status)
     }
     napi_handle_scope scope = nullptr;
     AdCallbackParam *data = reinterpret_cast<AdCallbackParam *>(work->data);
+
+    // 检查环境是否有效
+    if (data->isEnvValid == nullptr || !*(data->isEnvValid)) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Environment is already destroyed");
+        clearEnvValid(data);
+        delete data;
+        work->data = nullptr;
+        return;
+    }
+
     napi_open_handle_scope(data->env, &scope);
     if (scope == nullptr) {
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "open scope failed");
+        clearEnvValid(data);
         delete data;
         work->data = nullptr;
         return;
@@ -257,6 +321,8 @@ void UvQueueWorkOnAdRequestBody(uv_work_t *work, int status)
         napi_reject_deferred(data->env, data->deferred, error);
     }
     napi_close_handle_scope(data->env, scope);
+    // 清理环境有效性标志和钩子
+    clearEnvValid(data);
     delete data;
     data = nullptr;
     delete work;

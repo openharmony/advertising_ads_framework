@@ -49,7 +49,11 @@ struct AdCallbackParam {
     std::string ads;
     std::string multiAds;
     AdJSCallback callback;
+    bool* isEnvValid = nullptr;
 };
+
+void clearEnvValid(AdCallbackParam *data);
+void EnvCleanupHook(void* arg);
 
 class AdLoadListenerCallback : public AdLoadCallbackStub {
 public:
