@@ -668,6 +668,10 @@ napi_value Advertising::LoadAd(napi_env env, napi_callback_info info)
         },
         reinterpret_cast<void *>(asyncContext), &asyncContext->asyncWork));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_user_initiated));
+    if (asyncContext != nullptr) {
+        delete asyncContext;
+        asyncContext = nullptr;
+    }
     return NapiGetNull(env);
 }
 
@@ -768,6 +772,10 @@ napi_value Advertising::LoadAdWithMultiSlots(napi_env env, napi_callback_info in
         },
         reinterpret_cast<void *>(asyncContext), &asyncContext->asyncWork));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_user_initiated));
+    if (asyncContext != nullptr) {
+        delete asyncContext;
+        asyncContext = nullptr;
+    }
     return NapiGetNull(env);
 }
 
@@ -862,6 +870,10 @@ napi_value Advertising::GetAdRequestBody(napi_env env, napi_callback_info info)
     NAPI_CALL(env, napi_create_async_work(env, nullptr, functionName, ExecuteCBWithPromise, CompleteCBWithPromise,
         reinterpret_cast<void *> (reuqestBodyContext), &reuqestBodyContext->asyncWork));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, reuqestBodyContext->asyncWork, napi_qos_user_initiated));
+    if (reuqestBodyContext != nullptr) {
+        delete reuqestBodyContext;
+        reuqestBodyContext = nullptr;
+    }
     return promise;
 }
 
