@@ -108,13 +108,16 @@ void GetAdConfigItem(const char *path, CloudServiceProvider &cloudServiceProvide
     }
     if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName) &&
         cJSON_IsArray(cloudServiceUEAAbilityName)) {
-            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceBundleName, 0))) {
+            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceBundleName, 0)) &&
+                (cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring != nullptr)) {
                 cloudServiceProvider.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
             }
-            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceAbilityName, 0))) {
+            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceAbilityName, 0)) &&
+                (cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring != nullptr)) {
                 cloudServiceProvider.abilityName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
             }
-            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceUEAAbilityName, 0))) {
+            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceUEAAbilityName, 0)) &&
+                (cJSON_GetArrayItem(cloudServiceUEAAbilityName, 0)->valuestring != nullptr)) {
                 cloudServiceProvider.ueaAbilityName = cJSON_GetArrayItem(cloudServiceUEAAbilityName, 0)->valuestring;
             }
     }
