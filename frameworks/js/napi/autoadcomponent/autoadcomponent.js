@@ -267,7 +267,9 @@ class AutoAdComponent extends ViewPU {
         hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent',
         `onReceive print data error, code: ${o.code}, message: ${o.message}`);
       }
-      this.interactionListener.onStatusChanged(t.status, t.ad, t.data);
+      if (t.status !== undefined) {
+        this.interactionListener.onStatusChanged(t.status, t.ad, t.data);
+      }
     }));
     o || UIExtensionComponent.pop();
   }
