@@ -94,6 +94,7 @@ AdLoadListenerCallback::~AdLoadListenerCallback() {}
 
 void UvQueneWorkOnAdLoadSuccess(uv_work_t *work, int status)
 {
+    (void)status;
     if ((work == nullptr) || (work->data == nullptr)) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "OnAdLoadSuccess work or data is nullptr");
         return;
@@ -157,6 +158,7 @@ void clearEnvValid(AdCallbackParam *data)
 
 void UvQueneWorkOnAdLoadMultiSlotsSuccess(uv_work_t *work, int status)
 {
+    (void)status;
     if ((work == nullptr) || (work->data == nullptr)) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "OnAdLoadMultiSlotsSuccess work or data is nullptr");
         return;
@@ -191,6 +193,7 @@ void UvQueneWorkOnAdLoadMultiSlotsSuccess(uv_work_t *work, int status)
 
 void UvQueneWorkOnAdLoadFailed(uv_work_t *work, int status)
 {
+    (void)status;
     if ((work == nullptr) || (work->data == nullptr)) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "OnAdLoadFailed work or data is nullptr");
         return;
@@ -282,6 +285,7 @@ AdRequestBodyAsync::~AdRequestBodyAsync() {}
 
 void UvQueueWorkOnAdRequestBody(uv_work_t *work, int status)
 {
+    (void)status;
     if (work == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "work is null");
         return;
