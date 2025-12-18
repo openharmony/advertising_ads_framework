@@ -32,6 +32,7 @@ public:
 
     static void Finalizer(napi_env env, void* data, void* hint)
     {
+        (void)hint;
         ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "JsAdsServiceExtensionContext::Finalizer is called");
         std::unique_ptr<JsAdsServiceExtensionContext>(static_cast<JsAdsServiceExtensionContext*>(data));
     }
