@@ -90,7 +90,20 @@ bool InitAdLoadCallbackWorkEnv(napi_env env, uv_loop_s **loop, uv_work_t **work,
 
 AdLoadListenerCallback::AdLoadListenerCallback(napi_env env, AdJSCallback callback) : env_(env), callback_(callback) {}
 
-AdLoadListenerCallback::~AdLoadListenerCallback() {}
+AdLoadListenerCallback::~AdLoadListenerCallback()
+{
+    // 释放 Node‑API 对象引用，防止句柄泄漏
+    if (callback_.onAdLoadSuccess != nullptr) {
+        napi_delete_reference(env_, callback_.onAdLoadSuccess);
+        callback_.onAdLoadSuccess = nullptr;
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "wyy free onAdLoadSuccess");
+    }
+    if (callback_.onAdLoadFailure != nullptr) {
+        napi_delete_reference(env_, callback_.onAdLoadFailure);
+        callback_.onAdLoadFailure = nullptr;
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "wyy free onAdLoadFailure");
+    }
+}
 
 void UvQueneWorkOnAdLoadSuccess(uv_work_t *work, int status)
 {
