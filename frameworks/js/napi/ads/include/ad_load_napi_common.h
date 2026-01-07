@@ -21,6 +21,7 @@
 #include <vector>
 #include <uv.h>
 #include <string>
+#include <atomic>
 #include "ad_load_callback_stub.h"
 #include "ad_request_body_stub.h"
 #include "napi/native_api.h"
@@ -42,6 +43,7 @@ struct AdJSCallback {
 
 struct AdCallbackParam {
     napi_env env = nullptr;
+    std::atomic<bool>* envAlive = nullptr;
     napi_deferred deferred;
     int32_t errCode;
     std::string errMsg;
@@ -49,11 +51,7 @@ struct AdCallbackParam {
     std::string ads;
     std::string multiAds;
     AdJSCallback callback;
-    bool* isEnvValid = nullptr;
 };
-
-void clearEnvValid(AdCallbackParam *data);
-void EnvCleanupHook(void* arg);
 
 class AdLoadListenerCallback : public AdLoadCallbackStub {
 public:
@@ -62,10 +60,11 @@ public:
     void OnAdLoadSuccess(const std::string &result) override;
     void OnAdLoadMultiSlotsSuccess(const std::string &result) override;
     void OnAdLoadFailure(int32_t resultCode, const std::string &resultMsg) override;
-
+    bool IsEnvAlive() const { return envAlive_ && envAlive_->load(); }
 private:
     napi_env env_ = nullptr;
     AdJSCallback callback_;
+    std::atomic<bool>* envAlive_ = nullptr;
 };
 
 class AdRequestBodyAsync : public AdRequestBodyStub {
