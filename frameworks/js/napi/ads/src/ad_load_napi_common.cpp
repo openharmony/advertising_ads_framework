@@ -74,46 +74,9 @@ bool InitAdLoadCallbackWorkEnv(napi_env env, uv_loop_s **loop, uv_work_t **work,
     return true;
 }
 
-AdLoadListenerCallback::AdLoadListenerCallback(napi_env env, AdJSCallback callback) : env_(env), callback_(callback)
-{
-    envAlive_ = new std::atomic<bool>(true);
-    napi_add_env_cleanup_hook(env, [](void* data) {
-        auto* self = static_cast<AdLoadListenerCallback*>(data);
-        self->envAlive_->store(false);
-        self->env_ = nullptr;
-    }, this);
-}
+AdLoadListenerCallback::AdLoadListenerCallback(napi_env env, AdJSCallback callback) : env_(env), callback_(callback) {}
 
-AdLoadListenerCallback::~AdLoadListenerCallback()
-{
-    if (env_ && IsEnvAlive()) {
-        napi_remove_env_cleanup_hook(env_, [](void* data) {
-            static_cast<AdLoadListenerCallback*>(data)->envAlive_->store(false);
-        }, this);
-        // 释放 Node‑API 对象引用，防止句柄泄漏
-        if (callback_.onAdLoadSuccess != nullptr) {
-            napi_delete_reference(env_, callback_.onAdLoadSuccess);
-            callback_.onAdLoadSuccess = nullptr;
-        }
-        if (callback_.onAdLoadFailure != nullptr) {
-            napi_delete_reference(env_, callback_.onAdLoadFailure);
-            callback_.onAdLoadFailure = nullptr;
-        }
-        delete envAlive_;
-        envAlive_ = nullptr;
-    }
-}
-
-bool IsEnvValid(napi_env env, const std::atomic<bool>* envAlive)
-{
-    if (env == nullptr) {
-        return false;
-    }
-    if (envAlive == nullptr || !envAlive->load()) {
-        return false;
-    }
-    return true;
-}
+AdLoadListenerCallback::~AdLoadListenerCallback() {}
 
 void UvQueneWorkOnAdLoadSuccess(uv_work_t *work, int status)
 {
@@ -124,7 +87,7 @@ void UvQueneWorkOnAdLoadSuccess(uv_work_t *work, int status)
     }
     AdCallbackParam *data = reinterpret_cast<AdCallbackParam *>(work->data);
     // 检查环境是否有效
-    if (!IsEnvValid(data->env, data->envAlive)) {
+    if (data->env == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Environment is already destroyed");
         delete data;
         delete work;
@@ -164,20 +127,11 @@ void UvQueneWorkOnAdLoadSuccess(uv_work_t *work, int status)
 
 void UvQueneWorkOnAdLoadMultiSlotsSuccess(uv_work_t *work, int status)
 {
-    (void)status;
     if ((work == nullptr) || (work->data == nullptr)) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "OnAdLoadMultiSlotsSuccess work or data is nullptr");
         return;
     }
     AdCallbackParam *data = reinterpret_cast<AdCallbackParam *>(work->data);
-    // 检查环境是否有效
-    if (!IsEnvValid(data->env, data->envAlive)) {
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Environment is already destroyed");
-        delete data;
-        delete work;
-        return;
-    }
-
     napi_handle_scope scope = nullptr;
     napi_open_handle_scope(data->env, &scope);
     napi_value result = nullptr;
@@ -202,15 +156,6 @@ void UvQueneWorkOnAdLoadFailed(uv_work_t *work, int status)
         return;
     }
     AdCallbackParam *data = reinterpret_cast<AdCallbackParam *>(work->data);
-
-    // 检查环境是否有效
-    if (!IsEnvValid(data->env, data->envAlive)) {
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Environment is already destroyed");
-        delete data;
-        delete work;
-        return;
-    }
-
     napi_handle_scope scope = nullptr;
     napi_open_handle_scope(data->env, &scope);
     napi_value results[2] = {0};
@@ -230,10 +175,6 @@ void UvQueneWorkOnAdLoadFailed(uv_work_t *work, int status)
 
 void AdLoadListenerCallback::OnAdLoadSuccess(const std::string &result)
 {
-    if (!IsEnvAlive()) {
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Env destroyed before queuing work");
-        return;
-    }
     uv_loop_s *loop = nullptr;
     uv_work_t *work = nullptr;
     AdCallbackParam *param = nullptr;
@@ -243,7 +184,6 @@ void AdLoadListenerCallback::OnAdLoadSuccess(const std::string &result)
     }
     param->ads = result;
     param->callback = callback_;
-    param->envAlive = envAlive_;
     work->data = reinterpret_cast<void *>(param);
     uv_queue_work_with_qos(
         loop, work, [](uv_work_t *work) {}, UvQueneWorkOnAdLoadSuccess, uv_qos_user_initiated);
@@ -251,10 +191,6 @@ void AdLoadListenerCallback::OnAdLoadSuccess(const std::string &result)
 
 void AdLoadListenerCallback::OnAdLoadMultiSlotsSuccess(const std::string &result)
 {
-    if (!IsEnvAlive()) {
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Env destroyed before queuing work");
-        return;
-    }
     uv_loop_s *loop = nullptr;
     uv_work_t *work = nullptr;
     AdCallbackParam *param = nullptr;
@@ -264,7 +200,6 @@ void AdLoadListenerCallback::OnAdLoadMultiSlotsSuccess(const std::string &result
     }
     param->multiAds = result;
     param->callback = callback_;
-    param->envAlive = envAlive_;
     work->data = reinterpret_cast<void *>(param);
     uv_queue_work_with_qos(
         loop, work, [](uv_work_t *work) {}, UvQueneWorkOnAdLoadMultiSlotsSuccess, uv_qos_user_initiated);
@@ -272,10 +207,6 @@ void AdLoadListenerCallback::OnAdLoadMultiSlotsSuccess(const std::string &result
 
 void AdLoadListenerCallback::OnAdLoadFailure(int32_t resultCode, const std::string &resultMsg)
 {
-    if (!IsEnvAlive()) {
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Env destroyed before queuing work");
-        return;
-    }
     uv_loop_s *loop = nullptr;
     uv_work_t *work = nullptr;
     AdCallbackParam *param = nullptr;
@@ -286,7 +217,6 @@ void AdLoadListenerCallback::OnAdLoadFailure(int32_t resultCode, const std::stri
     param->errCode = ErrCodeConvert(resultCode);
     param->errMsg = resultMsg;
     param->callback = callback_;
-    param->envAlive = envAlive_;
     ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "LoadAdFailure. errorCode:  %{public}d  errorMsg:  %{public}s",
         param->errCode, param->errMsg.c_str());
     work->data = reinterpret_cast<void *>(param);
@@ -311,16 +241,6 @@ void UvQueueWorkOnAdRequestBody(uv_work_t *work, int status)
     }
     napi_handle_scope scope = nullptr;
     AdCallbackParam *data = reinterpret_cast<AdCallbackParam *>(work->data);
-
-    // 检查环境是否有效
-    if (!IsEnvValid(data->env, data->envAlive)) {
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Environment is already destroyed");
-        delete data;
-        data = nullptr;
-        delete work;
-        return;
-    }
-
     napi_open_handle_scope(data->env, &scope);
     if (scope == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "open scope failed");
