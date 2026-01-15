@@ -428,7 +428,7 @@ void AssembShowAdParas(Want &want, const Advertisment &advertisment, cJSON *root
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "AssembShowAdParas enter");
     cJSON_AddItemToObject(root, AD_RESPONSE_AD_TYPE.c_str(), cJSON_CreateNumber(advertisment.adType));
-    cJSON_AddItemToObject(root, AD_RESPONSE_REWARD_CONFIG.c_str(), nullptr);
+    cJSON_AddItemToObject(root, AD_RESPONSE_REWARD_CONFIG.c_str(), cJSON_CreateNull());
     cJSON_AddItemToObject(root, AD_RESPONSE_UNIQUE_ID.c_str(), cJSON_CreateString(advertisment.uniqueId.c_str()));
     cJSON_AddItemToObject(root, AD_RESPONSE_REWARDED.c_str(), cJSON_CreateBool(advertisment.rewarded));
     cJSON_AddItemToObject(root, AD_RESPONSE_SHOWN.c_str(), cJSON_CreateBool(advertisment.shown));
