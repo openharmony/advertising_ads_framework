@@ -127,6 +127,7 @@ void UvQueneWorkOnAdLoadSuccess(uv_work_t *work, int status)
 
 void UvQueneWorkOnAdLoadMultiSlotsSuccess(uv_work_t *work, int status)
 {
+    (void)status;
     if ((work == nullptr) || (work->data == nullptr)) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "OnAdLoadMultiSlotsSuccess work or data is nullptr");
         return;
