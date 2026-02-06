@@ -71,6 +71,7 @@ void AdRequestConnection::OnAbilityDisconnectDone(const AppExecFwk::ElementName 
 }
 
 std::mutex AdLoadService::lock_;
+std::mutex AdLoadService::configLock_;
 sptr<AdLoadService> AdLoadService::instance_;
 
 AdLoadService::AdLoadService()
@@ -114,6 +115,7 @@ ErrCode AdLoadService::LoadAd(const std::string &request, const std::string &opt
     const sptr<Cloud::IAdLoadCallback> &callback, int32_t loadAdType)
 {
     if (adServiceElementName_.bundleName.empty() || adServiceElementName_.extensionName.empty()) {
+        std::lock_guard<std::mutex> autoLock(configLock_);
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "adServiceElementName is null, read from config");
         GetAdServiceElement(adServiceElementName_);
     }
@@ -137,6 +139,7 @@ int32_t AdLoadService::RequestAdBody(const std::string &request, const std::stri
 {
     ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "enter RequestAdBody");
     if (adServiceElementName_.bundleName.empty() || adServiceElementName_.extensionName.empty()) {
+        std::lock_guard<std::mutex> autoLock(configLock_);
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "adServiceElementName is null, read from config");
         GetAdServiceElement(adServiceElementName_);
     }
