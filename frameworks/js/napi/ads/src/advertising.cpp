@@ -260,7 +260,7 @@ napi_value GetStringArrayProperty(const napi_env &env, napi_value &value, const 
         }
         uint32_t length = 0;
         napi_get_array_length(env, result, &length);
-        if (length == 0) {
+        if (length <= 0) {
             ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "parse array size is invalid");
             return nullptr;
         }
