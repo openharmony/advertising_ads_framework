@@ -240,7 +240,6 @@ bool JsonStr2CAdvertisementArr(cJSON* advertisementArrJson, CAdvertisementArr* r
     for (int64_t i = 0; i < res->size; ++i) {
         cJSON* cAdvertisementJson = cJSON_GetArrayItem(advertisementArrJson, i);
         if (cAdvertisementJson == nullptr || !JsonStr2CAdvertisement(cAdvertisementJson, &res->head[i])) {
-            res = nullptr;
             return false;
         }
     }

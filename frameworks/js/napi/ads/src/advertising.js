@@ -377,7 +377,7 @@ class ParseAdResponseRpcObj extends rpc.RemoteObject {
       if (respCode === CODE_SUCCESS) {
         this.listener?.onAdLoadSuccess(new Map(Object.entries(JSON.parse(respData))));
       } else if (respCode === CODE_DEVICE_NOT_SUPPORT) {
-        this.listener?.onAdLoadFailure(respCode, 'Device not supported');
+        this.listener?.onAdLoadFailure(respCode, 'Device not supported.');
       } else if (respCode === AdsError.PARSE_RESPONSE_ERROR) {
         this.listener?.onAdLoadFailure(respCode, 'Failed to parse the ad response.');
       } else {
