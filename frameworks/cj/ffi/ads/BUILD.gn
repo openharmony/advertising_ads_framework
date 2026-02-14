@@ -73,6 +73,7 @@ ohos_shared_library("cj_advertising_ffi") {
     "ability_runtime:ability_manager",
     "ability_runtime:abilitykit_native",
     "ability_runtime:app_context",
+    "ability_runtime:napi_common",
     "ace_engine:ace_uicontent",
     "bundle_framework:appexecfwk_core",
     "cJSON:cjson",
