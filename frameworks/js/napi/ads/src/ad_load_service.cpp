@@ -114,7 +114,7 @@ void AdLoadService::GetAdServiceElement(AdServiceElementName &adServiceElementNa
 ErrCode AdLoadService::LoadAd(const std::string &request, const std::string &options,
     const sptr<Cloud::IAdLoadCallback> &callback, int32_t loadAdType)
 {
-    if (adServiceElementName_.bundleName.empty() || adServiceElementName_.extensionName.empty()) {
+    if (IsConfigEmpty(adServiceElementName_)) {
         std::lock_guard<std::mutex> autoLock(configLock_);
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "adServiceElementName is null, read from config");
         GetAdServiceElement(adServiceElementName_);
@@ -138,7 +138,7 @@ int32_t AdLoadService::RequestAdBody(const std::string &request, const std::stri
     const sptr<Cloud::IAdRequestBody> &callback)
 {
     ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "enter RequestAdBody");
-    if (adServiceElementName_.bundleName.empty() || adServiceElementName_.extensionName.empty()) {
+    if (IsConfigEmpty(adServiceElementName_)) {
         std::lock_guard<std::mutex> autoLock(configLock_);
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "adServiceElementName is null, read from config");
         GetAdServiceElement(adServiceElementName_);
@@ -163,8 +163,19 @@ int32_t AdLoadService::RequestAdBody(const std::string &request, const std::stri
     return Cloud::ERR_SEND_OK;
 }
 
+bool AdLoadService::IsConfigEmpty(AdServiceElementName &adServiceElementName)
+{
+    std::lock_guard<std::mutex> autoLock(configLock_);
+    return adServiceElementName.bundleName.empty() || adServiceElementName.extensionName.empty() ||
+           adServiceElementName.apiServiceName.empty();
+}
+
 void AdLoadService::GetConfigItem(const char *path, AdServiceElementName &adServiceElementName)
 {
+    if (!IsConfigEmpty(adServiceElementName)) {
+        return;
+    }
+    std::lock_guard<std::mutex> autoLock(configLock_);
     std::ifstream inFile(path, std::ios::in);
     if (!inFile.is_open()) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Open file error.");
