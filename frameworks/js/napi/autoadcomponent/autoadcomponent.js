@@ -316,7 +316,7 @@ class AutoAdComponent extends ViewPU {
   
   visibleAreaChange(t, o) {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `isVisible:${t}, currentRatio:${o}`);
-    if (t && o >= 1) {
+    if (t && o >= 0.9) {
       hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'component visible');
       this.isTaskRunning || this.refreshAd();
     }
