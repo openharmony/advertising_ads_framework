@@ -789,7 +789,6 @@ napi_value ParseAdRequestBodyParms(napi_env env, napi_callback_info info, GetAdR
         return NapiGetNull(env);
     }
     std::string parmsString = AdJsonUtil::ToString(parms);
-    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "reuqest body param is: %{public}s", parmsString.c_str());
     cJSON_Delete(parms);
     context->parms = parmsString;
     // AdOptions
