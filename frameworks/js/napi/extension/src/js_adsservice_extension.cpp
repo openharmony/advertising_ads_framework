@@ -41,9 +41,15 @@ napi_value AttachAdsServiceExtensionContext(napi_env env, void *value, void *)
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "invalid parameter.");
         return nullptr;
     }
+
+    // 创建escapable handle scope来管理返回的napi_value
+    napi_escapable_handle_scope scope;
+    napi_open_escapable_handle_scope(env, &scope);
+
     auto ptr = reinterpret_cast<std::weak_ptr<AdsServiceExtensionContext> *>(value)->lock();
     if (ptr == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "invalid context.");
+        napi_close_escapable_handle_scope(env, scope);
         return nullptr;
     }
     napi_value object = CreateJsAdsServiceExtensionContext(env, ptr);
@@ -51,6 +57,7 @@ napi_value AttachAdsServiceExtensionContext(napi_env env, void *value, void *)
         "advertising.AdsServiceExtensionContext", &object, 1);
     if (module == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "load module failed.");
+        napi_close_escapable_handle_scope(env, scope);
         return nullptr;
     }
     auto contextObj = module->GetNapiValue();
@@ -59,6 +66,7 @@ napi_value AttachAdsServiceExtensionContext(napi_env env, void *value, void *)
     auto workContext = new (std::nothrow) std::weak_ptr<AdsServiceExtensionContext>(ptr);
     if (workContext == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "workContext is null.");
+        napi_close_escapable_handle_scope(env, scope);
         return nullptr;
     }
     napi_wrap(env, contextObj, workContext,
@@ -68,6 +76,9 @@ napi_value AttachAdsServiceExtensionContext(napi_env env, void *value, void *)
             delete static_cast<std::weak_ptr<AdsServiceExtensionContext> *>(data);
         },
         nullptr, nullptr);
+
+    // 在所有操作完成后关闭scope
+    napi_close_escapable_handle_scope(env, scope);
     return contextObj;
 }
 
@@ -107,13 +118,23 @@ void JsAdsServiceExtension::Init(const std::shared_ptr<AppExecFwk::AbilityLocalR
         return;
     }
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "JsAdsServiceExtension::Init ConvertNativeValueTo.");
+    napi_handle_scope scope;
+    napi_status status = napi_open_handle_scope(env_, &scope);
+    if (status != napi_ok) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Init Failed to open handle scope");
+        return;
+    }
     napi_value obj = jsObj_->GetNapiValue();
     if (!obj) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Failed to get JsAdsServiceExtension object");
+        napi_close_handle_scope(env_, scope);
         return;
     }
 
     BindContext(env_, obj);
+    // 关闭 HandleScope
+    napi_close_handle_scope(env_, scope);
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "JsAdsServiceExtension init end");
 }
 
 void JsAdsServiceExtension::BindContext(napi_env env, napi_value obj)
@@ -123,10 +144,16 @@ void JsAdsServiceExtension::BindContext(napi_env env, napi_value obj)
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Failed to get context");
         return;
     }
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "JsAdsServiceExtension::BindContext");
+    // 创建 HandleScope 管理
+    napi_handle_scope scope;
+    napi_open_handle_scope(env_, &scope);
+
     napi_value contextObj = CreateJsAdsServiceExtensionContext(env_, context);
     auto shellContextRef = jsRuntime_.LoadSystemModule("advertising.AdsServiceExtensionContext", &contextObj, ARGC_ONE);
     if (!shellContextRef) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "shellContextRef is nullptr.");
+        napi_close_handle_scope(env_, scope);
         return;
     }
     contextObj = shellContextRef->GetNapiValue();
@@ -135,12 +162,15 @@ void JsAdsServiceExtension::BindContext(napi_env env, napi_value obj)
 
     if (!contextObj) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Failed to get adsservice extension native object");
+        napi_close_handle_scope(env_, scope);
         return;
     }
     napi_wrap(env_, contextObj, new std::weak_ptr<AbilityRuntime::Context>(context),
         [](napi_env env, void* data, void*) {
             delete static_cast<std::weak_ptr<AbilityRuntime::Context>*>(data);
         }, nullptr, nullptr);
+    napi_close_handle_scope(env_, scope);
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "BindContext end");
 }
 
 bool JsAdsServiceExtension::GetSrcPathAndModuleName(std::string& srcPath, std::string& moduleName)
@@ -175,11 +205,18 @@ bool JsAdsServiceExtension::GetSrcPathAndModuleName(std::string& srcPath, std::s
 sptr<IRemoteObject> JsAdsServiceExtension::OnConnect(const AAFwk::Want &want)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "JsAdsServiceExtension::OnConnect start");
+    // 用于跨napi context传递napi值
+    napi_escapable_handle_scope scope;
+    napi_open_escapable_handle_scope(env_, &scope);
     napi_value result = CallOnConnect(want);
     auto remoteObj = NAPI_ohos_rpc_getNativeRemoteObject(env_, result);
     if (remoteObj == nullptr) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "remoteObj null.");
     }
+
+    // 关闭 scope
+    napi_close_escapable_handle_scope(env_, scope);
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "JsAdsServiceExtension::OnConnect end");
     return remoteObj;
 }
 
