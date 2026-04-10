@@ -45,15 +45,29 @@ napi_value CreateJsAdsServiceExtensionContext(
     napi_env env, std::shared_ptr<AdsServiceExtensionContext> context)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "CreateJsAdsServiceExtensionContext begin");
+    // 可逃逸的scope管理
+    napi_escapable_handle_scope scope;
+    napi_open_escapable_handle_scope(env, &scope);
+
     napi_value object = CreateJsExtensionContext(env, context);
     std::unique_ptr<JsAdsServiceExtensionContext> jsContext =
         std::make_unique<JsAdsServiceExtensionContext>(context);
     if (!object) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "object is nullptr.");
+        // 关闭 scope
+        napi_close_escapable_handle_scope(env, scope);
         return nullptr;
     }
     napi_wrap(env, object, jsContext.release(), JsAdsServiceExtensionContext::Finalizer, nullptr, nullptr);
-    return object;
+
+    // 将 object 逃逸出当前 scope，使其在父 scope 中可用
+    napi_value escapedObject = nullptr;
+    napi_escape_handle(env, scope, object, &escapedObject);
+
+    // 关闭 scope
+    napi_close_escapable_handle_scope(env, scope);
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "CreateJsAdsServiceExtensionContext end");
+    return escapedObject;
 }
 } // namespace AdsExtension
 } // namespace OHOS
