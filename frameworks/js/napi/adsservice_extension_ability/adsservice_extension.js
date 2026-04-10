@@ -133,7 +133,6 @@ class AdsCoreServiceRpcObj extends rpc.RemoteObject {
           respAdsData = respData.values().next().value;
         }
         respMsg = toJSON(respAdsData);
-        hilog.debug(HILOG_DOMAIN_CODE, 'AdsCoreServiceRpcObj', `respMsg: ${respMsg}`);
       }
       this.sendMsgReq(code, replyRpcObj, respCode, respMsg);
     }

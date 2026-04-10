@@ -616,6 +616,8 @@ napi_value ParseContextForLoadAd(napi_env env, napi_callback_info info, Advertis
         cJSON_Delete(requestRoot);
         return NapiGetNull(env);
     }
+    cJSON_AddBoolToObject(requestRoot, "sptAppRender", true);
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "add sptAppRender");
     std::string requestRootString = AdJsonUtil::ToString(requestRoot);
     cJSON_ReplaceItemInObject(requestRoot, "oaid", cJSON_CreateString("********-****-****-************"));
     std::string requestParam = AdJsonUtil::ToString(requestRoot);
@@ -717,6 +719,13 @@ napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info, Mult
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "GetAdsArray failed");
         cJSON_Delete(requestRoot);
         return NapiGetNull(env);
+    }
+    int arraySize = cJSON_GetArraySize(requestRoot);
+    for (int i = 0; i < arraySize; i++) {
+        cJSON *item = cJSON_GetArrayItem(requestRoot, i);
+        if (cJSON_IsObject(item)) {
+            cJSON_AddBoolToObject(item, "sptAppRender", true);
+        }
     }
     std::string requestRootString = AdJsonUtil::ToString(requestRoot);
     ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{public}s", requestRootString.c_str());
