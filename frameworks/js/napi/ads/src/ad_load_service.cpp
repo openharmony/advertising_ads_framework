@@ -115,7 +115,6 @@ ErrCode AdLoadService::LoadAd(const std::string &request, const std::string &opt
     const sptr<Cloud::IAdLoadCallback> &callback, int32_t loadAdType)
 {
     if (IsConfigEmpty(adServiceElementName_)) {
-        std::lock_guard<std::mutex> autoLock(configLock_);
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "adServiceElementName is null, read from config");
         GetAdServiceElement(adServiceElementName_);
     }
@@ -139,7 +138,6 @@ int32_t AdLoadService::RequestAdBody(const std::string &request, const std::stri
 {
     ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "enter RequestAdBody");
     if (IsConfigEmpty(adServiceElementName_)) {
-        std::lock_guard<std::mutex> autoLock(configLock_);
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "adServiceElementName is null, read from config");
         GetAdServiceElement(adServiceElementName_);
     }
