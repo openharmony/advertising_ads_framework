@@ -41,7 +41,11 @@ AdLoadListenerCallback::~AdLoadListenerCallback() {}
 void AdLoadListenerCallback::OnAdLoadSuccess(const std::string &result)
 {
     cJSON* adsArrayJson = cJSON_Parse(result.c_str());
-    CAdvertisementArr adsArray;
+    if (adsArrayJson == nullptr) {
+        OnAdLoadFailure(Cloud::AdsError::REQUEST_FAIL, "parse json fail");
+        return;
+    }
+    CAdvertisementArr adsArray = {nullptr, 0};
     if (!JsonStr2CAdvertisementArr(adsArrayJson, &adsArray)) {
         OnAdLoadFailure(Cloud::AdsError::REQUEST_FAIL, "request fail");
         cJSON_Delete(adsArrayJson);
@@ -54,7 +58,11 @@ void AdLoadListenerCallback::OnAdLoadSuccess(const std::string &result)
 void AdLoadListenerCallback::OnAdLoadMultiSlotsSuccess(const std::string &result)
 {
     cJSON* adsMapJson = cJSON_Parse(result.c_str());
-    CAdvertisementHashStrArr adsMap;
+    if (adsMapJson == nullptr) {
+        OnAdLoadFailure(Cloud::AdsError::REQUEST_FAIL, "parse json fail");
+        return;
+    }
+    CAdvertisementHashStrArr adsMap = {nullptr, 0};
     if (!JsonStr2CAdvertisementHashStrArr(adsMapJson, &adsMap)) {
         OnAdLoadFailure(Cloud::AdsError::REQUEST_FAIL, "request fail");
         cJSON_Delete(adsMapJson);
@@ -72,7 +80,9 @@ void AdLoadListenerCallback::OnAdLoadFailure(int32_t resultCode, const std::stri
     } else {
         multiCallback_.OnAdLoadFailure(resultCode, str);
     }
-    delete[] str;
+    if (str != nullptr) {
+        free(str);
+    }
 }
 
 std::mutex AdLoadService::lock_;
