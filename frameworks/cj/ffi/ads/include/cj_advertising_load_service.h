@@ -95,7 +95,9 @@ private:
     bool ConnectAdKit(const sptr<Cloud::AdRequestData> &data, const sptr<Cloud::IAdLoadCallback> &callback,
         int32_t loadAdType);
     void GetConfigItem(const char *path, AdServiceElementName &adServiceElementName);
+    bool IsConfigEmptyNoLock(AdServiceElementName &adServiceElementName);
     static std::mutex lock_;
+    static std::mutex configLock_;
     static sptr<AdLoadService> instance_;
     AdServiceElementName adServiceElementName_;
 };

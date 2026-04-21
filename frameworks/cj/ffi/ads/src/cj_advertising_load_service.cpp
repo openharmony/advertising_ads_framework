@@ -86,6 +86,7 @@ void AdLoadListenerCallback::OnAdLoadFailure(int32_t resultCode, const std::stri
 }
 
 std::mutex AdLoadService::lock_;
+std::mutex AdLoadService::configLock_;
 sptr<AdLoadService> AdLoadService::instance_;
 
 AdLoadService::AdLoadService()
@@ -127,7 +128,9 @@ void AdLoadService::GetAdServiceElement(AdServiceElementName &adServiceElementNa
 ErrCode AdLoadService::LoadAd(const std::string &request, const std::string &options,
     const sptr<Cloud::IAdLoadCallback> &callback, int32_t loadAdType)
 {
-    if (adServiceElementName_.bundleName.empty() || adServiceElementName_.extensionName.empty()) {
+    if (IsConfigEmptyNoLock(adServiceElementName_)) {
+        std::lock_guard<std::mutex> autoLock(configLock_);
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_CJ_FFI, "adServiceElementName is null, read from config");
         GetAdServiceElement(adServiceElementName_);
     }
     if (callback == nullptr) {
@@ -149,7 +152,8 @@ int32_t AdLoadService::RequestAdBody(const std::string &request,
                                      const sptr<Cloud::IAdRequestBody> &callback)
 {
     ADS_HILOGW(OHOS::Cloud::ADS_MODULE_CJ_FFI, "enter RequestAdBody");
-    if (adServiceElementName_.bundleName.empty() || adServiceElementName_.extensionName.empty()) {
+    if (IsConfigEmptyNoLock(adServiceElementName_)) {
+        std::lock_guard<std::mutex> autoLock(configLock_);
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_CJ_FFI, "adServiceElementName is null, read from config");
         GetAdServiceElement(adServiceElementName_);
     }
@@ -173,8 +177,21 @@ int32_t AdLoadService::RequestAdBody(const std::string &request,
     return Cloud::ERR_SEND_OK;
 }
 
+bool AdLoadService::IsConfigEmptyNoLock(AdServiceElementName &adServiceElementName)
+{
+    return adServiceElementName.bundleName.empty() || adServiceElementName.extensionName.empty() ||
+           adServiceElementName.apiServiceName.empty();
+}
+
 void AdLoadService::GetConfigItem(const char *path, AdServiceElementName &adServiceElementName)
 {
+    if (!IsConfigEmptyNoLock(adServiceElementName)) {
+        return;
+    }
+    std::lock_guard<std::mutex> autoLock(configLock_);
+    if (!IsConfigEmptyNoLock(adServiceElementName)) {
+        return;
+    }
     std::ifstream inFile(path, std::ios::in);
     if (!inFile.is_open()) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_CJ_FFI, "Open file error.");
