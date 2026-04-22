@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,7 @@
 #ifndef OHOS_CJ_ADVERTISING_LOAD_SERVICE_H
 #define OHOS_CJ_ADVERTISING_LOAD_SERVICE_H
 
+#include <atomic>
 #include <mutex>
 #include <string>
 
@@ -95,9 +96,12 @@ private:
     bool ConnectAdKit(const sptr<Cloud::AdRequestData> &data, const sptr<Cloud::IAdLoadCallback> &callback,
         int32_t loadAdType);
     void GetConfigItem(const char *path, AdServiceElementName &adServiceElementName);
+    bool IsConfigEmptyNoLock();
     static std::mutex lock_;
+    static std::mutex configLock_;
     static sptr<AdLoadService> instance_;
     AdServiceElementName adServiceElementName_;
+    std::atomic<bool> configInitialized_{false};
 };
 
 class AdRequestConnection : public AAFwk::AbilityConnectionStub {

@@ -41,7 +41,11 @@ AdLoadListenerCallback::~AdLoadListenerCallback() {}
 void AdLoadListenerCallback::OnAdLoadSuccess(const std::string &result)
 {
     cJSON* adsArrayJson = cJSON_Parse(result.c_str());
-    CAdvertisementArr adsArray;
+    if (adsArrayJson == nullptr) {
+        OnAdLoadFailure(Cloud::AdsError::REQUEST_FAIL, "parse json fail");
+        return;
+    }
+    CAdvertisementArr adsArray = {nullptr, 0};
     if (!JsonStr2CAdvertisementArr(adsArrayJson, &adsArray)) {
         OnAdLoadFailure(Cloud::AdsError::REQUEST_FAIL, "request fail");
         cJSON_Delete(adsArrayJson);
@@ -49,12 +53,17 @@ void AdLoadListenerCallback::OnAdLoadSuccess(const std::string &result)
     }
     callback_.OnAdLoadSuccess(adsArray);
     cJSON_Delete(adsArrayJson);
+    FreeCAdvertisementArr(&adsArray);
 }
 
 void AdLoadListenerCallback::OnAdLoadMultiSlotsSuccess(const std::string &result)
 {
     cJSON* adsMapJson = cJSON_Parse(result.c_str());
-    CAdvertisementHashStrArr adsMap;
+    if (adsMapJson == nullptr) {
+        OnAdLoadFailure(Cloud::AdsError::REQUEST_FAIL, "parse json fail");
+        return;
+    }
+    CAdvertisementHashStrArr adsMap = {nullptr, 0};
     if (!JsonStr2CAdvertisementHashStrArr(adsMapJson, &adsMap)) {
         OnAdLoadFailure(Cloud::AdsError::REQUEST_FAIL, "request fail");
         cJSON_Delete(adsMapJson);
@@ -62,6 +71,7 @@ void AdLoadListenerCallback::OnAdLoadMultiSlotsSuccess(const std::string &result
     }
     cJSON_Delete(adsMapJson);
     multiCallback_.OnAdLoadSuccess(adsMap);
+    FreeCAdvertisementHashStrArr(&adsMap);
 }
 
 void AdLoadListenerCallback::OnAdLoadFailure(int32_t resultCode, const std::string &resultMsg)
@@ -72,10 +82,13 @@ void AdLoadListenerCallback::OnAdLoadFailure(int32_t resultCode, const std::stri
     } else {
         multiCallback_.OnAdLoadFailure(resultCode, str);
     }
-    delete[] str;
+    if (str != nullptr) {
+        free(str);
+    }
 }
 
 std::mutex AdLoadService::lock_;
+std::mutex AdLoadService::configLock_;
 sptr<AdLoadService> AdLoadService::instance_;
 
 AdLoadService::AdLoadService()
@@ -117,7 +130,8 @@ void AdLoadService::GetAdServiceElement(AdServiceElementName &adServiceElementNa
 ErrCode AdLoadService::LoadAd(const std::string &request, const std::string &options,
     const sptr<Cloud::IAdLoadCallback> &callback, int32_t loadAdType)
 {
-    if (adServiceElementName_.bundleName.empty() || adServiceElementName_.extensionName.empty()) {
+    if (IsConfigEmptyNoLock()) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_CJ_FFI, "adServiceElementName is null, read from config");
         GetAdServiceElement(adServiceElementName_);
     }
     if (callback == nullptr) {
@@ -139,7 +153,7 @@ int32_t AdLoadService::RequestAdBody(const std::string &request,
                                      const sptr<Cloud::IAdRequestBody> &callback)
 {
     ADS_HILOGW(OHOS::Cloud::ADS_MODULE_CJ_FFI, "enter RequestAdBody");
-    if (adServiceElementName_.bundleName.empty() || adServiceElementName_.extensionName.empty()) {
+    if (IsConfigEmptyNoLock()) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_CJ_FFI, "adServiceElementName is null, read from config");
         GetAdServiceElement(adServiceElementName_);
     }
@@ -163,8 +177,45 @@ int32_t AdLoadService::RequestAdBody(const std::string &request,
     return Cloud::ERR_SEND_OK;
 }
 
+bool AdLoadService::IsConfigEmptyNoLock()
+{
+    return !configInitialized_.load(std::memory_order_acquire);
+}
+
+static bool ParseConfigFromJson(cJSON *root, AdServiceElementName &adServiceElementName)
+{
+    cJSON *bundleName = cJSON_GetObjectItem(root, "providerBundleName");
+    cJSON *abilityName = cJSON_GetObjectItem(root, "providerAbilityName");
+    cJSON *apiServiceName = cJSON_GetObjectItem(root, "providerApiAbilityName");
+    if (bundleName == nullptr || abilityName == nullptr || apiServiceName == nullptr) {
+        return false;
+    }
+    if (!cJSON_IsArray(bundleName) || !cJSON_IsArray(abilityName) || !cJSON_IsArray(apiServiceName)) {
+        return false;
+    }
+    if (cJSON_IsString(cJSON_GetArrayItem(bundleName, 0))) {
+        adServiceElementName.bundleName = cJSON_GetArrayItem(bundleName, 0)->valuestring;
+    }
+    if (cJSON_IsString(cJSON_GetArrayItem(abilityName, 0))) {
+        adServiceElementName.extensionName = cJSON_GetArrayItem(abilityName, 0)->valuestring;
+    }
+    if (cJSON_IsString(cJSON_GetArrayItem(apiServiceName, 0))) {
+        adServiceElementName.apiServiceName = cJSON_GetArrayItem(apiServiceName, 0)->valuestring;
+    }
+    return !adServiceElementName.bundleName.empty() &&
+           !adServiceElementName.extensionName.empty() &&
+           !adServiceElementName.apiServiceName.empty();
+}
+
 void AdLoadService::GetConfigItem(const char *path, AdServiceElementName &adServiceElementName)
 {
+    if (!IsConfigEmptyNoLock()) {
+        return;
+    }
+    std::lock_guard<std::mutex> autoLock(configLock_);
+    if (!IsConfigEmptyNoLock()) {
+        return;
+    }
     std::ifstream inFile(path, std::ios::in);
     if (!inFile.is_open()) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_CJ_FFI, "Open file error.");
@@ -177,31 +228,13 @@ void AdLoadService::GetConfigItem(const char *path, AdServiceElementName &adServ
         inFile.close();
         return;
     }
-    cJSON *cloudServiceBundleName = cJSON_GetObjectItem(root, "providerBundleName");
-    cJSON *cloudServiceAbilityName = cJSON_GetObjectItem(root, "providerAbilityName");
-    cJSON *apiServiceName = cJSON_GetObjectItem(root, "providerApiAbilityName");
-    if (cloudServiceBundleName == nullptr || cloudServiceAbilityName == nullptr ||
-        apiServiceName == nullptr) {
-        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_CJ_FFI, "cJSON_GetObjectItem VALUE IS NULL");
-        inFile.close();
-        cJSON_Delete(root);
-        return;
-    }
-    if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName) &&
-        cJSON_IsArray(apiServiceName)) {
-        if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceBundleName, 0))) {
-            adServiceElementName.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
-        }
-        if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceAbilityName, 0))) {
-            adServiceElementName.extensionName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
-        }
-        if (cJSON_IsString(cJSON_GetArrayItem(apiServiceName, 0))) {
-            adServiceElementName.apiServiceName = cJSON_GetArrayItem(apiServiceName, 0)->valuestring;
-        }
-    }
+    bool configParsed = ParseConfigFromJson(root, adServiceElementName);
     adServiceElementName.userId = Cloud::USER_ID;
     inFile.close();
     cJSON_Delete(root);
+    if (configParsed) {
+        configInitialized_.store(true, std::memory_order_release);
+    }
 }
 
 bool AdLoadService::ConnectAdKit(const sptr<Cloud::AdRequestData> &data, const sptr<Cloud::IAdLoadCallback> &callback,
