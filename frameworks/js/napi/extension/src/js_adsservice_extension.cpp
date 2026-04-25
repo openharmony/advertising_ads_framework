@@ -77,9 +77,13 @@ napi_value AttachAdsServiceExtensionContext(napi_env env, void *value, void *)
         },
         nullptr, nullptr);
 
+    // 将 contextObj 逃逸出当前 scope，使其在父 scope 中可用
+    napi_value escapedObject = nullptr;
+    napi_escape_handle(env, scope, contextObj, &escapedObject);
+
     // 在所有操作完成后关闭scope
     napi_close_escapable_handle_scope(env, scope);
-    return contextObj;
+    return escapedObject;
 }
 
 JsAdsServiceExtension* JsAdsServiceExtension::Create(const std::unique_ptr<AbilityRuntime::Runtime>& runtime)
@@ -209,7 +213,10 @@ sptr<IRemoteObject> JsAdsServiceExtension::OnConnect(const AAFwk::Want &want)
     napi_escapable_handle_scope scope;
     napi_open_escapable_handle_scope(env_, &scope);
     napi_value result = CallOnConnect(want);
-    auto remoteObj = NAPI_ohos_rpc_getNativeRemoteObject(env_, result);
+    // 将 result 逃逸出当前 scope，使其在父 scope 中可用
+    napi_value escapedResult = nullptr;
+    napi_escape_handle(env_, scope, result, &escapedResult);
+    auto remoteObj = NAPI_ohos_rpc_getNativeRemoteObject(env_, escapedResult);
     if (remoteObj == nullptr) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "remoteObj null.");
     }
