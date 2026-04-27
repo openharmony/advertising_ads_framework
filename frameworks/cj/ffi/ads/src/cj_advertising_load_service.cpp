@@ -193,13 +193,16 @@ static bool ParseConfigFromJson(cJSON *root, AdServiceElementName &adServiceElem
     if (!cJSON_IsArray(bundleName) || !cJSON_IsArray(abilityName) || !cJSON_IsArray(apiServiceName)) {
         return false;
     }
-    if (cJSON_IsString(cJSON_GetArrayItem(bundleName, 0))) {
+    if (cJSON_IsString(cJSON_GetArrayItem(bundleName, 0)) &&
+        (cJSON_GetArrayItem(bundleName, 0)->valuestring != nullptr)) {
         adServiceElementName.bundleName = cJSON_GetArrayItem(bundleName, 0)->valuestring;
     }
-    if (cJSON_IsString(cJSON_GetArrayItem(abilityName, 0))) {
+    if (cJSON_IsString(cJSON_GetArrayItem(abilityName, 0)) &&
+        (cJSON_GetArrayItem(abilityName, 0)->valuestring != nullptr)) {
         adServiceElementName.extensionName = cJSON_GetArrayItem(abilityName, 0)->valuestring;
     }
-    if (cJSON_IsString(cJSON_GetArrayItem(apiServiceName, 0))) {
+    if (cJSON_IsString(cJSON_GetArrayItem(apiServiceName, 0)) &&
+        (cJSON_GetArrayItem(apiServiceName, 0)->valuestring != nullptr)) {
         adServiceElementName.apiServiceName = cJSON_GetArrayItem(apiServiceName, 0)->valuestring;
     }
     return !adServiceElementName.bundleName.empty() &&
