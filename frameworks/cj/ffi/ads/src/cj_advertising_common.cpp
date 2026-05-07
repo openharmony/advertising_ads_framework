@@ -16,6 +16,7 @@
 #include "cj_advertising_common.h"
 
 #include <cstring>
+#include <memory>
 
 #include "securec.h"
 
@@ -34,11 +35,13 @@ char* MallocCString(const std::string& origin)
         return nullptr;
     }
     auto len = origin.length() + 1;
-    char* res = static_cast<char*>(malloc(sizeof(char) * len));
-    if (res == nullptr) {
+    char* raw = static_cast<char*>(malloc(sizeof(char) * len));
+    if (raw == nullptr) {
         return nullptr;
     }
-    return std::char_traits<char>::copy(res, origin.c_str(), len);
+    std::unique_ptr<char[]> res(raw);
+    std::char_traits<char>::copy(res.get(), origin.c_str(), len);
+    return res.release();
 }
 
 void Adparameters2CJSONObject(CParameterArr parameters, cJSON* root)
@@ -260,7 +263,7 @@ bool JsonStr2CAdvertisement(cJSON* cAdvertisementJson, CAdvertisement* res)
         !cJSON_IsBool(clicked) || !cJSON_IsArray(rewardConfig)) {
         return false;
     }
-    res->adType = adType->valueint;
+    res->adType = static_cast<uint32_t>(adType->valueint);
     size_t len = strlen(uniqueId->valuestring);
     if (len == 0) {
         return false;
@@ -419,7 +422,7 @@ static bool InitHashStrArrHeaders(CAdvertisementHashStrArr* res, int64_t size)
         res->size = 0;
         return false;
     }
-    size_t allocSize = sizeof(CAdvertisementHashStrArrPair) * size;
+    size_t allocSize = sizeof(CAdvertisementHashStrArrPair) * static_cast<size_t>(size);
     res->headers = static_cast<CAdvertisementHashStrArrPair*>(malloc(allocSize));
     if (res->headers == nullptr) {
         res->size = 0;
