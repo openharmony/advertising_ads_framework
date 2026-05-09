@@ -209,20 +209,18 @@ bool JsAdsServiceExtension::GetSrcPathAndModuleName(std::string& srcPath, std::s
 sptr<IRemoteObject> JsAdsServiceExtension::OnConnect(const AAFwk::Want &want)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "JsAdsServiceExtension::OnConnect start");
-    // 用于跨napi context传递napi值
-    napi_escapable_handle_scope scope;
-    napi_open_escapable_handle_scope(env_, &scope);
+    // 创建 HandleScope 管理
+    napi_handle_scope scope;
+    napi_open_handle_scope(env_, &scope);
+
     napi_value result = CallOnConnect(want);
-    // 将 result 逃逸出当前 scope，使其在父 scope 中可用
-    napi_value escapedResult = nullptr;
-    napi_escape_handle(env_, scope, result, &escapedResult);
-    auto remoteObj = NAPI_ohos_rpc_getNativeRemoteObject(env_, escapedResult);
+    auto remoteObj = NAPI_ohos_rpc_getNativeRemoteObject(env_, result);
     if (remoteObj == nullptr) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "remoteObj null.");
     }
 
     // 关闭 scope
-    napi_close_escapable_handle_scope(env_, scope);
+    napi_close_handle_scope(env_, scope);
     ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "JsAdsServiceExtension::OnConnect end");
     return remoteObj;
 }
