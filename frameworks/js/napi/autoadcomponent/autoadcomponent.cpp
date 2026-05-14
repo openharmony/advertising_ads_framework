@@ -49,7 +49,7 @@ static napi_module autoAdComponentModule = {
     .nm_flags = 0,
     .nm_filename = nullptr,
     .nm_modname = "advertising.AutoAdComponent",
-    .nm_priv = ((void*)0),
+    .nm_priv = nullptr,
     .reserved = { 0 },
 };
 /*
