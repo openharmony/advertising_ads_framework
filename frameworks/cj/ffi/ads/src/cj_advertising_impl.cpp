@@ -45,7 +45,6 @@ void GetAdConfigItem(const char *path, CloudServiceProvider &cloudServiceProvide
     if (root == nullptr) {
         ADS_HILOGE(Cloud::ADS_MODULE_CJ_FFI, "Parse fileContent failed.");
         inFile.close();
-        cJSON_Delete(root);
         return;
     }
     cJSON *cloudServiceBundleName = cJSON_GetObjectItem(root, "providerBundleName");
