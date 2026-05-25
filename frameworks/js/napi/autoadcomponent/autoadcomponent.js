@@ -14,19 +14,42 @@
  */
 
 let advertising = globalThis.requireNapi('advertising');
-
 let fs = globalThis.requireNapi('file.fs');
-
 let hilog = globalThis.requireNapi('hilog');
-
 let configPolicy = globalThis.requireNapi('configPolicy');
-
+let rpc = globalThis.requireNapi('rpc');
+let LightWeightMap = globalThis.requireNapi('util.LightWeightMap');
 const MAX_REFRESH_TIME = 12e4;
-
 const MIN_REFRESH_TIME = 3e4;
-
 const HILOG_DOMAIN_CODE = 65280;
+const SET_DEATH_CALLBACK = 7;
+const REGISTERE = 1;
+const UNREGISTERE = 0;
 const READ_FILE_BUFFER_SIZE = 4096;
+
+const AutoAdConnectionManager = {
+  connection: -1,
+  remoteObj: null,
+  connectCount: 0,
+  reset() {
+    this.connection = -1;
+    this.remoteObj = null;
+    this.connectCount = 0;
+  }
+};
+
+class AutoAdFailCallbackStub extends rpc.RemoteObject {
+  static DESCRIPTOR = 'AutoAdFailCallbackDescriptor';
+  constructor(component) {
+    super(AutoAdFailCallbackStub.DESCRIPTOR);
+    this.component = component;
+  }
+
+  async onRemoteMessageRequest(code, data, reply, options) {
+    await this.component.handleUIFail();
+    return true;
+  }
+}
 
 class AutoAdComponent extends ViewPU {
   constructor(t, o, i, e = -1) {
@@ -48,7 +71,11 @@ class AutoAdComponent extends ViewPU {
     this.isTaskRunning = !1;
     this.isVisibleBeforeRemoteReady = false;
     this.currentRatioBeforeRemoteReady = 0;
+    this.failCallbackStub = null;
+    this.isRegisterFailCallback = false;
     this.setInitiallyProvidedValue(o);
+    this.map = new LightWeightMap();
+    this.uniqueId = '';
   }
   
   setInitiallyProvidedValue(t) {
@@ -99,6 +126,7 @@ class AutoAdComponent extends ViewPU {
       if (s > -1) {
         const t = e.substring(0, s);
         const o = e.substring(s + 1);
+        this.map.set(t, o);
         i[t] = o;
       }
     }
@@ -169,6 +197,7 @@ class AutoAdComponent extends ViewPU {
         hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `adArray is : ${JSON.stringify(t)}`);
         if (t[0]) {
           ad.uniqueId = t[0].uniqueId;
+          this.uniqueId = t[0].uniqueId;
           ad.adType = t[0].adType;
           ad.rewardVerifyConfig = t[0].rewardVerifyConfig;
         }
@@ -184,6 +213,7 @@ class AutoAdComponent extends ViewPU {
             ads: t
           });
         }
+        this.connectServiceExtAbility();
       }
     };
     this.loader.loadAd(this.adParam, this.adOptions, t);
@@ -214,6 +244,144 @@ class AutoAdComponent extends ViewPU {
       hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `start next task timeoutId:${this.timeoutId}.`);
     }
   }
+
+  async setFailCallback() {
+    if (!this.isRegisterFailCallback) {
+      await this.registerFailCallback();
+    } else {
+      await this.unregisterFailCallback();
+    }
+  }
+
+  async connectServiceExtAbility() {
+    hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent connectServiceExtAbility:${AutoAdConnectionManager.connection}, 
+      ${AutoAdConnectionManager.connectCount}`);
+    if (AutoAdConnectionManager.connection !== -1 || AutoAdConnectionManager.connectCount > 0) {
+      AutoAdConnectionManager.connectCount++;
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'already connected, skip duplicate connect');
+      this.setFailCallback();
+      return;
+    }
+    let a1 = {
+      bundleName: this.map.get('providerBundleName'),
+      abilityName: this.map.get('providerApiAbilityName'),
+    };
+    AutoAdConnectionManager.connection = this.context?.connectServiceExtensionAbility(a1, {
+      onConnect: (b1, c1) => {
+        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent onConnect success.`);
+        if (c1 === null) {
+          hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent onConnect remote is null.`);
+          return;
+        }
+        AutoAdConnectionManager.remoteObj = c1;
+        AutoAdConnectionManager.connectCount = 1;
+        this.setFailCallback();
+        hilog.debug(HILOG_DOMAIN_CODE, 'AutoAdComponent', `connectCount after increment: ${AutoAdConnectionManager.connectCount}`);
+      },
+      onDisconnect: () => {
+        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent onDisconnect`);
+        AutoAdConnectionManager.connection = -1;
+      },
+      onFailed: () => {
+        hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent onFailed`);
+        AutoAdConnectionManager.connection = -1;
+      }
+    });
+    hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent connectServiceExtAbility result: ${AutoAdConnectionManager.connection}`);
+  }
+
+  disconnectServiceExtAbility() {
+    hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent disconnectServiceExtAbility`);
+    if (AutoAdConnectionManager.connection === -1) {
+      AutoAdConnectionManager.reset();
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'already disconnect');
+      return;
+    }
+
+    AutoAdConnectionManager.connectCount = Math.max(0, AutoAdConnectionManager.connectCount - 1);
+    hilog.debug(HILOG_DOMAIN_CODE, 'AutoAdComponent', `connectCount after decrement: ${AutoAdConnectionManager.connectCount}`);
+
+    this.context?.disconnectServiceExtensionAbility(AutoAdConnectionManager.connection).then(() => {
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent disconnectServiceExtAbility success.`);
+    }).catch((f1) => {
+      hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent',
+        `AutoAdComponent disconnectAbility failed. code: ${f1.code}, message : ${f1.message}`);
+    }).finally(() => {
+      if (AutoAdConnectionManager.connectCount <= 0) {
+        AutoAdConnectionManager.reset();
+        hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'connectCount=0, reset connection manager');
+      }
+      AutoAdConnectionManager.connection === -1;
+      this.isRegisterFailCallback = false;
+      this.failCallbackStub = null;
+    });
+  }
+  async handleUIFail() {
+    hilog.debug(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent handleUIFail.`);
+    let t;
+    (t = this.interactionListener) === null || t === void 0 ? void 0 :
+      t.onStatusChanged('onAdClose', this.ads, 'adUiProcessDied');
+    await this.unregisterFailCallback();
+    this.disconnectServiceExtAbility();
+  }
+
+  async registerFailCallback() {
+    if (!AutoAdConnectionManager.remoteObj || this.isRegisterFailCallback) {
+      hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent registerFailCallback remoteObj is null.`);
+      return;
+    }
+    hilog.debug(HILOG_DOMAIN_CODE, 'AutoAdComponent', `registerFailCallback start: ${AutoAdConnectionManager.connection}`);
+    if (!this.failCallbackStub) {
+      this.failCallbackStub = new AutoAdFailCallbackStub(this);
+    }
+    let data = rpc.MessageSequence.create();
+    data.writeInterfaceToken(AutoAdConnectionManager.remoteObj?.getDescriptor());
+    data.writeInt(REGISTERE);
+    data.writeString(this.uniqueId);
+    data.writeRemoteObject(this.failCallbackStub);
+    let reply = rpc.MessageSequence.create();
+    let option = new rpc.MessageOption();
+    try {
+      const result = await AutoAdConnectionManager.remoteObj?.sendMessageRequest(SET_DEATH_CALLBACK, data, reply, option);
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent registerFailCallback result: ${JSON.stringify(result)}`);
+      this.isRegisterFailCallback = true;
+    } catch (e) {
+      hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent',
+        `AutoAdComponent registerFailCallback error. code: ${e.code}, message: ${e.message}`);
+    } finally {
+      if (reply) {
+        reply.reclaim();
+      }
+    }
+  }
+
+  async unregisterFailCallback() {
+    hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `unregisterFailCallback this.isRegisterFailCallback: ${this.isRegisterFailCallback}`);
+    if (!AutoAdConnectionManager.remoteObj || !this.isRegisterFailCallback) {
+      hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent unregisterFailCallback remoteObj is null.`);
+      return;
+    }
+    let data = rpc.MessageSequence.create();
+    data.writeInterfaceToken(AutoAdConnectionManager.remoteObj?.getDescriptor());
+    data.writeInt(UNREGISTERE);
+    data.writeString(this.uniqueId);
+    data.writeRemoteObject(this.failCallbackStub);
+    let reply = rpc.MessageSequence.create();
+    let option = new rpc.MessageOption();
+    try {
+      const result = await AutoAdConnectionManager.remoteObj?.sendMessageRequest(SET_DEATH_CALLBACK, data, reply, option);
+      hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', `AutoAdComponent unregisterFailCallback result: ${JSON.stringify(result)}`);
+    } catch (e) {
+      hilog.error(HILOG_DOMAIN_CODE, 'AutoAdComponent',
+        `AutoAdComponent unregisterFailCallback error. code: ${e.code}, message: ${e.message}`);
+    } finally {
+      if (reply) {
+        reply.reclaim();
+      }
+      this.isRegisterFailCallback = false;
+      this.failCallbackStub = null;
+    }
+  }
   
   aboutToAppear() {
     hilog.info(HILOG_DOMAIN_CODE, 'AutoAdComponent', 'aboutToAppear.');
@@ -231,6 +399,8 @@ class AutoAdComponent extends ViewPU {
       clearTimeout(this.timeoutId);
       this.isTaskRunning = !1;
     }
+    this.setFailCallback();
+    this.disconnectServiceExtAbility();
   }
   
   createUIExtensionComponent(t, o) {
