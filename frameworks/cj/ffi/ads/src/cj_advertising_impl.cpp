@@ -174,7 +174,6 @@ int32_t CJAdvertisingImpl::loadAd(CAdRequestParams adParam, CAdOptions adOptions
 {
     cJSON* requestRoot = cJSON_CreateObject();
     if (requestRoot == nullptr) {
-        cJSON_Delete(requestRoot);
         return -1;
     }
     if (!ConvertCAdRequestParams2CJSON(adParam, requestRoot)) {
@@ -186,7 +185,6 @@ int32_t CJAdvertisingImpl::loadAd(CAdRequestParams adParam, CAdOptions adOptions
 
     cJSON* optionRoot = cJSON_CreateObject();
     if (optionRoot == nullptr) {
-        cJSON_Delete(optionRoot);
         return -1;
     }
     if (!ConvertCAdOptions2CJSON(adOptions, optionRoot)) {
@@ -214,7 +212,6 @@ int32_t CJAdvertisingImpl::loadAdWithMultiSlots(CAdRequestParamsArr adParam,
 {
     cJSON* requestArrRoot = cJSON_CreateObject();
     if (requestArrRoot == nullptr) {
-        cJSON_Delete(requestArrRoot);
         return -1;
     }
     if (!ConvertCAdRequestParamsArr2CJSON(adParam, requestArrRoot)) {
@@ -226,7 +223,6 @@ int32_t CJAdvertisingImpl::loadAdWithMultiSlots(CAdRequestParamsArr adParam,
 
     cJSON* optionRoot = cJSON_CreateObject();
     if (optionRoot == nullptr) {
-        cJSON_Delete(optionRoot);
         return -1;
     }
     if (!ConvertCAdOptions2CJSON(adOptions, optionRoot)) {
@@ -254,7 +250,6 @@ std::string CJAdvertisingImpl::getAdRequestBody(CAdRequestParamsArr adParams, CA
     cJSON* requestArrRoot = cJSON_CreateObject();
     if (requestArrRoot == nullptr) {
         *errorCode = ERR_CJ_PARAMETER_ERROR;
-        cJSON_Delete(requestArrRoot);
         return resultInfo;
     }
     if (ConvertCAdRequestParamsArr2CJSON(adParams, requestArrRoot) == false) {
@@ -268,7 +263,6 @@ std::string CJAdvertisingImpl::getAdRequestBody(CAdRequestParamsArr adParams, CA
     cJSON* optionRoot = cJSON_CreateObject();
     if (optionRoot == nullptr) {
         *errorCode = ERR_CJ_PARAMETER_ERROR;
-        cJSON_Delete(optionRoot);
         return resultInfo;
     }
     if (ConvertCAdOptions2CJSON(adOptions, optionRoot) == false) {
