@@ -164,18 +164,18 @@ napi_value GetLongStringProperty(const napi_env &env, napi_value &value, const s
         NAPI_CALL(env, napi_typeof(env, result, &valuetype));
         if (valuetype != napi_string) {
             ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Wrong argument type. String expected.");
-            (void)memset_s(str, CUSTOM_DATA_MAX_SIZE, 0, CUSTOM_DATA_MAX_SIZE);
+            (void)memset_s(str, sizeof(str), 0, sizeof(str));
             return nullptr;
         }
         NAPI_CALL(env, napi_get_value_string_utf8(env, result, str, CUSTOM_DATA_MAX_SIZE, &strLen));
         if (strLen > CUSTOM_DATA_MAX_SIZE) {
             ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "data over size");
-            (void)memset_s(str, CUSTOM_DATA_MAX_SIZE, 0, CUSTOM_DATA_MAX_SIZE);
+            (void)memset_s(str, sizeof(str), 0, sizeof(str));
             return nullptr;
         }
         stringValue = str;
     }
-    (void)memset_s(str, CUSTOM_DATA_MAX_SIZE, 0, CUSTOM_DATA_MAX_SIZE);
+    (void)memset_s(str, sizeof(str), 0, sizeof(str));
     return NapiGetNull(env);
 }
 
@@ -731,7 +731,8 @@ bool GetAdsArray(napi_env env, napi_value argv, cJSON *root)
     return true;
 }
 
-napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info, MultiSlotsRequestContext *context)
+napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info,
+    MultiSlotsRequestContext *context)
 {
     size_t argc = AD_LOADER_PARA;
     napi_value argv[AD_LOADER_PARA] = { nullptr };
