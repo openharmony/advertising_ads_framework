@@ -78,7 +78,7 @@ std::string GetStringFromValueUtf8(napi_env env, napi_value value)
     if (length > 0) {
         result.append(str, length);
     }
-    (void)memset_s(str, MAX_STRING_LENGTH, 0, MAX_STRING_LENGTH);
+    (void)memset_s(str, sizeof(str), 0, sizeof(str));
     return result;
 }
 
@@ -731,8 +731,8 @@ bool GetAdsArray(napi_env env, napi_value argv, cJSON *root)
     return true;
 }
 
-napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info,
-    MultiSlotsRequestContext *context)
+napi_value ParseContextForMultiSlots(napi_env env,
+    napi_callback_info info, MultiSlotsRequestContext *context)
 {
     size_t argc = AD_LOADER_PARA;
     napi_value argv[AD_LOADER_PARA] = { nullptr };
