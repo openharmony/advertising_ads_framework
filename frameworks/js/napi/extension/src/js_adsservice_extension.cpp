@@ -193,7 +193,10 @@ bool JsAdsServiceExtension::GetSrcPathAndModuleName(std::string& srcPath, std::s
     } else if (!Extension::abilityInfo_->srcEntrance.empty()) {
         srcPath.append(Extension::abilityInfo_->moduleName + "/");
         srcPath.append(Extension::abilityInfo_->srcEntrance);
-        srcPath.erase(srcPath.rfind('.'));
+        size_t pos = srcPath.rfind('.');
+        if (pos != std::string::npos) {
+            srcPath.erase(pos);
+        }
         srcPath.append(".abc");
     } else {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Failed to get srcPath");
@@ -201,7 +204,7 @@ bool JsAdsServiceExtension::GetSrcPathAndModuleName(std::string& srcPath, std::s
     }
     moduleName = Extension::abilityInfo_->moduleName;
     moduleName.append("::").append(abilityInfo_->name);
-    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "moduleName:%{public}s, srcPath:%{public}s.",
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "moduleName:%{public}s, srcPath:%{private}s.",
         moduleName.c_str(), srcPath.c_str());
     return true;
 }
