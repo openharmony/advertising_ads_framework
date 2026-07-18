@@ -731,22 +731,39 @@ bool GetAdsArray(napi_env env, napi_value argv, cJSON *root)
     return true;
 }
 
-napi_value ParseContextForMultiSlots(napi_env env,
-    napi_callback_info info, MultiSlotsRequestContext *context)
+napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info, MultiSlotsRequestContext *context)
 {
     size_t argc = AD_LOADER_PARA;
     napi_value argv[AD_LOADER_PARA] = { nullptr };
     napi_value thisVar = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (!ParseMultiSlotsRequest(env, argv, context)) {
+        return NapiGetNull(env);
+    }
+    if (!ParseMultiSlotsOption(env, argv, context)) {
+        return NapiGetNull(env);
+    }
+    AdJSCallback callback;
+    ParseJSCallback(env, argv[2], callback);
+    context->mulitAdLoadCallback = new (std::nothrow) AdLoadListenerCallback(env, callback);
+    if (context->mulitAdLoadCallback == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "create AdLoadListenerCallback failed");
+        return NapiGetNull(env);
+    }
+    return NapiGetNull(env);
+}
+
+bool ParseMultiSlotsRequest(napi_env env, napi_value argv[], MultiSlotsRequestContext *context)
+{
     cJSON *requestRoot = cJSON_CreateArray();
     if (requestRoot == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateArray failed for requestRoot");
-        return NapiGetNull(env);
+        return false;
     }
     if (!GetAdsArray(env, argv[0], requestRoot)) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "GetAdsArray failed");
         cJSON_Delete(requestRoot);
-        return NapiGetNull(env);
+        return false;
     }
     int arraySize = cJSON_GetArraySize(requestRoot);
     for (int i = 0; i < arraySize; i++) {
@@ -759,15 +776,20 @@ napi_value ParseContextForMultiSlots(napi_env env,
     ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{private}s", requestRootString.c_str());
     cJSON_Delete(requestRoot);
     context->mulitRequestString = requestRootString;
+    return true;
+}
+
+bool ParseMultiSlotsOption(napi_env env, napi_value argv[], MultiSlotsRequestContext *context)
+{
     cJSON *optionRoot = cJSON_CreateObject();
     if (optionRoot == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateObject failed for optionRoot");
-        return NapiGetNull(env);
+        return false;
     }
     if (ParseObjectFromJs(env, argv[1], optionRoot) == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "parse multi ad option failed");
         cJSON_Delete(optionRoot);
-        return NapiGetNull(env);
+        return false;
     }
     std::string optionRootString = DEFAULT_JSON_STR;
     if (optionRoot->child != nullptr) {
@@ -776,14 +798,7 @@ napi_value ParseContextForMultiSlots(napi_env env,
     cJSON_Delete(optionRoot);
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "optionRootString is: %{private}s", optionRootString.c_str());
     context->mulitOptionString = optionRootString;
-    AdJSCallback callback;
-    ParseJSCallback(env, argv[2], callback);
-    context->mulitAdLoadCallback = new (std::nothrow) AdLoadListenerCallback(env, callback);
-    if (context->mulitAdLoadCallback == nullptr) {
-        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "create AdLoadListenerCallback failed");
-        return NapiGetNull(env);
-    }
-    return NapiGetNull(env);
+    return true;
 }
 
 napi_value Advertising::LoadAdWithMultiSlots(napi_env env, napi_callback_info info)
