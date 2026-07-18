@@ -76,8 +76,9 @@ std::string GetStringFromValueUtf8(napi_env env, napi_value value)
     size_t length = 0;
     NAPI_CALL_BASE(env, napi_get_value_string_utf8(env, value, str, MAX_STRING_LENGTH, &length), result);
     if (length > 0) {
-        return result.append(str, length);
+        result.append(str, length);
     }
+    (void)memset_s(str, MAX_STRING_LENGTH, 0, MAX_STRING_LENGTH);
     return result;
 }
 
@@ -163,15 +164,18 @@ napi_value GetLongStringProperty(const napi_env &env, napi_value &value, const s
         NAPI_CALL(env, napi_typeof(env, result, &valuetype));
         if (valuetype != napi_string) {
             ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "Wrong argument type. String expected.");
+            (void)memset_s(str, CUSTOM_DATA_MAX_SIZE, 0, CUSTOM_DATA_MAX_SIZE);
             return nullptr;
         }
         NAPI_CALL(env, napi_get_value_string_utf8(env, result, str, CUSTOM_DATA_MAX_SIZE, &strLen));
         if (strLen > CUSTOM_DATA_MAX_SIZE) {
             ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "data over size");
+            (void)memset_s(str, CUSTOM_DATA_MAX_SIZE, 0, CUSTOM_DATA_MAX_SIZE);
             return nullptr;
         }
         stringValue = str;
     }
+    (void)memset_s(str, CUSTOM_DATA_MAX_SIZE, 0, CUSTOM_DATA_MAX_SIZE);
     return NapiGetNull(env);
 }
 
@@ -531,6 +535,10 @@ napi_value Advertising::ShowAd(napi_env env, napi_callback_info info)
         return NapiGetNull(env);
     }
     cJSON *adDisplayOptionsRoot = cJSON_CreateObject();
+    if (adDisplayOptionsRoot == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateObject failed for adDisplayOptionsRoot");
+        return NapiGetNull(env);
+    }
     if (ParseObjectFromJs(env, argv[1], adDisplayOptionsRoot) == nullptr) { // 2 params
         napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Invalid input parameter.");
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseDisplayOptionsByShowAd failed");
@@ -541,10 +549,15 @@ napi_value Advertising::ShowAd(napi_env env, napi_callback_info info)
     if (adDisplayOptionsRoot->child != nullptr) {
         displayOptionsString = AdJsonUtil::ToString(adDisplayOptionsRoot);
     }
-    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "enter show ad display is %{public}s", displayOptionsString.c_str());
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "enter show ad display is %{private}s", displayOptionsString.c_str());
     Want want;
     Advertisment advertisment;
     cJSON *adRoot = cJSON_CreateObject();
+    if (adRoot == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateObject failed for adRoot");
+        cJSON_Delete(adDisplayOptionsRoot);
+        return NapiGetNull(env);
+    }
     if (ParseAdvertismentByAd(env, argv[0], advertisment, adRoot) == nullptr) {
         napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Invalid input parameter.");
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseAdvertismentByAd failed");
@@ -610,6 +623,10 @@ napi_value ParseContextForLoadAd(napi_env env, napi_callback_info info, Advertis
     napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
     // argv[0]
     cJSON *requestRoot = cJSON_CreateObject();
+    if (requestRoot == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateObject failed for requestRoot");
+        return NapiGetNull(env);
+    }
     if (ParseObjectFromJs(env, argv[0], requestRoot) == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseAdRequestByLoadAd failed");
         cJSON_Delete(requestRoot);
@@ -620,11 +637,15 @@ napi_value ParseContextForLoadAd(napi_env env, napi_callback_info info, Advertis
     std::string requestRootString = AdJsonUtil::ToString(requestRoot);
     cJSON_ReplaceItemInObject(requestRoot, "oaid", cJSON_CreateString("********-****-****-************"));
     std::string requestParam = AdJsonUtil::ToString(requestRoot);
-    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{public}s", requestParam.c_str());
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{private}s", requestParam.c_str());
     cJSON_Delete(requestRoot);
     context->requestString = requestRootString;
     // argv[1]
     cJSON *optionRoot = cJSON_CreateObject();
+    if (optionRoot == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateObject failed for optionRoot");
+        return NapiGetNull(env);
+    }
     if (ParseObjectFromJs(env, argv[1], optionRoot) == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseAdOptionsByLoadAd failed");
         cJSON_Delete(optionRoot);
@@ -634,13 +655,17 @@ napi_value ParseContextForLoadAd(napi_env env, napi_callback_info info, Advertis
     if (optionRoot->child != nullptr) {
         optionRootString = AdJsonUtil::ToString(optionRoot);
     }
-    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "optionRootString is: %{public}s", optionRootString.c_str());
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "optionRootString is: %{private}s", optionRootString.c_str());
     cJSON_Delete(optionRoot);
     context->optionString = optionRootString;
     // argv[2]
     AdJSCallback callback;
     ParseJSCallback(env, argv[2], callback);
     context->adLoadCallback = new (std::nothrow) AdLoadListenerCallback(env, callback); // 2 params
+    if (context->adLoadCallback == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "create AdLoadListenerCallback failed");
+        return NapiGetNull(env);
+    }
     return NapiGetNull(env);
 }
 
@@ -714,6 +739,10 @@ napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info, Mult
     napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
     // argv[0]
     cJSON *requestRoot = cJSON_CreateArray();
+    if (requestRoot == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateArray failed for requestRoot");
+        return NapiGetNull(env);
+    }
     if (!GetAdsArray(env, argv[0], requestRoot)) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "GetAdsArray failed");
         cJSON_Delete(requestRoot);
@@ -727,11 +756,15 @@ napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info, Mult
         }
     }
     std::string requestRootString = AdJsonUtil::ToString(requestRoot);
-    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{public}s", requestRootString.c_str());
+    ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{private}s", requestRootString.c_str());
     cJSON_Delete(requestRoot);
     context->mulitRequestString = requestRootString;
     // argv[1]
     cJSON *optionRoot = cJSON_CreateObject();
+    if (optionRoot == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateObject failed for optionRoot");
+        return NapiGetNull(env);
+    }
     if (ParseObjectFromJs(env, argv[1], optionRoot) == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "parse multi ad option failed");
         cJSON_Delete(optionRoot);
@@ -742,12 +775,16 @@ napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info, Mult
         optionRootString = AdJsonUtil::ToString(optionRoot);
     }
     cJSON_Delete(optionRoot);
-    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "optionRootString is: %{public}s", optionRootString.c_str());
+    ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "optionRootString is: %{private}s", optionRootString.c_str());
     context->mulitOptionString = optionRootString;
     //  argv[2]
     AdJSCallback callback;
     ParseJSCallback(env, argv[2], callback);
     context->mulitAdLoadCallback = new (std::nothrow) AdLoadListenerCallback(env, callback);
+    if (context->mulitAdLoadCallback == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "create AdLoadListenerCallback failed");
+        return NapiGetNull(env);
+    }
     return NapiGetNull(env);
 }
 
@@ -790,6 +827,11 @@ napi_value ParseAdRequestBodyParms(napi_env env, napi_callback_info info, GetAdR
     napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
     // AdRequestParams[]
     cJSON *parms = cJSON_CreateArray();
+    if (parms == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateArray failed for parms");
+        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Invalid input parameter.");
+        return NapiGetNull(env);
+    }
     if (!GetAdsArray(env, argv[0], parms)) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "parse get request body parms failed");
         cJSON_Delete(parms);
@@ -801,6 +843,11 @@ napi_value ParseAdRequestBodyParms(napi_env env, napi_callback_info info, GetAdR
     context->parms = parmsString;
     // AdOptions
     cJSON *optionsObject = cJSON_CreateObject();
+    if (optionsObject == nullptr) {
+        ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateObject failed for optionsObject");
+        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Invalid input parameter.");
+        return NapiGetNull(env);
+    }
     if (ParseObjectFromJs(env, argv[1], optionsObject) == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "parse get request body options failed");
         cJSON_Delete(optionsObject);

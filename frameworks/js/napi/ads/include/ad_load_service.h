@@ -82,6 +82,7 @@ private:
     sptr<Cloud::AdLoadSendRequestProxy> proxy_{ nullptr };
     sptr<Cloud::AdRequestBodySendProxy> bodyProxy_{ nullptr };
     AdServiceElementName currAdServiceElementName_;
+    static std::once_flag initFlag_;
 };
 } // namespace AdsNapi
 } // namespace CloudNapi

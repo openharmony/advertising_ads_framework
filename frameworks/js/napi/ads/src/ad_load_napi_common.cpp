@@ -247,6 +247,7 @@ void UvQueueWorkOnAdRequestBody(uv_work_t *work, int status)
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "open scope failed");
         delete data;
         work->data = nullptr;
+        delete work;
         return;
     }
     napi_value result = nullptr;

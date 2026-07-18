@@ -28,9 +28,14 @@ const std::u16string API_SERVICE_INTERFACE_TOKEN = u"com.ohos.AdsApiService";
 inline std::u16string Str8ToStr16(const std::string &str)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_SERVICE, "Str8ToStr16");
-    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
-    std::u16string result = convert.from_bytes(str);
-    return result;
+    try {
+        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+        std::u16string result = convert.from_bytes(str);
+        return result;
+    } catch (const std::range_error &e) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "Str8ToStr16 range_error: %{public}s", e.what());
+        return u"";
+    }
 }
 
 ErrCode AdLoadSendRequestProxy::SendAdLoadRequest(const sptr<AdRequestData> &requestData,
@@ -69,6 +74,10 @@ ErrCode AdLoadSendRequestProxy::SendAdLoadIpcRequest(int32_t code, MessageParcel
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "remote is nullptr");
+        return ERR_AD_COMMON_AD_SA_REMOTE_OBJECT_ERROR;
+    }
     ErrCode result = remote->SendRequest(static_cast<uint32_t>(code), data, reply, option);
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_SERVICE, "AdLoadSendRequestProxy SendRequest result = %{public}d", result);
     if (result != ERR_OK) {
@@ -105,6 +114,10 @@ void AdRequestBodySendProxy::SendAdBodyRequest(const sptr<AdRequestData> &data, 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "remote is nullptr");
+        return;
+    }
     ErrCode result = remote->SendRequest(static_cast<uint32_t>(IAdRequestBody::Message::REQUEST_BODY_CODE), dataParcel,
         reply, option);
     ADS_HILOGD(OHOS::Cloud::ADS_MODULE_SERVICE, "AdRequestBodySendProxy SendRequest result = %{public}d", result);
