@@ -51,6 +51,8 @@ ohos_source_set("advertising_common") {
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "node:node_header_notice",
+    "libuv:uv"
   ]
   part_name = "advertising"
   subsystem_name = "advertising"

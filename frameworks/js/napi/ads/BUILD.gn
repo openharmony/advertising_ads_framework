@@ -105,6 +105,8 @@ ohos_shared_library("advertising") {
     "napi:ace_napi",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "node:node_header_notice",
+    "libuv:uv"
   ]
 
   relative_install_dir = "module"

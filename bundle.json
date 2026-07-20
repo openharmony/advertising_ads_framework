@@ -36,7 +36,8 @@
         "napi",
         "safwk",
         "samgr",
-        "libuv"
+        "libuv",
+        "node"
       ],
       "third_party": [
 
