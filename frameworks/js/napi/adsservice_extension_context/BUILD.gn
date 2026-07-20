@@ -44,7 +44,11 @@ ohos_shared_library("adsserviceextensioncontext_napi") {
     ":adsservice_extension_context_js",
   ]
 
-  external_deps = [ "napi:ace_napi" ]
+  external_deps = [
+    "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv"
+  ]
 
   sanitize = {
     cfi = true
