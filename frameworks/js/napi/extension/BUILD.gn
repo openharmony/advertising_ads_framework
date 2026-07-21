@@ -72,6 +72,8 @@ ohos_shared_library("libadsservice_extension") {
     "ipc:ipc_napi",
     "ipc:ipc_single",
     "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv"
   ]
 
   subsystem_name = "advertising"
@@ -120,6 +122,8 @@ ohos_shared_library("adsservice_extension_module") {
     "hilog:libhilog",
     "ipc:ipc_core",
     "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv"
   ]
 
   relative_install_dir = "extensionability/"
