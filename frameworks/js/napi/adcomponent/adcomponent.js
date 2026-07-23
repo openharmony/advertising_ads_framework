@@ -614,7 +614,7 @@ class AdComponent extends ViewPU {
         AdConnectionManager.reset();
         hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'connectCount=0, reset connection manager');
       }
-      AdConnectionManager.connection === -1
+      AdConnectionManager.connection === -1;
       this.uiExtProxy = null;
       this.isRegisterFailCallback = false;
       this.failCallbackStub = null;
