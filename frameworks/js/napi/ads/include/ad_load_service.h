@@ -59,6 +59,7 @@ private:
     static std::mutex configLock_;
     static sptr<AdLoadService> instance_;
     AdServiceElementName adServiceElementName_;
+    static std::once_flag initFlag_;
 };
 
 class AdRequestConnection : public AAFwk::AbilityConnectionStub {
@@ -82,7 +83,6 @@ private:
     sptr<Cloud::AdLoadSendRequestProxy> proxy_{ nullptr };
     sptr<Cloud::AdRequestBodySendProxy> bodyProxy_{ nullptr };
     AdServiceElementName currAdServiceElementName_;
-    static std::once_flag initFlag_;
 };
 } // namespace AdsNapi
 } // namespace CloudNapi
