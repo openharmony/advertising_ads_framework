@@ -26,14 +26,9 @@ AdRequestBodyStub::~AdRequestBodyStub() {}
 
 std::string Str16ToStr8(const std::u16string &str)
 {
-    try {
-        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
-        std::string result = convert.to_bytes(str);
-        return result;
-    } catch (const std::range_error &e) {
-        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_COMMON, "Str16ToStr8 range_error: %{public}s", e.what());
-        return "";
-    }
+    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+    std::string result = convert.to_bytes(str);
+    return result;
 }
 
 int32_t AdRequestBodyStub::OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply,
