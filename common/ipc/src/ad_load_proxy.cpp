@@ -28,14 +28,9 @@ const std::u16string API_SERVICE_INTERFACE_TOKEN = u"com.ohos.AdsApiService";
 inline std::u16string Str8ToStr16(const std::string &str)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_SERVICE, "Str8ToStr16");
-    try {
-        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
-        std::u16string result = convert.from_bytes(str);
-        return result;
-    } catch (const std::range_error &e) {
-        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_SERVICE, "Str8ToStr16 range_error: %{public}s", e.what());
-        return u"";
-    }
+    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+    std::u16string result = convert.from_bytes(str);
+    return result;
 }
 
 ErrCode AdLoadSendRequestProxy::SendAdLoadRequest(const sptr<AdRequestData> &requestData,
