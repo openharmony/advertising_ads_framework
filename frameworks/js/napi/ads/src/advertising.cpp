@@ -731,7 +731,7 @@ bool GetAdsArray(napi_env env, napi_value argv, cJSON *root)
     return true;
 }
 
-napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info, MultiSlotsRequestContext *context)
+napi_value Advertising::ParseContextForMultiSlots(napi_env env, napi_callback_info info, MultiSlotsRequestContext *context)
 {
     size_t argc = AD_LOADER_PARA;
     napi_value argv[AD_LOADER_PARA] = { nullptr };
@@ -753,7 +753,7 @@ napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info, Mult
     return NapiGetNull(env);
 }
 
-bool ParseMultiSlotsRequest(napi_env env, napi_value argv[], MultiSlotsRequestContext *context)
+bool Advertising::ParseMultiSlotsRequest(napi_env env, napi_value argv[], MultiSlotsRequestContext *context)
 {
     cJSON *requestRoot = cJSON_CreateArray();
     if (requestRoot == nullptr) {
@@ -779,7 +779,7 @@ bool ParseMultiSlotsRequest(napi_env env, napi_value argv[], MultiSlotsRequestCo
     return true;
 }
 
-bool ParseMultiSlotsOption(napi_env env, napi_value argv[], MultiSlotsRequestContext *context)
+bool Advertising::ParseMultiSlotsOption(napi_env env, napi_value argv[], MultiSlotsRequestContext *context)
 {
     cJSON *optionRoot = cJSON_CreateObject();
     if (optionRoot == nullptr) {
