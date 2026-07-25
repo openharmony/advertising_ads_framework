@@ -59,6 +59,7 @@ private:
     static std::mutex configLock_;
     static sptr<AdLoadService> instance_;
     AdServiceElementName adServiceElementName_;
+    static std::once_flag initFlag_;
 };
 
 class AdRequestConnection : public AAFwk::AbilityConnectionStub {

@@ -112,6 +112,13 @@ private:
 
     static napi_value LoadAdWithMultiSlots(napi_env env, napi_callback_info info);
 
+    static bool ParseMultiSlotsRequest(napi_env env, napi_value argv[], MultiSlotsRequestContext *context);
+
+    static bool ParseMultiSlotsOption(napi_env env, napi_value argv[], MultiSlotsRequestContext *context);
+     
+    static napi_value ParseContextForMultiSlots(napi_env env, napi_callback_info info,
+        MultiSlotsRequestContext *context);
+
     static napi_value JsConstructor(napi_env env, napi_callback_info cbinfo);
 
     static thread_local napi_ref adRef_;
