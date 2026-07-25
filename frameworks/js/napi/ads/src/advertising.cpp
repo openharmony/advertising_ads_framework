@@ -54,6 +54,11 @@ static const int32_t STR_MAX_SIZE = 256;
 static const int32_t PARAM_ERROR_CODE = 401;
 static const int32_t DEVICE_ERROR_CODE = 801;
 static const int32_t CUSTOM_DATA_MAX_SIZE = 1024 * 1024; // 1M
+enum MultiSlotsParamPos {
+    PARAM_REQ_DATA = 0,    // argv[0] 请求结构体参数
+    PARAM_OPTION = 1,      // argv[1] 配置参数
+    PARAM_CALLBACK = 2     // argv[2] JS回调方法
+};
 
 napi_value NapiGetNull(napi_env env)
 {
@@ -647,7 +652,7 @@ napi_value ParseContextForLoadAd(napi_env env, napi_callback_info info, Advertis
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateObject failed for optionRoot");
         return NapiGetNull(env);
     }
-    if (ParseObjectFromJs(env, argv[1], optionRoot) == nullptr) {
+    if (ParseObjectFromJs(env, argv[MultiSlotsParamPos::PARAM_OPTION], optionRoot) == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseAdOptionsByLoadAd failed");
         cJSON_Delete(optionRoot);
         return NapiGetNull(env);
@@ -661,7 +666,7 @@ napi_value ParseContextForLoadAd(napi_env env, napi_callback_info info, Advertis
     context->optionString = optionRootString;
     // argv[2]
     AdJSCallback callback;
-    ParseJSCallback(env, argv[MULTI_SLOTS_CALLBACK_IDX], callback);
+    ParseJSCallback(env, argv[MultiSlotsParamPos::PARAM_CALLBACK], callback);
     context->adLoadCallback = new (std::nothrow) AdLoadListenerCallback(env, callback); // 2 params
     if (context->adLoadCallback == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "create AdLoadListenerCallback failed");
