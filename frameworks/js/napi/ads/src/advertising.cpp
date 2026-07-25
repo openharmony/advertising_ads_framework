@@ -750,7 +750,7 @@ napi_value Advertising::ParseContextForMultiSlots(napi_env env, napi_callback_in
         return NapiGetNull(env);
     }
     AdJSCallback callback;
-    ParseJSCallback(env, argv[2], callback);
+    ParseJSCallback(env, argv[MultiSlotsParamPos::PARAM_CALLBACK], callback);
     context->mulitAdLoadCallback = new (std::nothrow) AdLoadListenerCallback(env, callback);
     if (context->mulitAdLoadCallback == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "create AdLoadListenerCallback failed");
