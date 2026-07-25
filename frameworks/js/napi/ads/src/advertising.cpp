@@ -637,6 +637,7 @@ napi_value ParseContextForLoadAd(napi_env env, napi_callback_info info, Advertis
     std::string requestRootString = AdJsonUtil::ToString(requestRoot);
     cJSON_ReplaceItemInObject(requestRoot, "oaid", cJSON_CreateString("********-****-****-************"));
     std::string requestParam = AdJsonUtil::ToString(requestRoot);
+    const size_t MULTI_SLOTS_CALLBACK_IDX = 2;
     ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{private}s", requestParam.c_str());
     cJSON_Delete(requestRoot);
     context->requestString = requestRootString;
@@ -660,7 +661,7 @@ napi_value ParseContextForLoadAd(napi_env env, napi_callback_info info, Advertis
     context->optionString = optionRootString;
     // argv[2]
     AdJSCallback callback;
-    ParseJSCallback(env, argv[2], callback);
+    ParseJSCallback(env, argv[MULTI_SLOTS_CALLBACK_IDX], callback);
     context->adLoadCallback = new (std::nothrow) AdLoadListenerCallback(env, callback); // 2 params
     if (context->adLoadCallback == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "create AdLoadListenerCallback failed");
