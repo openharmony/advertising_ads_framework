@@ -642,7 +642,6 @@ napi_value ParseContextForLoadAd(napi_env env, napi_callback_info info, Advertis
     std::string requestRootString = AdJsonUtil::ToString(requestRoot);
     cJSON_ReplaceItemInObject(requestRoot, "oaid", cJSON_CreateString("********-****-****-************"));
     std::string requestParam = AdJsonUtil::ToString(requestRoot);
-    const size_t MULTI_SLOTS_CALLBACK_IDX = 2;
     ADS_HILOGD(OHOS::Cloud::ADS_MODULE_JS_NAPI, "requestParam is: %{private}s", requestParam.c_str());
     cJSON_Delete(requestRoot);
     context->requestString = requestRootString;
