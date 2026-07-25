@@ -70,8 +70,8 @@ void AdRequestConnection::OnAbilityDisconnectDone(const AppExecFwk::ElementName 
     proxy_ = nullptr;
 }
 
-std::mutex AdLoadService::lock_;
 std::mutex AdLoadService::configLock_;
+std::once_flag AdLoadService::initFlag_;
 sptr<AdLoadService> AdLoadService::instance_;
 
 AdLoadService::AdLoadService()
@@ -83,13 +83,9 @@ AdLoadService::~AdLoadService() {};
 
 sptr<AdLoadService> AdLoadService::GetInstance()
 {
-    if (instance_ == nullptr) {
-        std::lock_guard<std::mutex> autoLock(lock_);
-        if (instance_ == nullptr) {
-            ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "create request ad instance");
-            instance_ = new AdLoadService;
-        }
-    }
+    std::call_once(initFlag_, []() {
+        instance_ = new AdLoadService;
+    });
     return instance_;
 }
 
@@ -124,6 +120,9 @@ ErrCode AdLoadService::LoadAd(const std::string &request, const std::string &opt
     }
     std::string collection = "{}";
     auto *data = new (std::nothrow) Cloud::AdRequestData(request, options, collection);
+    if (data == nullptr) {
+        return Cloud::ERR_AD_COMMON_AD_SA_REMOTE_OBJECT_ERROR;
+    }
     if (ConnectAdKit(data, callback, loadAdType)) {
         return ERR_OK;
     } else {
@@ -146,6 +145,9 @@ int32_t AdLoadService::RequestAdBody(const std::string &request, const std::stri
         return Cloud::INNER_ERR;
     }
     auto *data = new (std::nothrow) Cloud::AdRequestData(request, options, "");
+    if (data == nullptr) {
+        return Cloud::INNER_ERR;
+    }
     OHOS::AAFwk::Want connectionWant;
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "connect extension ability, apiServiceName is %{public}s,",
         adServiceElementName_.apiServiceName.c_str());
