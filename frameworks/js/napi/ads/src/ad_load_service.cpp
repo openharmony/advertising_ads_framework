@@ -200,17 +200,17 @@ void AdLoadService::GetConfigItem(const char *path, AdServiceElementName &adServ
     }
     if (cJSON_IsArray(cloudServiceBundleName) && cJSON_IsArray(cloudServiceAbilityName) &&
         cJSON_IsArray(apiServiceName)) {
-            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceBundleName, 0)) &&
-                (cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring != nullptr)) {
-                adServiceElementName.bundleName = cJSON_GetArrayItem(cloudServiceBundleName, 0)->valuestring;
+            cJSON *bundleItem = cJSON_GetArrayItem(cloudServiceBundleName, 0);
+            if (cJSON_IsString(bundleItem) && bundleItem->valuestring != nullptr) {
+                adServiceElementName.bundleName = bundleItem->valuestring;
             }
-            if (cJSON_IsString(cJSON_GetArrayItem(cloudServiceAbilityName, 0)) &&
-                (cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring != nullptr)) {
-                adServiceElementName.extensionName = cJSON_GetArrayItem(cloudServiceAbilityName, 0)->valuestring;
+            cJSON *abilityItem = cJSON_GetArrayItem(cloudServiceAbilityName, 0);
+            if (cJSON_IsString(abilityItem) && abilityItem->valuestring != nullptr) {
+                adServiceElementName.extensionName = abilityItem->valuestring;
             }
-            if (cJSON_IsString(cJSON_GetArrayItem(apiServiceName, 0)) &&
-                (cJSON_GetArrayItem(apiServiceName, 0)->valuestring != nullptr)) {
-                adServiceElementName.apiServiceName = cJSON_GetArrayItem(apiServiceName, 0)->valuestring;
+            cJSON *apiItem = cJSON_GetArrayItem(apiServiceName, 0);
+            if (cJSON_IsString(apiItem) && apiItem->valuestring != nullptr) {
+                adServiceElementName.apiServiceName = apiItem->valuestring;
             }
     }
     adServiceElementName.userId = Cloud::USER_ID;
