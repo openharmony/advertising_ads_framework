@@ -150,7 +150,8 @@ ErrCode AdLoadService::LoadAd(const std::string &request, const std::string &opt
 
 int32_t AdLoadService::RequestAdBody(const std::string &request,
                                      const std::string &options,
-                                     const sptr<Cloud::IAdRequestBody> &callback)
+                                     const sptr<Cloud::IAdRequestBody> &callback,
+                                     sptr<AdRequestConnection> &outConn)
 {
     ADS_HILOGW(OHOS::Cloud::ADS_MODULE_CJ_FFI, "enter RequestAdBody");
     if (IsConfigEmptyNoLock()) {
@@ -174,6 +175,7 @@ int32_t AdLoadService::RequestAdBody(const std::string &request,
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_CJ_FFI, "failed to connect ability");
         return Cloud::INNER_ERR;
     }
+    outConn = serviceConnection;
     return Cloud::ERR_SEND_OK;
 }
 
@@ -261,17 +263,24 @@ bool AdLoadService::ConnectAdKit(const sptr<Cloud::AdRequestData> &data, const s
 }
 
 void AdRequestConnection::OnAbilityConnectDone(const AppExecFwk::ElementName &element,
-                                               const sptr<IRemoteObject> &remoteObject,
-                                               int32_t resultCode)
+    const sptr<IRemoteObject> &remoteObject, int32_t resultCode)
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_CJ_FFI, "AdRequestConnection  OnAbilityConnectDone %{public}d.", resultCode);
     if (resultCode != ERR_OK) {
+        NotifyFailure(resultCode, "OnAbilityConnectDone resultCode != ERR_OK");
         return;
+    }
+    if (bodyCallback_ != nullptr || callback_ != nullptr) {
+        deathRecipient_ = new (std::nothrow) AdRequestDeathRecipient(bodyCallback_, callback_);
+        if (deathRecipient_ != nullptr) {
+            remoteObject->AddDeathRecipient(deathRecipient_);
+        }
     }
     if (element.GetAbilityName() == currAdServiceElementName_.extensionName) {
         proxy_ = (new (std::nothrow) Cloud::AdLoadSendRequestProxy(remoteObject));
         if (proxy_ == nullptr) {
             ADS_HILOGE(OHOS::Cloud::ADS_MODULE_CJ_FFI, "ad load get send request proxy failed.");
+            NotifyFailure(Cloud::INNER_ERR, "AdLoadSendRequestProxy alloc failed");
             return;
         }
         proxy_->SendAdLoadRequest(data_, callback_, loadAdType_);
@@ -279,11 +288,23 @@ void AdRequestConnection::OnAbilityConnectDone(const AppExecFwk::ElementName &el
         bodyProxy_ = (new (std::nothrow) Cloud::AdRequestBodySendProxy(remoteObject));
         if (bodyProxy_ == nullptr) {
             ADS_HILOGE(OHOS::Cloud::ADS_MODULE_CJ_FFI, "make ad request body proxy failed.");
+            NotifyFailure(Cloud::INNER_ERR, "AdRequestBodySendProxy alloc failed");
             return;
         }
         bodyProxy_->SendAdBodyRequest(data_, bodyCallback_);
     } else {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_CJ_FFI, "not match any service.");
+        NotifyFailure(Cloud::INNER_ERR, "service name mismatch");
+    }
+}
+
+void AdRequestConnection::NotifyFailure(int32_t code, const std::string &msg)
+{
+    if (callback_ != nullptr) {
+        callback_->OnAdLoadFailure(code, msg);
+    }
+    if (bodyCallback_ != nullptr) {
+        bodyCallback_->OnRequestBodyReturn(code, "", false);
     }
 }
 
@@ -291,9 +312,25 @@ void AdRequestConnection::OnAbilityDisconnectDone(const AppExecFwk::ElementName&
 {
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_CJ_FFI, "ad load on service disconnected.");
     proxy_ = nullptr;
+    bodyProxy_ = nullptr;
+    deathRecipient_ = nullptr;
 }
 
-AdRequestBodyAsync::AdRequestBodyAsync(std::function<void(std::string)> getBodyInfo) : getBodyInfo_(getBodyInfo) {}
+void AdRequestDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &remoteObject)
+{
+    ADS_HILOGW(OHOS::Cloud::ADS_MODULE_CJ_FFI, "ad service remote died");
+    if (bodyCallback_ != nullptr) {
+        bodyCallback_->OnRequestBodyReturn(Cloud::INNER_ERR, "", false);
+        bodyCallback_ = nullptr;
+    }
+    if (callback_ != nullptr) {
+        callback_->OnAdLoadFailure(Cloud::INNER_ERR, "ad service remote died");
+        callback_ = nullptr;
+    }
+}
+
+AdRequestBodyAsync::AdRequestBodyAsync(std::function<void(int32_t, std::string)> getBodyInfo)
+    : getBodyInfo_(getBodyInfo) {}
 
 AdRequestBodyAsync::~AdRequestBodyAsync() {}
 
@@ -301,7 +338,7 @@ void AdRequestBodyAsync::OnRequestBodyReturn(int32_t resultCode,
                                              const std::string& body,
                                              [[maybe_unused]] bool isResolved)
 {
-    getBodyInfo_(body);
+    getBodyInfo_(resultCode, body);
 }
 
 } // namespace Advertising
