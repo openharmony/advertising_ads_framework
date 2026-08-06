@@ -15,15 +15,21 @@
 
 #include "cj_advertising_impl.h"
 
+#include <atomic>
 #include <cstdint>
 #include <fstream>
+#include <future>
+#include <memory>
+#include <utility>
 
+#include "ability_manager_client.h"
 #include "cj_lambda.h"
 #include "config_policy_utils.h"
 
 #include "ad_common_util.h"
 #include "ad_constant.h"
 #include "ad_hilog_wreapper.h"
+#include "ad_inner_error_code.h"
 #include "ad_json_util.h"
 #include "cj_advertising_error.h"
 #include "cj_advertising_load_service.h"
@@ -244,6 +250,23 @@ int32_t CJAdvertisingImpl::loadAdWithMultiSlots(CAdRequestParamsArr adParam,
     return errCode;
 }
 
+static std::string WaitAdBodyResult(std::future<std::pair<int32_t, std::string>> &future,
+    sptr<AdRequestConnection> &connection)
+{
+    std::string resultInfo;
+    auto result = future.get();
+    if (result.first == Cloud::IPC_SUCCESS) {
+        resultInfo = std::move(result.second);
+    } else {
+        ADS_HILOGE(OHOS::Cloud::ADS_MODULE_CJ_FFI, "getAdRequestBody service err %{public}d, suppressed",
+            result.first);
+    }
+    if (connection != nullptr) {
+        AAFwk::AbilityManagerClient::GetInstance()->DisconnectAbility(connection);
+    }
+    return resultInfo;
+}
+
 std::string CJAdvertisingImpl::getAdRequestBody(CAdRequestParamsArr adParams, CAdOptions adOptions, int32_t* errorCode)
 {
     std::string resultInfo = "";
@@ -273,15 +296,29 @@ std::string CJAdvertisingImpl::getAdRequestBody(CAdRequestParamsArr adParams, CA
     std::string optionRootString = Cloud::AdJsonUtil::ToString(optionRoot);
     cJSON_Delete(optionRoot);
 
-    std::function<void(std::string)> lambda = [&resultInfo](std::string body) { resultInfo = body; };
+    auto promisePtr = std::make_shared<std::promise<std::pair<int32_t, std::string>>>();
+    auto future = promisePtr->get_future();
+    auto satisfied = std::make_shared<std::atomic<bool>>(false);
+    std::function<void(int32_t, std::string)> lambda =
+        [promisePtr, satisfied](int32_t code, std::string body) {
+            bool expected = false;
+            if (satisfied->compare_exchange_strong(expected, true)) {
+                promisePtr->set_value({code, std::move(body)});
+            }
+        };
     sptr<Cloud::IAdRequestBody> callback = new (std::nothrow) AdRequestBodyAsync(lambda);
     if (callback == nullptr) {
         *errorCode = ERR_CJ_PARAMETER_ERROR;
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_CJ_FFI, "create AdRequestBodyAsync callback failed");
         return resultInfo;
     }
-    *errorCode = AdLoadService::GetInstance()->RequestAdBody(requestArrRootString, optionRootString, callback);
-    return resultInfo;
+    sptr<AdRequestConnection> connection;
+    *errorCode =
+        AdLoadService::GetInstance()->RequestAdBody(requestArrRootString, optionRootString, callback, connection);
+    if (*errorCode != Cloud::ERR_SEND_OK) {
+        return resultInfo;
+    }
+    return WaitAdBodyResult(future, connection);
 }
 
 UIExtensionCallback::UIExtensionCallback(std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext)
