@@ -78,6 +78,22 @@ private:
     int32_t loadAdType = 0;
 };
 
+class AdRequestConnection;
+
+class AdRequestDeathRecipient : public IRemoteObject::DeathRecipient {
+public:
+    explicit AdRequestDeathRecipient(sptr<Cloud::IAdRequestBody> bodyCallback,
+                                     sptr<Cloud::IAdLoadCallback> callback)
+        : bodyCallback_(std::move(bodyCallback)), callback_(std::move(callback)) {}
+    ~AdRequestDeathRecipient() override = default;
+
+    void OnRemoteDied(const wptr<IRemoteObject> &remoteObject) override;
+
+private:
+    sptr<Cloud::IAdRequestBody> bodyCallback_;
+    sptr<Cloud::IAdLoadCallback> callback_;
+};
+
 class AdLoadService : public RefBase {
 public:
     static sptr<AdLoadService> GetInstance();
@@ -89,7 +105,8 @@ public:
                    int32_t loadAdType);
     int32_t RequestAdBody(const std::string &request,
                           const std::string &options,
-                          const sptr<Cloud::IAdRequestBody> &callback);
+                          const sptr<Cloud::IAdRequestBody> &callback,
+                          sptr<AdRequestConnection> &outConn);
     void GetAdServiceElement(AdServiceElementName &adServiceElementName);
 
 private:
@@ -126,23 +143,26 @@ public:
     void OnAbilityDisconnectDone(const AppExecFwk::ElementName &element, int resultCode);
 
 private:
+    void NotifyFailure(int32_t code, const std::string &msg);
+
     sptr<Cloud::AdRequestData> data_;
     sptr<Cloud::IAdLoadCallback> callback_;
     sptr<Cloud::IAdRequestBody> bodyCallback_;
     int32_t loadAdType_{0};
     sptr<Cloud::AdLoadSendRequestProxy> proxy_{ nullptr };
     sptr<Cloud::AdRequestBodySendProxy> bodyProxy_{ nullptr };
+    sptr<AdRequestDeathRecipient> deathRecipient_{ nullptr };
     AdServiceElementName currAdServiceElementName_;
 };
 
 class AdRequestBodyAsync : public Cloud::AdRequestBodyStub {
 public:
-    explicit AdRequestBodyAsync(std::function<void(std::string)> getBodyInfo);
+    explicit AdRequestBodyAsync(std::function<void(int32_t, std::string)> getBodyInfo);
     ~AdRequestBodyAsync();
 
     void OnRequestBodyReturn(int32_t resultCode, const std::string &body, bool isResolved);
 private:
-    std::function<void(std::string)> getBodyInfo_;
+    std::function<void(int32_t, std::string)> getBodyInfo_;
 };
 } // namespace Advertising
 } // namespace OHOS
