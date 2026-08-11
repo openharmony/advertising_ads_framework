@@ -28,9 +28,6 @@ const IMP = 1;
 const CLICK = 2;
 const CLOSE = 3;
 const CODE_SUCCESS = 200;
-const SET_DEATH_CALLBACK = 7;
-const REGISTERE = 1;
-const UNREGISTERE = 0;
 const AdMainCounterMap = new Map();
 
 const AdConnectionManager = {
@@ -43,19 +40,6 @@ const AdConnectionManager = {
     this.connectCount = 0;
   }
 };
-
-class AdFailCallbackStub extends rpc.RemoteObject {
-  static DESCRIPTOR = 'AdFailCallbackDescriptor';
-  constructor(component) {
-    super(AdFailCallbackStub.DESCRIPTOR);
-    this.component = component;
-  }
-
-  async onRemoteMessageRequest(code, data, reply, options) {
-    await this.component.handleUIFail();
-    return true;
-  }
-}
 
 class AdStateCallbackStub extends rpc.RemoteObject {
   static DESCRIPTOR = 'AdStateCallbackDescriptor';
@@ -105,11 +89,8 @@ class AdComponent extends ViewPU {
     this.__uecHeight = new ObservedPropertySimplePU('100%', this, 'uecHeight');
     this.adRenderer = this.Component;
     this.__rollPlayState = new SynchedPropertySimpleOneWayPU(p1.rollPlayState, this, 'rollPlayState');
-    this.AdFailCallbackStub = null;
-    this.failCallbackStub = null;
     this.AdStateCallbackStub = null;
     this.stateCallbackStub = null;
-    this.isRegisterFailCallback = false;
     this.isReconnecting = false;
     this.eventQueue = [];
     this.setInitiallyProvidedValue(p1);
@@ -353,73 +334,6 @@ class AdComponent extends ViewPU {
     }
   }
 
-  async handleUIFail() {
-    hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent handleUIFail.`);
-    let t;
-    (t = this.interactionListener) === null || t === void 0 ? void 0 :
-      t.onStatusChanged('onAdClose', this.ads[0], 'adUiProcessDied');
-    await this.unregisterFailCallback();
-    this.disconnectServiceExtAbility();
-  }
-
-  async registerFailCallback() {
-    if (!AdConnectionManager.remoteObj || this.isRegisterFailCallback) {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent registerFailCallback remoteObj is null.`);
-      return;
-    }
-    hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `registerFailCallback: ${AdConnectionManager.connection}`);
-    if (!this.failCallbackStub) {
-      this.failCallbackStub = new AdFailCallbackStub(this);
-    }
-    let data = rpc.MessageSequence.create();
-    data.writeInterfaceToken(AdConnectionManager.remoteObj?.getDescriptor());
-    data.writeInt(REGISTERE);
-    data.writeString(this.uniqueId);
-    data.writeRemoteObject(this.failCallbackStub);
-    let reply = rpc.MessageSequence.create();
-    let option = new rpc.MessageOption();
-    try {
-      const result = await AdConnectionManager.remoteObj?.sendMessageRequest(SET_DEATH_CALLBACK, data, reply, option);
-      hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent registerFailCallback result: ${JSON.stringify(result)}`);
-      this.isRegisterFailCallback = true;
-    } catch (e) {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent',
-        `AdComponent registerFailCallback error. code: ${e.code}, message: ${e.message}`);
-    } finally {
-      if (reply) {
-        reply.reclaim();
-      }
-    }
-  }
-
-  async unregisterFailCallback() {
-    hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `unregisterFailCallback this.isRegisterFailCallback: ${this.isRegisterFailCallback}`);
-    if (!AdConnectionManager.remoteObj || !this.isRegisterFailCallback) {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent unregisterFailCallback remoteObj is null.`);
-      return;
-    }
-    let data = rpc.MessageSequence.create();
-    data.writeInterfaceToken(AdConnectionManager.remoteObj?.getDescriptor());
-    data.writeInt(UNREGISTERE);
-    data.writeString(this.uniqueId);
-    data.writeRemoteObject(this.failCallbackStub);
-    let reply = rpc.MessageSequence.create();
-    let option = new rpc.MessageOption();
-    try {
-      const result = await AdConnectionManager.remoteObj?.sendMessageRequest(SET_DEATH_CALLBACK, data, reply, option);
-      hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent unregisterFailCallback result: ${JSON.stringify(result)}`);
-    } catch (e) {
-      hilog.error(HILOG_DOMAIN_CODE, 'AdComponent',
-        `AdComponent unregisterFailCallback error. code: ${e.code}, message: ${e.message}`);
-    } finally {
-      if (reply) {
-        reply.reclaim();
-      }
-      this.isRegisterFailCallback = false;
-      this.failCallbackStub = null;
-    }
-  }
-
   aboutToAppear() {
     hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent aboutToAppear.`);
     this.ratios = this.getRatios();
@@ -435,8 +349,6 @@ class AdComponent extends ViewPU {
     hilog.debug(HILOG_DOMAIN_CODE, 'AdComponent', `AdComponent aboutToDisappear connection:${AdConnectionManager.connection}`);
     if (this.isAdRenderer) {
       await this.sendDataRequest(CLOSE);
-    } else {
-      await this.unregisterFailCallback();
     }
     this.disconnectServiceExtAbility();
     this.component = null;
@@ -495,10 +407,6 @@ class AdComponent extends ViewPU {
       this.Behavior = HitTestMode.Default;
       hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `type:${this.displayOptions?.type}, Behavior:${this.Behavior}`);
       this.sendDataRequest(INIT);
-    } else {
-      if (!this.isRegisterFailCallback) {
-        this.registerFailCallback();
-      }
     }
   }
 
@@ -614,10 +522,8 @@ class AdComponent extends ViewPU {
         AdConnectionManager.reset();
         hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'connectCount=0, reset connection manager');
       }
-      AdConnectionManager.connection === -1;
+      AdConnectionManager.connection = -1;
       this.uiExtProxy = null;
-      this.isRegisterFailCallback = false;
-      this.failCallbackStub = null;
     });
   }
 
@@ -633,6 +539,13 @@ class AdComponent extends ViewPU {
         if (z.adPageHeight !== undefined) {
           this.uecHeight = z.adPageHeight;
         }
+      });
+      UIExtensionComponent.onTerminated((info) => {
+        hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', `onTerminated, code: ${info.code}`);
+      });
+      UIExtensionComponent.onError((err) => {
+        hilog.info(HILOG_DOMAIN_CODE, 'AdComponent', 'onAdClose adUiProcessDied');
+        this.interactionListener?.onStatusChanged('onAdClose', this.ads?.[0], 'adUiProcessDied');
       });
       UIExtensionComponent.onRemoteReady((v) => {
         this.uiExtProxy = v;
