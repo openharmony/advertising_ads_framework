@@ -140,6 +140,11 @@ int32_t AdLoadService::RequestAdBody(const std::string &request, const std::stri
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "adServiceElementName is null, read from config");
         GetAdServiceElement(adServiceElementName_);
     }
+    AdServiceElementName localElement;
+    {
+        std::lock_guard<std::mutex> autoLock(configLock_);
+        localElement = adServiceElementName_;
+    }
     if (callback == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ad load callback is null");
         return Cloud::INNER_ERR;
@@ -150,12 +155,12 @@ int32_t AdLoadService::RequestAdBody(const std::string &request, const std::stri
     }
     OHOS::AAFwk::Want connectionWant;
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI, "connect extension ability, apiServiceName is %{public}s,",
-        adServiceElementName_.apiServiceName.c_str());
-    connectionWant.SetElementName(adServiceElementName_.bundleName, adServiceElementName_.apiServiceName);
+        localElement.apiServiceName.c_str());
+    connectionWant.SetElementName(localElement.bundleName, localElement.apiServiceName);
     sptr<AdRequestConnection> serviceConnection =
-        new (std::nothrow) AdRequestConnection(data, callback, adServiceElementName_);
+        new (std::nothrow) AdRequestConnection(data, callback, localElement);
     ErrCode errCode = AAFwk::AbilityManagerClient::GetInstance()->ConnectAbility(connectionWant, serviceConnection,
-        adServiceElementName_.userId);
+        localElement.userId);
     if (errCode != ERR_OK) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "failed to connect ability");
         return Cloud::INNER_ERR;
@@ -221,16 +226,22 @@ void AdLoadService::GetConfigItem(const char *path, AdServiceElementName &adServ
 bool AdLoadService::ConnectAdKit(const sptr<Cloud::AdRequestData> &data, const sptr<Cloud::IAdLoadCallback> &callback,
     int32_t loadAdType)
 {
+    AdServiceElementName localElement;
+    {
+        std::lock_guard<std::mutex> autoLock(configLock_);
+        localElement = adServiceElementName_;
+    }
     ADS_HILOGI(OHOS::Cloud::ADS_MODULE_JS_NAPI,
         "Begin connect extension ability, bundleName is %{public}s, extension name is %{public}s, userId is %{public}d",
-        adServiceElementName_.bundleName.c_str(), adServiceElementName_.extensionName.c_str(),
-        adServiceElementName_.userId);
+        localElement.bundleName.c_str(), localElement.extensionName.c_str(),
+        localElement.userId);
     OHOS::AAFwk::Want connectionWant;
-    connectionWant.SetElementName(adServiceElementName_.bundleName, adServiceElementName_.extensionName);
+    connectionWant.SetElementName(localElement.bundleName, localElement.extensionName);
+
     sptr<AdRequestConnection> serviceConnection =
-        new (std::nothrow) AdRequestConnection(data, callback, loadAdType, adServiceElementName_);
+        new (std::nothrow) AdRequestConnection(data, callback, loadAdType, localElement);
     ErrCode errCode = AAFwk::AbilityManagerClient::GetInstance()->ConnectExtensionAbility(connectionWant,
-        serviceConnection, adServiceElementName_.userId);
+        serviceConnection, localElement.userId);
     if (errCode != ERR_OK) {
         ADS_HILOGE(OHOS::Cloud::ADS_MODULE_JS_NAPI, "failed to connect ability");
         return false;
