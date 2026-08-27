@@ -87,6 +87,8 @@ ohos_shared_library("cj_advertising_ffi") {
     "node:node_header_notice",
   ]
 
+  version_script = "libcj_advertising_ffi.map"
+
   innerapi_tags = [ "platformsdk" ]
   subsystem_name = "advertising"
   part_name = "advertising"
