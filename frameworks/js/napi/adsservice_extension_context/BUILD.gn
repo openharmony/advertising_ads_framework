@@ -59,7 +59,6 @@ ohos_shared_library("adsserviceextensioncontext_napi") {
     ubsan = true
   }
 
-  relative_install_dir = "module/advertising"
   subsystem_name = "advertising"
   part_name = "advertising"
 }
