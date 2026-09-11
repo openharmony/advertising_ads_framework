@@ -44,7 +44,7 @@ struct CloudServiceProvider {
 class CJAdvertisingImpl : public OHOS::FFI::FFIData {
     DECL_TYPE(CJAdvertisingImpl, OHOS::FFI::FFIData)
 public:
-    explicit CJAdvertisingImpl(AbilityRuntime::AbilityContext* abilityContext);
+    explicit CJAdvertisingImpl(std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext);
     ~CJAdvertisingImpl() = default;
     int32_t loadAd(CAdRequestParams adParam, CAdOptions adOptions, CAdLoadListenerId callbackId);
     int32_t loadAdWithMultiSlots(CAdRequestParamsArr adParam,

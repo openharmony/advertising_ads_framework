@@ -171,10 +171,9 @@ int32_t CJAdvertisingImpl::showAd(CAdvertisement cAdvertisement,
     return 0;
 }
 
-CJAdvertisingImpl::CJAdvertisingImpl(AbilityRuntime::AbilityContext* abilityContext)
-{
-    abilityContext_ = std::shared_ptr<AbilityRuntime::AbilityContext>(abilityContext);
-}
+CJAdvertisingImpl::CJAdvertisingImpl(std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext)
+    : abilityContext_(std::move(abilityContext))
+{}
 
 int32_t CJAdvertisingImpl::loadAd(CAdRequestParams adParam, CAdOptions adOptions, CAdLoadListenerId callbackId)
 {
