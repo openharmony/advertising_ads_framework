@@ -23,7 +23,13 @@ int64_t FfiOHOSAdvertisingAdLoaderConstructor(OHOS::AbilityRuntime::AbilityConte
     if (abilityContext == nullptr) {
         return -1;
     }
-    auto adLoader = OHOS::FFI::FFIData::Create<OHOS::Advertising::CJAdvertisingImpl>(abilityContext);
+    auto sptrContext = abilityContext->shared_from_this();
+    auto sptrAbilityContext = OHOS::AbilityRuntime::Context::ConvertTo<
+        OHOS::AbilityRuntime::AbilityContext>(sptrContext);
+    if (sptrAbilityContext == nullptr) {
+        return -1;
+    }
+    auto adLoader = OHOS::FFI::FFIData::Create<OHOS::Advertising::CJAdvertisingImpl>(sptrAbilityContext);
     if (adLoader == nullptr) {
         return -1;
     }
