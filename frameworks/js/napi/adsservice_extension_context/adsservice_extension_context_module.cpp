@@ -22,7 +22,7 @@ extern const char _binary_adsservice_extension_context_abc_end[];
 
 static napi_module _module = {
     .nm_version = 0,
-    .nm_filename = "advertising/libadsserviceextensioncontext_napi.so/AdsServiceExtensionContext.js",
+    .nm_filename = "libadsserviceextensioncontext_napi.so/AdsServiceExtensionContext.js",
     .nm_modname = "advertising.AdsServiceExtensionContext",
 };
 extern "C" __attribute__((constructor)) void NAPI_advertising_AdsServiceExtensionContext_AutoRegister()
