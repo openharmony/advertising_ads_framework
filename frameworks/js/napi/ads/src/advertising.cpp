@@ -545,7 +545,7 @@ napi_value Advertising::ShowAd(napi_env env, napi_callback_info info)
         return NapiGetNull(env);
     }
     if (ParseObjectFromJs(env, argv[1], adDisplayOptionsRoot) == nullptr) { // 2 params
-        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Invalid input parameter.");
+        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Parameter error.");
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseDisplayOptionsByShowAd failed");
         cJSON_Delete(adDisplayOptionsRoot);
         return NapiGetNull(env);
@@ -564,7 +564,7 @@ napi_value Advertising::ShowAd(napi_env env, napi_callback_info info)
         return NapiGetNull(env);
     }
     if (ParseAdvertismentByAd(env, argv[0], advertisment, adRoot) == nullptr) {
-        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Invalid input parameter.");
+        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Parameter error.");
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "ParseAdvertismentByAd failed");
         cJSON_Delete(adRoot);
         cJSON_Delete(adDisplayOptionsRoot);
@@ -848,13 +848,13 @@ napi_value ParseAdRequestBodyParms(napi_env env, napi_callback_info info, GetAdR
     cJSON *parms = cJSON_CreateArray();
     if (parms == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateArray failed for parms");
-        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Invalid input parameter.");
+        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Parameter error.");
         return NapiGetNull(env);
     }
     if (!GetAdsArray(env, argv[0], parms)) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "parse get request body parms failed");
         cJSON_Delete(parms);
-        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Invalid input parameter.");
+        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Parameter error.");
         return NapiGetNull(env);
     }
     std::string parmsString = AdJsonUtil::ToString(parms);
@@ -864,13 +864,13 @@ napi_value ParseAdRequestBodyParms(napi_env env, napi_callback_info info, GetAdR
     cJSON *optionsObject = cJSON_CreateObject();
     if (optionsObject == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "cJSON_CreateObject failed for optionsObject");
-        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Invalid input parameter.");
+        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Parameter error.");
         return NapiGetNull(env);
     }
     if (ParseObjectFromJs(env, argv[1], optionsObject) == nullptr) {
         ADS_HILOGW(OHOS::Cloud::ADS_MODULE_JS_NAPI, "parse get request body options failed");
         cJSON_Delete(optionsObject);
-        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Invalid input parameter.");
+        napi_throw_error(env, std::to_string(PARAM_ERROR_CODE).c_str(), "Parameter error.");
         return NapiGetNull(env);
     }
     std::string optionString = DEFAULT_JSON_STR;
@@ -904,10 +904,10 @@ void CompleteCBWithPromise(napi_env env, napi_status status, void *data)
         std::string jsErrorMsg = "System internal error.";
         switch (jsErrorCode) {
             case PARAM_ERROR_CODE:
-                jsErrorMsg = "Invalid input parameter.";
+                jsErrorMsg = "Parameter error.";
                 break;
             case DEVICE_ERROR_CODE:
-                jsErrorMsg = "Device not supported.";
+                jsErrorMsg = "Capability not supported.";
                 break;
             default:
                 break;

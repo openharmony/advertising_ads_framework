@@ -110,21 +110,21 @@ function processParamsNull(adParams, adOptions, listener, methodName) {
     hilog.error(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `${methodName} param error. code 401 , message adParam is null`);
     throw {
       code: AdsError.PARAM_ERR,
-      message: 'Invalid input parameter. AdParams is null.'
+      message: 'Parameter error. AdParams is null.'
     };
   }
   if (!adOptions) {
     hilog.error(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `${methodName} param error. code 401 , message adOptions is null`);
     throw {
       code: AdsError.PARAM_ERR,
-      message: 'Invalid input parameter. AdOptions is null.'
+      message: 'Parameter error. AdOptions is null.'
     };
   }
   if (!listener) {
     hilog.error(HILOG_DOMAIN_CODE, 'AdLoaderProxy', `${methodName} LoadAd param error. code 401 , message listener is null`);
     throw {
       code: AdsError.PARAM_ERR,
-      message: 'Invalid input parameter. Listener is null.'
+      message: 'Parameter error. Listener is null.'
     };
   }
 }
@@ -312,7 +312,7 @@ function registerWebAdInterface(controller, context, needRefresh) {
     hilog.error(HILOG_DOMAIN_CODE, 'advertising', `parameter controller or context is null`);
     throw {
       code: 401,
-      message: 'Invalid input parameter, controller or context is null.'
+      message: 'Parameter error, controller or context is null.'
     };
   }
   try {
@@ -337,7 +337,7 @@ function deleteWebAdInterface(controller, needRefresh) {
     hilog.error(HILOG_DOMAIN_CODE, 'advertising', `parameter controlleris null`);
     throw {
       code: 401,
-      message: 'Invalid input parameter, controller is null.'
+      message: 'Parameter error, controller is null.'
     };
   }
   try {
@@ -377,7 +377,7 @@ class ParseAdResponseRpcObj extends rpc.RemoteObject {
       if (respCode === CODE_SUCCESS) {
         this.listener?.onAdLoadSuccess(new Map(Object.entries(JSON.parse(respData))));
       } else if (respCode === CODE_DEVICE_NOT_SUPPORT) {
-        this.listener?.onAdLoadFailure(respCode, 'Device not supported.');
+        this.listener?.onAdLoadFailure(respCode, 'Capability not supported.');
       } else if (respCode === AdsError.PARSE_RESPONSE_ERROR) {
         this.listener?.onAdLoadFailure(respCode, 'Failed to parse the ad response.');
       } else {
@@ -438,14 +438,14 @@ function validateParams(adResponse, listener, context) {
     hilog.error(HILOG_DOMAIN_CODE, 'advertising', `The parameters cannot be empty, error code 401.`);
     throw {
       code: AdsError.PARAM_ERR,
-      message: 'Invalid input parameter. The parameters cannot be empty.'
+      message: 'Parameter error. The parameters cannot be empty.'
     };
   }
   if (adResponse.length > PARSE_RESP_LENGTH_LIMIT) {
     hilog.error(HILOG_DOMAIN_CODE, 'advertising', `The parameter adResponse is too long.`);
     throw {
       code: AdsError.PARAM_ERR,
-      message: 'Invalid input parameter. The parameter adResponse is too long.'
+      message: 'Parameter error. The parameter adResponse is too long.'
     };
   }
 }
